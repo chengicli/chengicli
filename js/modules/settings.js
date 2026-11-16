@@ -620,11 +620,15 @@ var curFontColor = localStorage.getItem("fontColor") || "";
 // 改成「全量打标记 + 精确排除」：除排除清单外，所有元素加 .fc-auto，统一吃 var(--fc-cur)。
 // 排除的是「不能改颜色的」——实底按钮/徽章/悬浮键（白字压主题色）和代码块（有语法高亮）。
 // 2026-11-08：页脚（#footer-wrap）整块加进排除清单 —— 它压在页面底部的渐隐暗场上，
-// 文字用的是自己的三级白（site-inject.css「页脚 v4」一节），必须保持浅色：
+// 文字用的是自己的三级浅色（site-inject.css「页脚 v4」一节），必须保持浅色：
 // 一旦被刷成访客选的深色字色，就是深字压深底、整块消失。顺带也让页脚躲开
 // paintFontColor() 每秒给全站元素写内联 color 的那波重排。
+// 2026-11-14：页脚现在**会**跟着字色变了，但方式不同 —— 走 site-inject.css「页脚 v4」③
+// 的 oklch(from var(--fc-cur) …)：只借字色的色相/彩度，亮度钉在页脚自己的三档上。
+// 所以它仍然留在排除清单里：这里写的是内联 color !important，会连 #ftRun / #ftLove
+// 的主题色数字、备案号 hover 一起刷平，也白白带来一次全量重排。
 // （a.btn-xz / .btn-xz 是历史兜底，footer.pug 里已经不用了。）
-var FC_KEEP = "#footer-wrap,a.btn-xz,.btn-xz,.a-chip,#ai-chat-btn,#rightside>div>button,.page-number.current,pre,code,kbd,figure.highlight";
+var FC_KEEP = "#footer-wrap,a.btn-xz,.btn-xz,.a-chip,#rightside>div>button,.page-number.current,pre,code,kbd,figure.highlight";
 
 function paintFontColor() {
   if (!curFontColor || !document.body) return;

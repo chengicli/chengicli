@@ -88,6 +88,13 @@ function createtime() {
 
   var runTxt = "站点运行 " + FT_YMD.fmt(FT_YMD.diff(FT_GRT, now));
   if (runEl.innerHTML !== runTxt) runEl.innerHTML = runTxt;
+
+  // 悬停提示：总天数（2026-11-14）。气泡样式见 site-inject.css 的「⑧-2」。
+  // 写法用 data-tip 而不是 title：原生 title 要悬停 1 秒才弹、还是系统白框。
+  // 总天数同样一天只变一次，所以放在这个跨天才会进来的分支里，不额外加开销。
+  var tipTxt = "建站至今 " + Math.floor((now - FT_GRT) / 86400000) + " 天";
+  if (runEl.getAttribute("data-tip") !== tipTxt) runEl.setAttribute("data-tip", tipTxt);
+
   // pjax 换页会把 #ftRun 换成新节点，所以要记住节点本身，内容被清空时也重写
   FT_RUN_EL = runEl;
   FT_RUN_KEY = key;

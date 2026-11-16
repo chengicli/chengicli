@@ -51,9 +51,9 @@ var LOVE_START = '2026-07-13';
       '  margin:0 2px;padding:0;border-radius:0;background:none;',
       '  color:' + THEME + ';font-weight:700;',
       '  font-variant-numeric:tabular-nums;',
-      '}',
-
-      '.footer_custom_text .ft-sep{margin:0 8px;opacity:.55}'
+      '}'
+      /* 装饰符 .ft-sep 的 margin / opacity 已于 2026-11-14 挪到
+         source/css/site-inject.css 的「⑧-1」一节（单一来源，脚本没跑到也不会贴字） */
     ].join('');
     var st = document.createElement('style');
     st.id = 'loveDaysStyle';
@@ -108,7 +108,7 @@ var LOVE_START = '2026-07-13';
     var total = Math.round((today - start) / DAY);
     if (total < 0) return { future: true, total: total };
 
-    return { ymd: diffYMD(start, today) };
+    return { ymd: diffYMD(start, today), total: total };
   }
 
   function render() {
@@ -121,6 +121,12 @@ var LOVE_START = '2026-07-13';
       el.textContent = '（love-days.js：LOVE_START 日期格式不对，请写成 年-月-日）';
       return;
     }
+
+    // 悬停提示：总天数（2026-11-14）。气泡样式见 site-inject.css 的「⑧-2」。
+    // 用 data-tip 而不是 title：原生 title 要悬停 1 秒才弹，等不到的人会以为没做。
+    var tip = (r.future ? '还有 ' : '在一起 ') + Math.abs(r.total) + ' 天';
+    if (el.getAttribute('data-tip') !== tip) el.setAttribute('data-tip', tip);
+
     if (r.future) {
       el.innerHTML = '还有 <b>' + Math.abs(r.total) + '</b> 天就到一起纪念日啦';
       return;

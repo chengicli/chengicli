@@ -1050,6 +1050,87 @@ html.beauty-cursor-on .winbox .wb-body * { cursor: inherit !important; }
  * 升级插件、hexo clean 之后这条依然生效（它挂在站点样式表里，不依赖插件版本）。 */
 .hbe-button { display: none !important; }
 
+/* ---------- 加密文章锁屏：把插件自带的「灰条」换成正常表单（2026-11-16 改） ----------
+ * hexo-blog-encrypt 带的那套 hbe-input-default 是 Material 浮动标签的残件：
+ *   · .hbe-input        → width:80%; min-width:400px（手机直接撑破版面）
+ *   · .hbe-input-field  → opacity:0（真输入框是隐形的，光标都看不见）
+ *   · label::before     → 一块 #666 的深灰横条，就是页面上那条丑灰条
+ *   · label-content     → 靠 transform 上浮，但插件从不加 .input--filled，所以永远浮不上去，
+ *                         文字就卡在灰条下面
+ * 这里不改插件的 DOM，只把这几样重新排一遍：
+ *   .hbe-input 改成 flex 的 column-reverse —— DOM 里是 input 在前、label 在后，
+ *   反过来正好让「请输入密码」当输入框上方的小标题，输入框本身可见、可点、带焦点环。
+ * 颜色一律走站内 token，明暗主题都跟得上。 */
+#hexo-blog-encrypt.hbe-container { overflow: visible; }
+
+#hexo-blog-encrypt .hbe-content {
+  padding: 4px 0 0;
+  font-size: 100%;
+}
+
+#hexo-blog-encrypt .hbe-input {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 8px;
+  width: min(340px, 100%);
+  min-width: 0;
+  margin: 0 auto;
+  vertical-align: top;
+}
+
+#hexo-blog-encrypt .hbe-input-field,
+#hexo-blog-encrypt .hbe-input-field-default {
+  float: none;
+  width: 100%;
+  height: 42px;
+  margin: 0;
+  padding: 0 14px;
+  border: 1px solid color-mix(in srgb, var(--font-color, #1f2937) 20%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--font-color, #1f2937) 5%, transparent);
+  color: var(--font-color, #1f2937);
+  font-family: inherit;
+  font-size: 15px;
+  opacity: 1;
+  transition: border-color .16s, box-shadow .16s;
+}
+
+#hexo-blog-encrypt .hbe-input-field:focus,
+#hexo-blog-encrypt .hbe-input-field-default:focus {
+  border-color: color-mix(in srgb, var(--theme-color, #ff1493) 60%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-color, #ff1493) 15%, transparent);
+  outline: none;
+}
+
+/* label → 输入框上方的小字说明：去掉绝对定位和 ::before/::after 那两条灰条 */
+#hexo-blog-encrypt .hbe-input-label,
+#hexo-blog-encrypt .hbe-input-label-default {
+  position: static;
+  float: none;
+  width: 100%;
+  padding: 0 2px;
+  font-size: 13px;
+  font-weight: 400;
+  text-align: left;
+  color: var(--font-color, #1f2937);
+  opacity: .6;
+}
+
+#hexo-blog-encrypt .hbe-input-label-default::before,
+#hexo-blog-encrypt .hbe-input-label-default::after {
+  display: none;
+  content: none;
+}
+
+#hexo-blog-encrypt .hbe-input-label-content,
+#hexo-blog-encrypt .hbe-input-label-content-default {
+  display: block;
+  padding: 0;
+  transform: none;
+  transition: none;
+  color: inherit;
+}
+
 /* ---------- 表格容器别永远画滚动条 ----------
  * 主题 `_global/index.styl` 里写的是 `.table-wrap { overflow-x: scroll }`，
  * `scroll` 是「不管溢不溢出都留出滚动条」：Windows 上的 Chromium 会把 thumb 填满整条轨道，
@@ -1412,7 +1493,7 @@ html[data-theme="dark"] {
 }
 
 /* ---------------------------------------------------------------------------
- * 全站内容容器：文章正文、Page 页面正文（音乐馆/统计/导航/关于…）、提示框、AI 面板
+ * 全站内容容器：文章正文、Page 页面正文（音乐馆/统计/导航/关于…）、提示框
  * 统一接上「磨砂」；底色仍由各页自己的 var(--surface) 决定。
  * 2026-11-02：上一版只覆盖了卡片，正文和整页容器漏了。
  * ------------------------------------------------------------------------- */
@@ -1422,7 +1503,6 @@ html[data-theme="dark"] {
    会出现一条明显色带。内层背景本来就是透明的，去掉后视觉不变。 */
 #post,
 #page,
-#ai-chat-panel,
 #sidebar-menus,
 #ds-mini,
 #ds-player {
@@ -1735,21 +1815,49 @@ html[data-theme="dark"] #footer::after {
     rgba(10, 11, 13, .54) 100%);
 }
 
-/* ③ 内容层：居中单列，与 .layout 同宽，文字全部白色系 */
+/* ③ 内容层：居中单列，与 .layout 同宽，文字全部浅色系
+   ★ 2026-11-14：三级色改成**跟随「美化设置 → 字体颜色」**（作者反馈：改了字色页脚没反应）。
+   原来这里是写死的三级白（.94 / .70 / .46），而 settings.js 的 FC_KEEP 又把
+   #footer-wrap 排除在全站刷色之外 —— 两边一起，页脚就成了唯一不听话的地方。
+   但**不能直接吃 var(--fc-cur)**：页脚压在底部那层暗场上，访客挑的字色多半是配浅色卡片的
+   深色，直接套就是深字压深底、整块消失（这正是 FC_KEEP 当初排除页脚的原因）。
+   所以改成 oklch(from …)：借字色的色相/彩度，亮度按字色明暗在页脚自己的三档上缩放，
+   细则写在下面 @supports 那段的注释里。
+   不支持相对色语法的浏览器走这里的三级白，等同于改动前。
+   ⚠ #footer-wrap 仍留在 FC_KEEP 里（不吃 paintFontColor 的内联 color !important），
+     否则它会把 #ftRun / #ftLove 的主题色数字、备案号 hover 一起刷平。 */
 #footer-wrap {
   position: relative;
   box-sizing: border-box;
   max-width: 1200px;
   margin: 0 auto;
   padding: 46px 20px 34px;
-  color: rgba(255, 255, 255, .72);
   text-align: center;
   /* 双层投影：近处一层实一点保证边缘，外面一圈散开负责在亮壁纸上兜底 */
   text-shadow: 0 1px 2px rgba(0, 0, 0, .55), 0 0 10px rgba(0, 0, 0, .35);
-  /* 三级白 + 主题色点缀，下面的规则全部引用这组 token */
+  /* 三级浅色 + 主题色点缀，下面的规则全部引用这组 token */
   --ft-fg: rgba(255, 255, 255, .94);
   --ft-mid: rgba(255, 255, 255, .7);
   --ft-dim: rgba(255, 255, 255, .46);
+  color: var(--ft-mid);
+}
+
+/* 有自定义字色时：借它的色相和彩度，亮度在页脚自己的档位上按字色明暗做缩放
+   （--fc-cur 由 source/js/inject/beauty-boot.js 在 <head> 同步写入，首帧就存在；
+   深色模式下它已经被 color-mix 提亮过一次）。
+   亮度公式 `档位 × (0.72 + l × 0.28)`：
+     · 字色是白色/未设置（l=1）→ 正好等于原档位 0.95 / 0.85 / 0.70，视觉无变化；
+     · 字色是墨黑（l≈0.24）→ 落到 0.75 / 0.67 / 0.55，明显变沉，但仍是浅字压暗场；
+     · 字色是靛蓝/玫红这类彩色 → 色相和彩度进来，页脚一眼就是那个色系。
+   没用「把亮度钉死」的写法：那样子色环里选墨黑/深灰（彩度≈0）时页脚纹丝不动，
+   作者会以为设置没生效 —— 这正是本次要修的问题。
+   彩度只借 45%，直接用原彩度会让小字发艳、跟页脚这层的克制感打架。 */
+@supports (color: oklch(from red 0.9 0.1 h)) {
+  #footer-wrap {
+    --ft-fg: oklch(from var(--fc-cur, #fff) calc(0.95 * (0.72 + l * 0.28)) calc(c * 0.45) h);
+    --ft-mid: oklch(from var(--fc-cur, #fff) calc(0.85 * (0.72 + l * 0.28)) calc(c * 0.45) h);
+    --ft-dim: oklch(from var(--fc-cur, #fff) calc(0.70 * (0.72 + l * 0.28)) calc(c * 0.45) h);
+  }
 }
 
 @media screen and (min-width: 2000px) {
@@ -1888,6 +1996,74 @@ html[data-theme="dark"] #footer::after {
   white-space: nowrap;
 }
 
+/* ⑧-1 第三行内部间距 + 装饰符 ｡ﾟﾟ･🌸･ﾟﾟ･｡（2026-11-14 从 love-days.js 挪来）
+   · 装饰符来自 _config.chengic.yml 的 footer.custom_text 开头，它的 margin / opacity
+     以前只写在 love-days.js 的 style() 里 —— 脚本没跑到（pjax 首帧、注入的 <style>
+     被缓存漏掉）时它会贴住「天」和「已」，所以收到这里做单一来源。
+   · 间距**一律不用左边距**：左间距挂在 #ftRun 的 margin-right，右间距挂在 .ft-sep 的
+     margin-right。第三行是 text-align:center，行首若带外边距，整行会右移半个外边距，
+     看着就像"开头多打了个空格"；现在无论哪块落到行首，行首都是零外边距。
+   · nowrap：这串装饰里的 ･ ﾟ 是 NS 类、🌸 是 ID 类，本来就不该被拆开；写死 nowrap
+     是为了不依赖浏览器的 Unicode 断行表，而不是为了调整折行点（折行点见下方说明）。
+   · 折行点：窄屏下第三行会断成「站点运行 …天 ｡ﾟﾟ･🌸･ﾟﾟ･｡」+「已经和女朋友…啦 ♥」——
+     「天」后面不能断（UAX#14 禁止在 CL 类字符前断行，装饰符首字符 ｡ 正是 CL 类），
+     所以装饰符留在第一行末尾收尾，第二行从正文开始，比让它孤零零起一行好看。 */
+#footer-wrap .footer_custom_text #ftRun {
+  margin-right: 8px;
+}
+
+#footer-wrap .footer_custom_text .ft-sep {
+  margin: 0 8px 0 0;
+  opacity: .55;
+  white-space: nowrap;
+}
+
+/* ⑧-2 悬停提示：鼠标移上两段时长，显示「具体多少天」（2026-11-14 新增）
+   为什么不用原生 title：浏览器要悬停约 1 秒才弹，而且是系统白底方框，
+   跟页脚这层暗场的语言不搭，所以自己做。
+   气泡文字由脚本写进 data-tip 属性：
+     #ftRun  ← source/js/modules/footer-time.js  「建站至今 N 天」
+     #ftLove ← source/js/love-days.js             「在一起 N 天」
+   气泡放**下方**（2026-11-14 作者反馈）：原先往上弹会盖住上面那行
+   「© 2023-2026 By chengicli · 豫ICP备2026057580号-1」，看着像把字吃掉。
+   往下弹正好落进 #footer-wrap 底部留白里（base 34px / ≤640px 86px 都装得下），
+   页脚又紧贴页面底边，所以不会压到正文任何东西。
+   只在 :hover 出现，不加 delay —— 鼠标一进就展示，不用等。 */
+#footer-wrap .footer_custom_text #ftRun,
+#footer-wrap .footer_custom_text #ftLove {
+  position: relative;
+}
+
+#footer-wrap .footer_custom_text [data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 6px);
+  z-index: 3;
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 255, 255, .14);
+  border-radius: 8px;
+  background: rgba(18, 20, 24, .86);
+  color: rgba(255, 255, 255, .92);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: .2px;
+  white-space: nowrap;
+  /* 页脚那层白字投影不能带到气泡上，否则小字会发糊 */
+  text-shadow: none;
+  pointer-events: none;
+  opacity: 0;
+  /* 初始位置在目标位置上方 4px，出现时往下落到原位（跟气泡在下方的方向一致） */
+  transform: translate(-50%, -4px);
+  transition: opacity .18s ease, transform .18s ease;
+}
+
+#footer-wrap .footer_custom_text [data-tip]:hover::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
 /* ⑨ 第四行「站点统计 + 去归档翻翻」（#workboard）于 2026-11-09 整行删除，
    对应的 flex 排版与 .ft-arch 样式一并移除。 */
 
@@ -1905,6 +2081,9 @@ html[data-theme="dark"] #footer::after {
   #footer-wrap .copyright { margin-top: 14px; font-size: 12.5px; }
   #footer-wrap .footer_custom_text { font-size: 12.5px; }
   #footer-wrap .footer_custom_text #ftRun { font-size: 12.5px; }
+  /* 这一档底部留白收到 30px，悬停气泡（高 28px）的间距同步收到 2px，
+     免得上悬停时气泡探出页脚底边、页面凭空多出几像素滚动范围 */
+  #footer-wrap .footer_custom_text [data-tip]::after { top: calc(100% + 2px); }
 }
 
 @media screen and (max-width: 640px) {
@@ -1915,7 +2094,7 @@ html[data-theme="dark"] #footer::after {
   #footer-wrap .ft-deco { margin: 12px auto 16px; }
   #footer-wrap .ft-links a + a { margin-left: 15px; }
   #footer-wrap .ft-links a + a::before { left: -9px; }
-  /* © 那一行（含"域名正在备案中~"）在 390px 下一行放不下，右边又会顶到固定圆钮，
+  /* © 那一行（含"豫ICP备2026057580号-1"）在 390px 下一行放不下，右边又会顶到固定圆钮，
      干脆拆成两行：© + 作者一行、备案号一行，各自居中 */
   #footer-wrap .copyright { font-size: 12px; display: block; }
   #footer-wrap .copyright .ft-icp { display: block; }

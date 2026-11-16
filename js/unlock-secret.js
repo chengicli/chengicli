@@ -223,11 +223,12 @@
   function injectStyleOnce() {
     if (document.getElementById(STYLE_ID)) return;
     var css = [
+      // 尺寸跟 site-inject.css 里那个输入框对齐（340 宽 / 42 高 / 10 圆角），像个正经表单
       '.hbe-unlock-btn{',
-      '  display:block;margin:16px auto 0;padding:9px 30px;',
-      '  border:none;border-radius:8px;cursor:pointer;',
+      '  display:block;width:min(340px,100%);height:42px;margin:12px auto 0;padding:0 24px;',
+      '  border:none;border-radius:10px;cursor:pointer;',
       '  background:var(--theme-color,#49b1f5);color:#fff;',
-      '  font-size:14px;line-height:1.6;letter-spacing:2px;',
+      '  font-family:inherit;font-size:15px;font-weight:600;line-height:1;letter-spacing:1px;',
       '  transition:opacity .15s,transform .1s;-webkit-tap-highlight-color:transparent;',
       '}',
       '.hbe-unlock-btn:hover{opacity:.88}',
