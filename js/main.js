@@ -803,4 +803,11 @@ document.addEventListener('DOMContentLoaded', function () {
      目录的滚动高亮就一直不亮。解密完成后调一次这里重抓即可。
      只重抓目录，不重跑整个 refreshFn —— 那会重复绑定一堆监听。 */
   window.__fomalTocResync = scrollFnToDo
+
+  /* 同上：加密文章在解锁前 body 很短，scrollFn 会卡在「页面不够长」那一步直接 return，
+     滚动监听压根没绑上 —— 解锁后往下翻，导航栏永远不会变成固定顶栏，
+     表现就是「一刷新/一滚动菜单栏就没了」（仓库页踩过）。
+     这里暴露出去，由 source/js/unlock-secret.js 在解密完成后补调一次。
+     scrollFn 自己会先摘掉旧监听，重复调是安全的。 */
+  window.__fomalScrollResync = scrollFn
 })

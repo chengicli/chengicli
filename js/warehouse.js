@@ -31,6 +31,7 @@
   var SEC_TEXT = {};     // 「品类|行号」→ 该行的检索文本
   var els = {};
   var META = {};
+  var scrollReset = false;   // 每次页面加载只复位一次滚动位置
 
   /* ---------- 小工具 ---------- */
   function norm(s) {
@@ -322,6 +323,34 @@
 
   function queueSticky() { if (!stickyRaf) stickyRaf = requestAnimationFrame(syncSticky); }
 
+  /* 顶部导航栏的高度不固定，得实测：
+     主题 main.js 会按滚动方向给 #page-header 挂 nav-fixed / nav-visible，
+     站内 custom.css 又写了「顶栏常驻」——transform: translateY(58px) !important，
+     所以只要导航变成固定条就是**露在外面**的（58px，不是 60），
+     死写 60 会压住第一行，写成「nav-visible 才算可见」又会算成 0 把整块顶到导航底下。
+     直接量 #nav 的底边最省事。class 一变就重量（比在 scroll 里读稳：主题那边 200ms 节流）。 */
+  var navObserver = null;
+  var navRaf = 0;
+
+  function navTop() {
+    var header = document.getElementById('page-header');
+    var nav = document.getElementById('nav');
+    if (!header || !nav) return 0;
+    var fixed = header.classList.contains('nav-fixed');
+    var shown = header.classList.contains('nav-visible');
+    if (!fixed && !shown) return 0;            // 还在页面原位，不用避让
+    var r = nav.getBoundingClientRect();
+    return r.bottom > 0 ? Math.round(r.bottom) : 0;
+  }
+
+  function syncNav() {
+    navRaf = 0;
+    document.documentElement.style.setProperty('--wh-navtop', navTop() + 'px');
+    syncSticky();   // 表头位置 = 吸顶块 top + 高度
+  }
+
+  function queueNav() { if (!navRaf) navRaf = requestAnimationFrame(syncNav); }
+
   function bindSticky(bar, root) {
     if (!bar) return;
     stickyTarget = { bar: bar, root: root };
@@ -334,10 +363,20 @@
       stickyObserver.observe(bar);
     }
 
+    /* pjax 换页会把 #page-header 整个换掉，所以每次 init 都重挂一次 */
+    if (navObserver) { navObserver.disconnect(); navObserver = null; }
+    var header = document.getElementById('page-header');
+    if (header && window.MutationObserver) {
+      navObserver = new MutationObserver(queueNav);
+      navObserver.observe(header, { attributes: true, attributeFilter: ['class'] });
+    }
+    queueNav();
+
     if (stickyBound) { syncSticky(); return; }
     stickyBound = true;
 
     window.addEventListener('resize', queueSticky);
+    window.addEventListener('resize', queueNav);
     window.addEventListener('load', queueSticky);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(queueSticky);
     // 首屏字体/图片撑开工具条后高度会变，几个时间点各量一次兜住
@@ -345,14 +384,74 @@
   }
 
   /* ---------- 视图切换 ---------- */
-  function openGroup(name) {
+  /* ---------- 地址栏路由：/warehouse/tap ----------
+   * 每个品类在导出的数据里带一个英文 slug（在 tools/xlsx2warehouse.py 里配），
+   * 点品类时用 pushState 把地址换成 /warehouse/tap，刷新和分享都能直达。
+   * 静态站没法给每个 slug 单独渲染一页，所以构建时会在 public/warehouse/<slug>/
+   * 放一个跳板页（scripts/warehouse-routes.js）：它跳到 ?g=<slug>，本文件再把
+   * 地址 replaceState 回干净路径。 */
+  function basePath() {
+    var key = '/warehouse';
+    var p = location.pathname;
+    var i = p.indexOf(key);
+    if (i < 0) return key + '/';
+    return p.slice(0, i + key.length) + '/';
+  }
+
+  function routeSlug() {
+    var m = /[?&]g=([a-z0-9-]+)/i.exec(location.search);
+    if (m) return m[1].toLowerCase();
+    var rest = location.pathname.slice(basePath().length).replace(/\/+$/, '');
+    return rest ? rest.split('/')[0].toLowerCase() : '';
+  }
+
+  function sheetBySlug(slug) {
+    for (var i = 0; i < sheets.length; i++) if (sheets[i].slug === slug) return sheets[i];
+    return null;
+  }
+
+  function setUrl(slug) {
+    var url = basePath() + (slug || '');
+    try { history.pushState({ wh: slug || '' }, '', url); } catch (e) {}
+  }
+
+  /* 明细视图时把浏览器标题和页面大标题都换成品类名，返回时还原。
+     主题的页面大标题是 header#page-header h1#site-title（.post-title 只有文章页有），
+     之前只找 .post-title，所以大标题一直没变过（2026-11-17 修）。 */
+  var ORIG_TITLE = '';
+  var ORIG_PLACEHOLDER = '';
+  function setTitle(name) {
+    if (!ORIG_TITLE) ORIG_TITLE = document.title;
+    var parts = ORIG_TITLE.split(/[|｜]/);
+    var site = parts.length > 1 ? parts.slice(1).join('|').trim() : '';
+    document.title = name ? (name + (site ? ' | ' + site : '')) : ORIG_TITLE;
+
+    var el = document.querySelector('#page-header #site-title') ||
+             document.querySelector('#page-header .post-title');
+    if (!el) return;
+    if (!el.getAttribute('data-wh-base')) el.setAttribute('data-wh-base', el.textContent.trim());
+    var base = el.getAttribute('data-wh-base') || '';
+    /* 大标题写「刀具库 · U钻」：既说明在哪个页面，也说明在哪个品类 */
+    el.textContent = name ? (base ? base + ' · ' + name : name) : base;
+  }
+
+  /* keepUrl: 地址栏已经对了就别再 push；noScroll: 别自动滚到明细（刷新/直链时用） */
+  function openGroup(name, keepUrl, noScroll) {
     var sheet = sheetByName(name);
     if (!sheet) return;
+
+    if (!keepUrl) setUrl(sheet.slug || '');
+    setTitle(name);
 
     state.group = name;
     state.type = 'all';
     state.kw = '';
-    if (els.search) els.search.value = '';
+    if (els.search) {
+      els.search.value = '';
+      /* 输入框里直接写品类名，翻到表格深处也还看得见自己在搜哪个品类 */
+      if (!ORIG_PLACEHOLDER) ORIG_PLACEHOLDER = els.search.placeholder;
+      els.search.placeholder = '在「' + name + '」里搜：19.5、通孔、1604…';
+    }
 
     els.stats.hidden = true;
     els.cats.hidden = true;
@@ -374,18 +473,26 @@
     apply();
     if (els.sync) els.sync();
 
+    /* 只有用户自己点品类才滚到明细。
+       刷新 / 直链 / 前进后退时不滚：一滚就把页面顶部（那圈菜单栏）甩出视口，
+       看着就像导航被删了（2026-11-17 修）。 */
+    if (noScroll) return;
     var top = els.app.getBoundingClientRect().top + window.pageYOffset - 70;
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     window.scrollTo({ top: Math.max(top, 0), behavior: reduce ? 'auto' : 'smooth' });
   }
 
-  function closeGroup() {
+  function closeGroup(keepUrl) {
+    if (!keepUrl) setUrl('');
+    setTitle('');
+
     state.group = '';
     state.type = 'all';
     state.kw = '';
     els.detail.hidden = true;
     els.stats.hidden = false;
     els.cats.hidden = false;
+    if (els.search && ORIG_PLACEHOLDER) els.search.placeholder = ORIG_PLACEHOLDER;
     if (els.stamp) els.stamp.hidden = false;
     Object.keys(secMap).forEach(function (k) { secMap[k].hidden = true; });
   }
@@ -394,6 +501,21 @@
   function init() {
     var app = document.getElementById('whApp');
     if (!app || app.getAttribute('data-ready') === 'done') return;   // 不是这页 / 已经初始化过
+
+    /* 刷新时浏览器会恢复离开时的滚动位置，而主题的导航栏得等滚动事件才会变成固定条，
+       于是停在表格中间一刷新，顶部只剩表格、菜单栏看着就“没了”（2026-11-17）。
+       放在等数据之前：数据多等几秒也别让页面先跳到半截去。 */
+    if (!scrollReset) {
+      scrollReset = true;
+      if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+      window.scrollTo(0, 0);
+    }
+
+    /* 加密页的坑：主题 scrollFn 在「解密前页面还短」那次直接 return，滚动监听没绑上，
+       导航栏就永远不会变成固定顶栏（一滚菜单栏就没了）。补绑一次，详情见 unlock-secret.js。 */
+    if (typeof window.__fomalScrollResync === 'function' && !window.scrollCollect) {
+      try { window.__fomalScrollResync(); } catch (e) {}
+    }
 
     /* 页面加密时（front-matter 的 password），解密后 hbe.js 会把 <script> 重新创建一遍再插入，
        defer 对动态插入的脚本无效、执行顺序也不保证 —— 数据脚本可能比本文件晚到几毫秒。
@@ -429,6 +551,9 @@
     state = { group: '', type: 'all', kw: '' };
     secMap = {};
     SEC_TEXT = {};
+    /* pjax 换页后 document.title / placeholder 都是新页面的，重新取一次基准 */
+    ORIG_TITLE = '';
+    ORIG_PLACEHOLDER = '';
 
     var data = window.WH_DATA;
     if (!data || !data.sheets) {
@@ -486,7 +611,9 @@
         if (els.search) els.search.focus();
       });
     }
-    if (els.back) els.back.addEventListener('click', closeGroup);
+    /* 注意：closeGroup(keepUrl) 的第一个参数是「别动地址栏」，
+       直接当监听器会把 click 事件对象传进去（真值）→ 返回时不改地址。 */
+    if (els.back) els.back.addEventListener('click', function () { closeGroup(); });
 
     /* 主题会给表格套 .table-wrap（overflow-x），会让 thead 的 sticky 失效 */
     Array.prototype.slice.call(app.querySelectorAll('.wh-table .table-wrap'))
@@ -496,8 +623,27 @@
         p.removeChild(w);
       });
 
-    bindSticky(document.querySelector('.wh-bar'), document.documentElement);
+    /* 吸顶的是「明细头 + 工具条」整块（.wh-sticky），表头要贴在它下面 */
+    bindSticky(document.querySelector('.wh-sticky') || document.querySelector('.wh-bar'),
+      document.documentElement);
+
+    /* 地址栏里带了品类就直开明细（?g= 是跳板页转过来的，/warehouse/tap 是直接访问），
+       然后统一换成干净路径，别让 ?g= 留在地址里。 */
+    var slug = routeSlug();
+    var want = slug && sheetBySlug(slug);
+    if (want) {
+      openGroup(want.name, true, true);   // 直链/刷新：只还原视图，别把页面滚下去
+      try { history.replaceState({ wh: slug }, '', basePath() + slug); } catch (e) {}
+    }
   }
+
+  /* 浏览器前进/后退：按地址栏里的 slug 还原视图 */
+  window.addEventListener('popstate', function () {
+    var slug = routeSlug();
+    var sh = slug && sheetBySlug(slug);
+    if (sh) openGroup(sh.name, true, true);
+    else if (state.group) closeGroup(true);
+  });
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);

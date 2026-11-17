@@ -360,6 +360,12 @@
     if (locked()) return;
     revealToc();
     wrapTables();
+    /* 主题的滚动监听在「解密前页面还短」的那次 refreshFn 里会直接 return，压根没绑上，
+       于是解锁后往下翻，导航栏永远不会变成固定顶栏 —— 看起来就是一滚菜单栏就没了。
+       这里补绑一次（scrollFn 自己会先摘掉旧监听，重复调安全）。 */
+    if (typeof window.__fomalScrollResync === 'function' && !window.scrollCollect) {
+      try { window.__fomalScrollResync(); } catch (e) {}
+    }
     // 目录滚动高亮：主题那次 refreshFn 抓到的正文标题列表是空的，这里让它重抓一次。
     // 只在标题数量变化时重抓（解密前 0 个 → 解密后 5 个），否则聊天框之类频繁插节点
     // 会把这个防抖回调反复触发，每次都重建一遍滚动监听，纯浪费。
