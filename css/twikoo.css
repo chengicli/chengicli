@@ -688,3 +688,89 @@
 .twikoo .tk-footer {
   display: none !important;
 }
+
+/* ------------------------------------------------------------ 单条留言锚点
+   配套脚本 source/js/twikoo-anchor.js：给每条留言的昵称/时间行补一个「#」，
+   点击复制「页面地址#留言id」并把地址栏换成该 hash。
+   这里只管外观；按钮由脚本动态插入，不依赖 Twikoo 内部模板。 */
+
+/* 原生锚点跳转（直接在地址栏粘贴链接、或脚本还没执行时）也留出顶栏的高度 */
+.twikoo .tk-comment {
+  scroll-margin-top: 76px;
+}
+
+.twikoo .tk-anchor-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5em;
+  height: 1.5em;
+  /* 这是个 <button>（不是 <a>）：先把浏览器默认的按钮外壳全部归零 */
+  margin: 0;
+  padding: 0 0.35em;
+  border: 0;
+  border-radius: 6px;
+  background-color: transparent;
+  /* 与昵称同一行，不能把行高顶开 */
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  color: var(--tk-accent-deep);
+  cursor: pointer;
+  opacity: 0.4;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+/* 悬停整条留言时浮现：不抢正文注意力，但用的时候找得到 */
+.twikoo .tk-comment:hover .tk-anchor-link,
+.twikoo .tk-anchor-link:focus-visible {
+  opacity: 0.9;
+}
+.twikoo .tk-anchor-link:hover,
+.twikoo .tk-anchor-link:focus-visible {
+  opacity: 1;
+  background-color: var(--tk-accent-soft);
+}
+/* 复制成功的短反馈：宽度会从「#」变成「已复制」，用 nowrap 防止折行 */
+.twikoo .tk-anchor-link.is-copied {
+  opacity: 1;
+  color: var(--tk-on-deep);
+  background-color: var(--tk-accent-strong);
+  white-space: nowrap;
+}
+
+/* 定位到某条留言时的高亮：.tk-comment 自带的 background/border 过渡会顺着淡出 */
+.twikoo .tk-comment.tk-anchor-hit {
+  background-color: var(--tk-accent-faint);
+  border-color: var(--tk-accent-line);
+  box-shadow: 0 0 0 1px var(--tk-accent-line);
+}
+.twikoo .tk-replies > .tk-comment.tk-anchor-hit {
+  background-color: var(--tk-accent-faint);
+  border-color: var(--tk-accent-line);
+}
+[data-theme="dark"] .twikoo .tk-comment.tk-anchor-hit {
+  background-color: var(--tk-accent-soft);
+  border-color: var(--tk-accent-line);
+  box-shadow: 0 0 0 1px var(--tk-accent-line);
+}
+
+/* 触屏没有 hover，常驻可见 */
+@media screen and (max-width: 767px) {
+  .twikoo .tk-anchor-link {
+    opacity: 0.7;
+  }
+}
+
+/* 用户要求减少动效时不闪 */
+@media (prefers-reduced-motion: reduce) {
+  .twikoo .tk-comment,
+  .twikoo .tk-anchor-link {
+    transition: none;
+  }
+}
