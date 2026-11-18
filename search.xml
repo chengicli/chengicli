@@ -3,8 +3,6 @@
   
   
     
-    
-    
     <entry>
       <title>四轴 A 轴绕远路：两个角度解与后处理的两处开关</title>
       <link href="/posts/4axis-a-shortest-path.html"/>
@@ -29,155 +27,6 @@
             <tag> UG </tag>
             
             <tag> 后处理 </tag>
-            
-        </tags>
-      
-    </entry>
-    
-    
-    
-    <entry>
-      <title>给本站加功能的流程与自检清单</title>
-      <link href="/posts/add-feature-workflow.html"/>
-      <url>/posts/add-feature-workflow.html</url>
-      
-        <content type="html"><![CDATA[<h2 id="1-文件落位">1. 文件落位</h2><table><thead><tr><th>性质</th><th>位置</th></tr></thead><tbody><tr><td>站点专属功能</td><td><code>source/js/</code> + <code>source/css/</code></td></tr><tr><td>加载后执行一次</td><td><code>source/js/inject/</code></td></tr><tr><td>必须改模板结构</td><td><code>themes/chengic/</code></td></tr></tbody></table><p>优先前两项。动主题意味着后续升级要手动合并。</p><span id="more"></span><h2 id="2-HTML-进入页面">2. HTML 进入页面</h2><p><strong>独立页面</strong>：<code>source/&lt;名字&gt;/index.md</code>，front-matter 指定 <code>type: page</code>，正文写 HTML。</p><p><strong>构建期注入</strong>：不改模板，往页面塞脚本。</p><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo.<span class="property">extend</span>.<span class="property">injector</span>.<span class="title function_">register</span>(<span class="string">&#x27;body_end&#x27;</span>, <span class="string">&#x27;&lt;script src=&quot;/js/xxx.js&quot; defer&gt;&lt;/script&gt;&#x27;</span>, <span class="string">&#x27;default&#x27;</span>);</span><br></pre></td></tr></table></figure><p><strong>运行期插入</strong>：脚本自己建节点。注意后插入的 <code>&lt;a&gt;</code> 不被 pjax 拦截，需补绑。</p><h2 id="3-样式作用域">3. 样式作用域</h2><p>一页一个前缀（<code>.tt-</code>、<code>.mg-</code>、<code>.ab2-</code>）。脚本入口先判锚点，没有就退出：</p><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> root = <span class="variable language_">document</span>.<span class="title function_">querySelector</span>(<span class="string">&#x27;.mg-form&#x27;</span>);</span><br><span class="line"><span class="keyword">if</span> (!root) <span class="keyword">return</span>;</span><br></pre></td></tr></table></figure><h2 id="4-生命周期">4. 生命周期</h2><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">init</span>(<span class="params"></span>) &#123; <span class="comment">/* 绑定 */</span> &#125;</span><br><span class="line"></span><br><span class="line"><span class="variable language_">document</span>.<span class="title function_">addEventListener</span>(<span class="string">&#x27;DOMContentLoaded&#x27;</span>, init);</span><br><span class="line"><span class="variable language_">document</span>.<span class="title function_">addEventListener</span>(<span class="string">&#x27;pjax:complete&#x27;</span>, <span class="keyword">function</span> (<span class="params"></span>) &#123;</span><br><span class="line">  <span class="title function_">teardown</span>();</span><br><span class="line">  <span class="title function_">init</span>();</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure><p>只 <code>init</code> 不 <code>teardown</code>，监听器会累积，表现为一次点击触发多次。</p><h2 id="5-版本号">5. 版本号</h2><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">script</span> <span class="attr">defer</span> <span class="attr">src</span>=<span class="string">&quot;/js/my-feature.js?v=20261105a&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure><p>页面级写在 front-matter 或 md，全站写在 <code>_config.chengic.yml</code> 的 <code>inject</code> 段。</p><h2 id="6-适配">6. 适配</h2><ul><li>颜色用变量（<code>--glass-bg</code>、<code>--font-color</code>、<code>--ucard-bd</code>），暗色自动跟随</li><li>手机至少验三件事：宽度溢出、点击区 ≥44px、吸顶遮挡</li><li><code>prefers-reduced-motion</code> 下关闭动画</li></ul><h2 id="7-自检清单">7. 自检清单</h2><ol><li>首页、文章页、新页面均正常</li><li>从首页 pjax 进入新页面，功能仍可用</li><li>暗色可读</li><li>375px 宽无横向滚动</li><li>重复点击不重复触发</li><li><code>?v=</code> 已推</li><li>控制台无报错</li><li>改过 <code>.pug</code> 已重启 <code>hexo server</code></li></ol><h2 id="8-示例：回到顶部">8. 示例：回到顶部</h2><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// source/js/inject/back-top.js</span></span><br><span class="line">(<span class="keyword">function</span> (<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">if</span> (<span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&#x27;bt-btn&#x27;</span>)) <span class="keyword">return</span>;</span><br><span class="line">  <span class="keyword">const</span> btn = <span class="variable language_">document</span>.<span class="title function_">createElement</span>(<span class="string">&#x27;button&#x27;</span>);</span><br><span class="line">  btn.<span class="property">id</span> = <span class="string">&#x27;bt-btn&#x27;</span>;</span><br><span class="line">  btn.<span class="property">textContent</span> = <span class="string">&#x27;↑&#x27;</span>;</span><br><span class="line">  <span class="variable language_">document</span>.<span class="property">body</span>.<span class="title function_">appendChild</span>(btn);</span><br><span class="line">  btn.<span class="title function_">addEventListener</span>(<span class="string">&#x27;click&#x27;</span>, <span class="function">() =&gt;</span> <span class="variable language_">window</span>.<span class="title function_">scrollTo</span>(&#123; <span class="attr">top</span>: <span class="number">0</span>, <span class="attr">behavior</span>: <span class="string">&#x27;smooth&#x27;</span> &#125;));</span><br><span class="line">  <span class="variable language_">window</span>.<span class="title function_">addEventListener</span>(<span class="string">&#x27;scroll&#x27;</span>, <span class="function">() =&gt;</span> btn.<span class="property">classList</span>.<span class="title function_">toggle</span>(<span class="string">&#x27;show&#x27;</span>, <span class="variable language_">window</span>.<span class="property">scrollY</span> &gt; <span class="number">400</span>));</span><br><span class="line">&#125;)();</span><br></pre></td></tr></table></figure><figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-id">#bt-btn</span> &#123;</span><br><span class="line">  <span class="attribute">position</span>: fixed; <span class="attribute">right</span>: <span class="number">24px</span>; <span class="attribute">bottom</span>: <span class="number">96px</span>;</span><br><span class="line">  <span class="attribute">width</span>: <span class="number">44px</span>; <span class="attribute">height</span>: <span class="number">44px</span>; <span class="attribute">border-radius</span>: <span class="number">50%</span>;</span><br><span class="line">  <span class="attribute">opacity</span>: <span class="number">0</span>; <span class="attribute">pointer-events</span>: none; <span class="attribute">transition</span>: opacity .<span class="number">2s</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="selector-id">#bt-btn</span><span class="selector-class">.show</span> &#123; <span class="attribute">opacity</span>: <span class="number">1</span>; <span class="attribute">pointer-events</span>: auto; &#125;</span><br><span class="line"><span class="keyword">@media</span> (<span class="attribute">prefers-reduced-motion</span>: reduce) &#123; <span class="selector-id">#bt-btn</span> &#123; <span class="attribute">transition</span>: none; &#125; &#125;</span><br></pre></td></tr></table></figure><h2 id="9-登记">9. 登记</h2><p>改动写入 <code>docs/records/站点改动总览.md</code>：症状、根因、文件与行、验证方式、回滚。</p>]]></content>
-      
-      
-      <categories>
-          
-          <category> 建站折腾 </category>
-          
-      </categories>
-      
-      
-        <tags>
-            
-            <tag> Hexo </tag>
-            
-            <tag> 前端 </tag>
-            
-            <tag> 工作流 </tag>
-            
-        </tags>
-      
-    </entry>
-    
-    
-    
-    <entry>
-      <title>本站的 12 处改造：症状、根因与改法</title>
-      <link href="/posts/site-refactors.html"/>
-      <url>/posts/site-refactors.html</url>
-      
-        <content type="html"><![CDATA[<p>每处按「症状 → 根因 → 改法」记录，文件与关键取值都保留。</p><span id="more"></span><h2 id="1-卡片外壳不统一">1. 卡片外壳不统一</h2><p><strong>症状</strong>：首页卡片 8px 圆角、侧栏 4px、音乐馆又是另一种。</p><p><strong>根因</strong>：各处各写各的圆角、边框、阴影，没有公共变量。</p><p><strong>改法</strong>：<code>site-inject.css</code> 末尾立 token，其余容器挂上去。</p><figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-pseudo">:root</span> &#123;</span><br><span class="line">  <span class="attr">--ucard-r</span>: <span class="number">16px</span>;</span><br><span class="line">  <span class="attr">--ucard-bd</span>: <span class="built_in">rgba</span>(<span class="number">128</span>, <span class="number">128</span>, <span class="number">128</span>, .<span class="number">16</span>);</span><br><span class="line">  <span class="attr">--ucard-shadow</span>: <span class="number">0</span> <span class="number">2px</span> <span class="number">10px</span> -<span class="number">7px</span> <span class="built_in">rgba</span>(<span class="number">7</span>, <span class="number">17</span>, <span class="number">27</span>, .<span class="number">35</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="selector-attr">[data-theme=<span class="string">&quot;dark&quot;</span>]</span> &#123;</span><br><span class="line">  <span class="attr">--ucard-bd</span>: <span class="built_in">rgba</span>(<span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, .<span class="number">13</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>覆盖 <code>#recent-posts .recent-post-item</code>、<code>#post</code>、<code>#page</code>、<code>#archive</code>、<code>#aside-content .card-widget</code>、<code>.mp-card</code>、<code>.tk-submit</code>。只有列表卡加悬停上浮，大容器不加。</p><h2 id="2-评论气泡">2. 评论气泡</h2><p><strong>症状</strong>：评论内容是主题色实心底，字压在上面，且与其他卡片不搭。</p><p><strong>根因</strong>：Twikoo 自带样式优先级较高。</p><p><strong>改法</strong>：<code>twikoo.css</code> 末尾只改 <code>.tk-content</code>，玻璃底 + 左侧 3px 主题色竖线；另加一行 <code>.twikoo .tk-footer &#123; display: none !important &#125;</code> 收掉署名。</p><p>不修改 <code>twikoo.all.min.js</code>，避免升级冲突。</p><h2 id="3-关于页">3. 关于页</h2><p>原页是主题默认自述模板，换人即失效。改为 <code>source/about/index.md</code> 手写三段式：铭牌、工艺卡、实时体检，类名统一 <code>.ab2-*</code>。地址从 <code>/personal/about/</code> 迁到 <code>/about/</code>，旧路径直接 404，站内链接全部替换。</p><h2 id="4-字体缺字">4. 字体缺字</h2><p><strong>症状</strong>：同一段里部分字变成系统字体。</p><p><strong>根因</strong>：字体文件字集不全，缺字回落。</p><p><strong>改法</strong>：<code>_custom/custom.css</code> 的 <code>@font-face</code> 做三级 <code>src</code>：本机 → <code>@fontsource</code> CDN → <code>source/fonts/*-substitute.woff2</code> 兜底；<code>tools/font-subset.js</code> 裁剪兜底字体。</p><h2 id="5-tags-nav-整页发粉">5. <code>/tags/</code> <code>/nav/</code> 整页发粉</h2><p><strong>症状</strong>：只有这三页泛粉。</p><p><strong>根因</strong>：专属样式把大面积容器的底色和描边用 <code>color-mix()</code> 从主题色派生，而默认主题色实际是 <code>#FF1493</code>。</p><p><strong>改法</strong>：大面积底色改中性，主题色只留在线条、角标、下划线。涉及 <code>stats.css</code>、<code>stats.js</code>、<code>nav/index.md</code>、<code>links/index.md</code>。</p><h2 id="6-页面留白不一致">6. 页面留白不一致</h2><p>以音乐馆为基准，用 <code>vw</code> 与 <code>clamp()</code> 换算后统一到其他页面；首页保留自身比例。</p><h2 id="7-缓存">7. 缓存</h2><p>所有资源引用带 <code>?v=</code>，改一次推一位。页面级写在 front-matter 或模板，全站写在 <code>inject</code> 段。改 <code>.pug</code> 需重启 <code>hexo server</code>。</p><h2 id="8-pjax-三类故障">8. pjax 三类故障</h2><p><strong>8.1 运行期链接整页跳</strong><br>根因：pjax 只拦截初始化时存在的 <code>&lt;a&gt;</code>。<br>改法：<code>pjax-relink.js</code> 在 <code>pjax:complete</code> 后重扫并绑定。</p><p><strong>8.2 进页后滚动失效</strong><br>根因：<code>scrollFn()</code> 读到旧高度，命中&quot;不足一屏 return&quot;。<br>改法：<code>inject/nav-scroll-rebind.js</code> 在 pjax 后补调 <code>refreshFn()</code>。</p><p><strong>8.3 顶栏闪烁</strong><br>根因：<code>scroll</code> 靠等值判断方向，<code>wheel</code> 回调回写了 <code>position</code>，等值被顶掉。<br>改法：<code>scroll</code> 保留 <code>if (scroll === position) return</code>；<code>wheel</code> 回调禁止回写 <code>position</code>。</p><h2 id="9-音乐跨页中断">9. 音乐跨页中断</h2><p><strong>根因</strong>：整页导航销毁 <code>music-bus.js</code> 闭包，<code>&lt;audio&gt;</code> 随之消失。</p><p><strong>改法</strong>：站内跳转全走 pjax；整页刷新用 <code>sessionStorage.fomalPlayerResume</code> 存快照，新文档读回并 seek。快照记录 <code>wantPlaying</code>，不读 <code>audio.paused</code>。</p><h2 id="10-加密文章解锁">10. 加密文章解锁</h2><p><strong>根因</strong>：<code>hexo-blog-encrypt</code> 锁屏只有输入框，解密依赖回车事件，焦点不在框内即失效。</p><p><strong>改法</strong>：<code>unlock-secret.js</code> 增加按钮，接管点击、回车、移动端；解密后补做目录重算与图片懒加载。</p><h2 id="11-部署链路">11. 部署链路</h2><p>由&quot;推源码&quot;改为&quot;推成品&quot;：<code>_config.yml</code> 的 <code>deploy</code> 指向成品仓库，<code>hexo d</code> 只推 <code>public/</code>；项目 git 的 <code>origin</code> 移除，避免误推源码。</p><p>前提是托管平台能直接吃静态产物。若平台仍执行 <code>npm run build</code> 而仓库无 <code>package.json</code>，构建失败，站点停在上一版。发布后需确认线上 <code>Last-Modified</code>。</p><h2 id="12-改动文档">12. 改动文档</h2><p><code>docs/records/站点改动总览.md</code> 规定每次改动写五项：症状、根因、改动文件与行、验证方式、回滚与注意事项。</p>]]></content>
-      
-      
-      <categories>
-          
-          <category> 建站折腾 </category>
-          
-      </categories>
-      
-      
-        <tags>
-            
-            <tag> Hexo </tag>
-            
-            <tag> CSS </tag>
-            
-            <tag> 重构 </tag>
-            
-            <tag> 踩坑 </tag>
-            
-        </tags>
-      
-    </entry>
-    
-    
-    
-    <entry>
-      <title>本站功能清单：做了什么、怎么实现的</title>
-      <link href="/posts/site-features-added.html"/>
-      <url>/posts/site-features-added.html</url>
-      
-        <content type="html"><![CDATA[<p>所有功能挂在站点层（<code>source/js</code>、<code>source/css</code>、<code>source/js/inject</code>），主题模板只提供骨架。</p><span id="more"></span><h2 id="外观与交互">外观与交互</h2><table><thead><tr><th>功能</th><th>实现</th></tr></thead><tbody><tr><td>美化设置面板</td><td>Winbox 浮窗，默认 1000×620，尺寸存 <code>localStorage.meihuaSize</code>，最小化挂到右上角齿轮下方，点面板外关闭（<code>KEEP</code> 白名单）</td></tr><tr><td>面板状态</td><td>存 <code>themeColor</code>、<code>themeCustomColor</code>、<code>cursorOn</code>、<code>rippleOn</code>、<code>bgFilterOn</code>、<code>transNum</code>、<code>frostNum</code>、<code>nekoOn</code></td></tr><tr><td>鼠标指针</td><td><code>CURSOR_DOT = 10</code>，圆点与热区同源推导；<code>CURSOR_TRAIL = false</code></td></tr><tr><td>氛围动效</td><td><code>snow.js</code>、<code>fireflies.js</code>、<code>festival.js</code>、<code>ripple.js</code>、<code>typewriter.js</code>、<code>console-art.js</code>，均可关</td></tr><tr><td>页脚爱心</td><td>SVG <code>clipPath</code> 裁心形，内嵌 9 根柱，峰值 0.30→1.00 向两侧递减，延迟错开 0.05s</td></tr><tr><td>恋爱天数</td><td><code>love-days.js</code>，只改 <code>LOVE_START</code></td></tr></tbody></table><h2 id="音乐">音乐</h2><table><thead><tr><th>功能</th><th>实现</th></tr></thead><tbody><tr><td>音乐馆 <code>/music/</code></td><td>单张公开歌单，走 <code>/api/music</code> 代理（<code>qq_pl</code>、<code>qq_url</code>、<code>qq_lyric</code>、<code>qq_search</code>），绕开 CORS</td></tr><tr><td>播放核心</td><td><code>music-bus.js</code> 全站唯一 <code>&lt;audio&gt;</code>，其余模块发指令，不各自建播放器</td></tr><tr><td>跨页续播</td><td>导航前写 <code>sessionStorage.fomalPlayerResume</code>（曲目、秒数、队列、模式，队列上限 300），新文档 60ms 后读回并 seek</td></tr><tr><td>防双播</td><td>新标签页会复制 <code>sessionStorage</code>，用 <code>opener</code> + <code>BroadcastChannel</code> 握手只留一份</td></tr><tr><td>状态快照</td><td>记录用户意图 <code>wantPlaying</code>，不读 <code>audio.paused</code>（卸载时浏览器会自动 pause）</td></tr><tr><td>侧栏播放器</td><td>24s 换一言，悬停卡片（含上方 16px 热区）浮出播放器与歌词</td></tr><tr><td>迷你胶囊</td><td>常驻左下角，显示歌名与滚动歌词</td></tr></tbody></table><h2 id="工具页">工具页</h2><table><thead><tr><th>页面</th><th>实现</th></tr></thead><tbody><tr><td><code>/thread/</code></td><td>纯 HTML 表格，<code>thread-table.js</code> 做搜索过滤、分类切换、表头吸顶（<code>--tc-top</code>）</td></tr><tr><td><code>/macro/</code></td><td><code>macro-tpls.js</code> 存 42 个模板（<code>window.MACRO_TPL</code>），<code>macro-gen.js</code> 负责表单、实时生成、高亮、复制下载</td></tr><tr><td><code>/nav/</code></td><td>手写 HTML 卡片，CSS 计数器，无第三方组件</td></tr><tr><td><code>/site/time/</code></td><td>主题渲染 DOM，<code>timeline-archive.js</code> 后处理，以 <code>.tl-ready</code> 为开关</td></tr><tr><td><code>/tags/</code></td><td>主题 ECharts 出图，<code>stats.js</code> 在浏览器端重写配色</td></tr></tbody></table><h2 id="互动与内容">互动与内容</h2><table><thead><tr><th>功能</th><th>实现</th></tr></thead><tbody><tr><td>友链随机</td><td><code>flink-shuffle.js</code> 按 <code>.site-card-group</code> 分组打乱，组间不混</td></tr><tr><td>友链置顶</td><td><code>_data/link.yml</code> 写 <code>pin: N</code>，先占位，其余洗牌填空；总开关 <code>flink_shuffle</code></td></tr><tr><td>快速申请</td><td><code>kslink.js</code> 把模板填进 Twikoo 输入框，适配新版 <code>tk-input</code> 类名</td></tr><tr><td>留言板</td><td>Twikoo，评论区懒加载</td></tr><tr><td>二维码灯箱</td><td><code>wechat-qr.js</code> 同页弹层，不跳转、不新开标签</td></tr><tr><td>AI 助手</td><td><s><code>scripts/ai-chat-inject.js</code> 构建期注入，请求走同源 <code>/api/chat/completions</code>，Key 只在服务端</s>（2026-11-12 已整体移除）</td></tr><tr><td>PDF 预览</td><td>自定义标签，底层 pdf.js</td></tr></tbody></table><figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;% pdfview /assets/drawings/xxx.pdf 图纸 F3.6061.0074RM %&#125;</span><br></pre></td></tr></table></figure><p>| 加密文章 | <code>unlock-secret.js</code> 补解锁按钮，接管点击、回车、移动端三条路径，解密后补做目录与懒加载 |</p><h2 id="基础设施">基础设施</h2><table><thead><tr><th>功能</th><th>实现</th></tr></thead><tbody><tr><td>Service Worker</td><td>离线预缓存 + 按资源类型分流，单 <code>fetch</code> 监听、单次 <code>respondWith</code></td></tr><tr><td>线路探测</td><td>请求 <code>站点域名/?__pr=随机串</code>，由 <code>sw.js</code> 接住测回源延时，失败只影响侧栏徽标</td></tr><tr><td>侧栏日历</td><td><code>aside-calendar.js</code> + <code>lunar.js</code>，农历、节气、节日本地计算</td></tr><tr><td>移动端抽屉</td><td><code>mobile-drawer.css</code> 独立样式表，13 个小节</td></tr></tbody></table><h2 id="三个共同点">三个共同点</h2><ol><li>计算全部在浏览器完成，不依赖后端，站点可整包迁移</li><li>一个功能一个文件，删功能即删文件</li><li>全部可关，访客不喜欢可以关掉</li></ol>]]></content>
-      
-      
-      <categories>
-          
-          <category> 建站折腾 </category>
-          
-      </categories>
-      
-      
-        <tags>
-            
-            <tag> Hexo </tag>
-            
-            <tag> 前端 </tag>
-            
-            <tag> 功能实现 </tag>
-            
-        </tags>
-      
-    </entry>
-    
-    
-    
-    <entry>
-      <title>用 R50 拍金属零件：反光、景深与颜色</title>
-      <link href="/posts/r50-metal-parts.html"/>
-      <url>/posts/r50-metal-parts.html</url>
-      
-        <content type="html"><![CDATA[<h2 id="反光">反光</h2><p>金属表面的高光是光源形状的镜像。由此得出三条：</p><ul><li>要大面积柔和高光，把光源做大（A3 描图纸、白色泡沫板）</li><li>要细长高光以表现圆柱转折，用长条光源</li><li>要压掉多余高光，用黑卡遮挡，顺带勾出边界</li></ul><p>偏振镜对金属镜面反射基本无效——金属反射保持偏振态。它真正有用的是涂层、塑料、玻璃和水面。</p><span id="more"></span><p>三个低成本手段：白卡补暗部、黑旗压亮边、转动零件 15° 让高光从平面滑到棱边。</p><h2 id="镜头与景深">镜头与景深</h2><p>R50 是 APS-C，1.6 倍裁切，RF 50mm 等效约 80mm。透视平、变形小，但在小空间里需要后退。</p><p>光圈 f/8 起步，有台阶、型腔、螺纹的件用 f/11；f/16 以后衍射明显。景深仍不够时做焦点堆栈：固定机位，从近到远拍 3~5 张合成。</p><p>对焦用单点 AF，对准要表达的面，上三脚架开放大手动微调，2 秒延时或快门线。</p><h2 id="白平衡">白平衡</h2><p>色温固定 5000~5500K，同批次保持一致。拍灰卡做自定义白平衡。避免窗光与室内暖光混用。</p><p>表现阳极氧化或喷砂质感时，光源方向比色温更重要：侧逆光能打出表面微结构，正面光会拍成平板。</p><h2 id="三套布光">三套布光</h2><p><strong>窗光 + 白卡</strong>：阴天窗边，零件距窗 30~50cm，暗侧立白泡沫板。光质柔、颜色准，受天气影响，适合单件。</p><p><strong>两盏台灯 + 硫酸纸</strong>：左右 45°，主灯亮、辅灯弱 1~2 档，色温一致。适合需要重复的批量拍摄。</p><p><strong>单灯 + 黑旗</strong>：侧逆光，正面白卡补，边缘黑卡压。立体感最强，补光不足会死黑。</p><p>灯与零件的距离固定，距离一变亮度和白平衡全变。</p><h2 id="构图">构图</h2><p>三张必备：全貌（带桌面或卡尺）、关键特征（倒角、螺纹、型腔、刀纹）、参照（卡尺或硬币）。</p><p>45° 俯拍最通用；拍图纸正俯拍，镜头平面与纸面平行。背景用中性灰最稳。</p><p>拍摄前擦净工件，指纹和切削液残留比肉眼明显得多。</p><h2 id="后期">后期</h2><ol><li>按灰卡统一白平衡</li><li>压高光，保留金属纹理</li><li>蒙版局部提亮暗部</li><li>锐化 40~60，导出 sRGB，长边 2000px</li></ol><p>不加暗角、不拉饱和度、不磨皮。</p><h2 id="排查">排查</h2><table><thead><tr><th>症状</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>死白无纹理</td><td>光源小且正</td><td>加大柔光面积，光源移侧</td></tr><tr><td>颜色偏黄或偏青</td><td>混合光、自动白平衡</td><td>统一色温，拍灰卡</td></tr><tr><td>边缘糊、中间清</td><td>景深不足</td><td>收至 f/11 或焦点堆栈</td></tr><tr><td>刺眼白线</td><td>灯管或窗框直反射</td><td>柔光布遮挡，转 15°</td></tr><tr><td>暗部死黑</td><td>补光不足</td><td>暗侧加白卡并靠近</td></tr><tr><td>画面平</td><td>正面光</td><td>改侧逆光，黑旗压边</td></tr><tr><td>同件两次颜色不同</td><td>灯距或环境光变化</td><td>固定机位与灯位</td></tr></tbody></table>]]></content>
-      
-      
-      <categories>
-          
-          <category> 摄影 </category>
-          
-      </categories>
-      
-      
-        <tags>
-            
-            <tag> 佳能R50 </tag>
-            
-            <tag> 产品摄影 </tag>
-            
-            <tag> 布光 </tag>
-            
-        </tags>
-      
-    </entry>
-    
-    
-    
-    <entry>
-      <title>这个站的技术结构：分层、页面与部署</title>
-      <link href="/posts/hexo-blog-architecture.html"/>
-      <url>/posts/hexo-blog-architecture.html</url>
-      
-        <content type="html"><![CDATA[<h2 id="配置分三层">配置分三层</h2><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">_config.yml              站点：域名、链接格式、分页、部署</span><br><span class="line">_config.chengic.yml    主题实际生效配置：菜单、侧栏、页脚、特效</span><br><span class="line">themes/chengic/_config.yml   主题默认值，只读</span><br></pre></td></tr></table></figure><p>Hexo 的 alternate theme config 会把根目录的 <code>_config.&lt;主题名&gt;.yml</code> 深度合并进主题配置。三个名字必须一致：<code>theme: chengic</code>、<code>themes/</code> 下的目录名、配置文件名。不同步不会报错，主题配置会静默回退到默认值。</p><span id="more"></span><h2 id="站点与主题分离">站点与主题分离</h2><table><thead><tr><th>内容</th><th>位置</th></tr></thead><tbody><tr><td>文章、页面、图片</td><td><code>source/</code></td></tr><tr><td>全站样式</td><td><code>source/css/</code>，一页一个文件</td></tr><tr><td>功能脚本</td><td><code>source/js/</code>，一个功能一个文件</td></tr><tr><td>主题模板</td><td><code>themes/chengic/</code>，尽量不动</td></tr></tbody></table><p>换主题时站点层可以整体保留，这是分离的唯一目的。</p><h2 id="页面类型">页面类型</h2><p>两类：<code>source/_posts/*.md</code> 按 <code>permalink</code> 生成文章页；<code>source/&lt;名字&gt;/index.md</code> 生成独立页面。</p><table><thead><tr><th>路径</th><th>实现</th></tr></thead><tbody><tr><td><code>/archives/</code></td><td>主题模板</td></tr><tr><td><code>/tags/</code></td><td>ECharts 看板，<code>stats.js</code> 在浏览器端改配色</td></tr><tr><td><code>/music/</code></td><td>整页自绘 + 全局播放核心</td></tr><tr><td><code>/thread/</code></td><td>HTML 表格 + 筛选脚本</td></tr><tr><td><code>/macro/</code></td><td>表单 + 42 个模板</td></tr><tr><td><code>/nav/</code></td><td>手写 HTML + CSS 计数器</td></tr><tr><td><code>/site/time/</code></td><td>时间线标签 + <code>timeline-archive.js</code> 后处理</td></tr><tr><td><code>/links/</code></td><td>flink 模板 + 随机排序</td></tr><tr><td><code>/message/</code></td><td>Twikoo</td></tr><tr><td><code>/about/</code></td><td>手写 HTML</td></tr></tbody></table><p>除评论和少量接口外，全部静态生成。</p><h2 id="脚本分三层">脚本分三层</h2><ul><li>引导层：<code>modules/shell.js</code>、<code>modules/settings.js</code></li><li>功能层：音乐、日历、统计、阅读进度、鼠标、AI 面板</li><li>注入层：<code>inject/*.js</code>，页面加载后执行一次，如 pjax 后重绑滚动、搜索懒加载</li></ul><p>运行期插入的 <code>&lt;a&gt;</code> 不在 pjax 的拦截范围内，需要 <code>pjax-relink.js</code> 补绑，否则点击会整页跳转。</p><h2 id="缓存">缓存</h2><p>版本号写在引用处，改一次推一位：</p><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">&quot;stylesheet&quot;</span> <span class="attr">href</span>=<span class="string">&quot;/css/site-inject.css?v=20261103-revert1&quot;</span>&gt;</span></span><br></pre></td></tr></table></figure><p>页面级资源写在 front-matter 或模板，全站注入写在 <code>_config.chengic.yml</code> 的 <code>inject</code> 段。</p><p>只改文件不推版本号，浏览器会继续用缓存。改 <code>.pug</code> 模板还需要重启 <code>hexo server</code>，否则 HTML 里仍是旧的内联样式。</p><h2 id="部署">部署</h2><p>两条路径：GitHub Pages（<code>github.lichengic.com</code>，纯静态）与 Vercel（<code>www.lichengic.com</code>，带函数）。</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo g -d</span><br></pre></td></tr></table></figure><p><code>hexo-deployer-git</code> 在 <code>.deploy_git</code> 提交一次，再推送到目标仓库。仓库里是 <code>public/</code> 成品，源码留在本地。</p><p>这条路径的前提是托管平台能直接吃静态产物。如果平台的构建命令仍是 <code>npm run build</code>，而仓库里没有 <code>package.json</code>，构建会失败，站点停在最后一次成功的版本上。</p><h2 id="容易出问题的地方">容易出问题的地方</h2><ol><li><strong>模板语法写进 JS 注释</strong>：<code>source/js/</code> 也会被当模板处理，注释里出现模板标记会导致构建失败。</li><li><strong>样式被主题覆盖</strong>：主题 <code>custom.css</code> 里同名规则带 <code>!important</code> 且加载在后，需要抬特异性或确认加载顺序。</li><li><strong>pjax 状态残留</strong>：全局监听要在 <code>pjax:complete</code> 里先解绑再绑定。</li><li><strong>音乐跨页中断</strong>：整页导航销毁 <code>&lt;audio&gt;</code>，需要用 <code>sessionStorage</code> 做续播快照。</li><li><strong>构建成功但线上没更新</strong>：看 <code>?v=</code>、<code>public/</code> 产物时间、平台是否真的重新构建，不能只看本地构建结果。</li></ol>]]></content>
-      
-      
-      <categories>
-          
-          <category> 建站折腾 </category>
-          
-      </categories>
-      
-      
-        <tags>
-            
-            <tag> Hexo </tag>
-            
-            <tag> 前端 </tag>
-            
-            <tag> 建站 </tag>
-            
-            <tag> 部署 </tag>
             
         </tags>
       
@@ -240,7 +89,7 @@
     
     
     <entry>
-      <title>初学者在按下启动键之前要知道的事</title>
+      <title>CNC初学者在按下启动键之前要知道的事</title>
       <link href="/posts/beginner.html"/>
       <url>/posts/beginner.html</url>
       

@@ -1,5 +1,5 @@
 /*!
- * archive-page.css  —— 归档页卡片改版（站点独立样式，不改主题源码）
+ * archive-page.css  —— 文章111页卡片改版（站点独立样式，不改主题源码）
  * ---------------------------------------------------------------------------
  * 作用页：/archives/（Hexo 的 archive 页，每页篇数由根 _config.yml 的 archive_generator.per_page
  *          决定，默认 10 篇；本站 50 篇 = 5 页）；
@@ -36,7 +36,7 @@
 
 /* 正文根的内边距：主题靠 `.layout > div:first-child:not(.recent-posts)` 给 50px 40px，
    这条依赖「#archive 必须是 .layout 的第一个子元素」。模板里只要在它前面多一个
-   <link>/<script>，内边距就整个丢掉（2026-10-31 的归档页贴边事故）。
+   <link>/<script>，内边距就整个丢掉（2026-10-31 的文章111页贴边事故）。
    这里用 id 选择器显式补回同样的值，DOM 顺序再怎么变都不会再丢。 */
 #archive,
 #category,

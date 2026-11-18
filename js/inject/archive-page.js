@@ -1,5 +1,5 @@
 /*!
- * archive-page.js  —— 归档页卡片改版（站点独立脚本，不改主题源码）
+ * archive-page.js  —— 文章111页卡片改版（站点独立脚本，不改主题源码）
  * ---------------------------------------------------------------------------
  * 作用页：/archives/ 与其分页 /archives/page/N/（同套样式对 /categories/*、/tags/* 也生效）。
  * 职责：只读主题渲染好的 .article-sort DOM，就地重排成
@@ -218,11 +218,24 @@
       byYear[y] = (byYear[y] || 0) + 1;
     });
 
-    /* 总数：优先页面标题里的全站篇数（'文章总览 - 50'），匹配不到就用当前页条数 */
+    /* 标签/分类页没有 ar-index（构建期只往 #archive 里写），上面这一轮会一根柱子都不剩，
+       年度分布只剩一句「共 N 篇」。这里退回当前页 DOM 的 <time datetime> 再数一遍。 */
+    if (!Object.keys(byYear).length) {
+      posts.forEach(function (node) {
+        var t = node.querySelector('time');
+        var y = (t && t.getAttribute('datetime')) ? String(t.getAttribute('datetime')).slice(0, 4) : '';
+        if (/^\d{4}$/.test(y)) byYear[y] = (byYear[y] || 0) + 1;
+      });
+    }
+
+    /* 总数：只有 /archives/ 的标题是「文章总览 - 50」这种「- N」格式。
+       标签/分类页的标题是「标签 - 佳能R50」这类纯名字，末尾照样可能带数字，
+       原来的裸 /(\d+)$/ 会把「佳能R50」的 50 当成篇数（2026-11-18 修的 bug）。
+       现在两条一起卡：只在 #archive 上取，且只认「- N」结尾。 */
     var titleEl = root.querySelector('.article-sort-title');
     var total = yearsData.length;
-    if (titleEl) {
-      var m = String(titleEl.textContent || '').match(/(\d[\d,]*)\s*$/);
+    if (titleEl && root.id === 'archive') {
+      var m = String(titleEl.textContent || '').match(/[-–—]\s*(\d[\d,]*)\s*$/);
       if (m) total = parseInt(m[1].replace(/,/g, ''), 10) || total;
     }
 
@@ -396,7 +409,7 @@
         // 本站全局有 html{scroll-padding-top:70px}（给常驻顶栏留位），scrollIntoView
         // 会认为吸顶条里的胶囊「不在视口内」，每跨一个年份就把窗口往上顶 61px。
         // 这些反向滚动会让顶栏方向检测反复翻转（菜单收起 / 标题弹出），
-        // 表现就是归档页滚起来一顿一顿 + 导航栏抖动。
+        // 表现就是文章111页滚起来一顿一顿 + 导航栏抖动。
         var chip = chips[year];
         if (!chip || !track) return;
         if (track.scrollWidth <= track.clientWidth + 1) return;

@@ -1,0 +1,326 @@
+/* ============================================================
+ * hours.css —— 「产品工时」页（/hours/）样式
+ * ----------------------------------------------------------------------------
+ * 只作用于 #article-container 内的 .ph-* 元素，站内其它页面不受影响
+ * （命名空间前缀惯例同 .tc-* 螺纹、.wh-* 刀具库、.nv-* 导航）。
+ * 数据由 tools/xlsx2hours.py 从 Excel 生成到 source/hours/index.md，
+ * 改样式不用动脚本，改脚本也不用动这里。
+ *
+ * 配色一律走站内 token：
+ *   --font-color / --trans-light / --trans-dark  → 字色与卡片底
+ *   --theme-color                               → 强调色（图号、合计）
+ *   OP1-OP4 的表头色是固定四色（与螺纹表列色同一套），保证深浅色下都够对比。
+ * ============================================================ */
+
+#article-container .ph-app {
+  --ph-ink: var(--font-color, #1f2937);
+  --ph-dim: color-mix(in srgb, var(--ph-ink) 58%, transparent);
+  --ph-line: color-mix(in srgb, var(--ph-ink) 12%, transparent);
+  --ph-soft: color-mix(in srgb, var(--ph-ink) 5%, transparent);
+  --ph-card: var(--trans-light, var(--card-bg, #fff));
+  --ph-accent: var(--theme-color, #ff1493);
+  color: var(--ph-ink);
+}
+
+[data-theme="dark"] #article-container .ph-app {
+  --ph-card: var(--trans-dark, #2b2b30);
+  --ph-soft: color-mix(in srgb, #fff 6%, transparent);
+  --ph-line: color-mix(in srgb, #fff 12%, transparent);
+}
+
+/* ------------------------------------------------------- 设备切换按钮
+ * 视觉与 /macro/ 页的「加工中心 / 数控车床」按钮同一套（macro-gen.css 的 .mg-tab）。
+ * 切换靠 radio + label 的纯 CSS 选择器：不写 JS，pjax 换页后也不会失效
+ * （脚本会把 radio 紧挨在自己的 label 前面）。
+ */
+#article-container .ph-head {
+  margin: 0 0 16px;
+}
+
+/* 按钮靠左，产品数靠右上角 */
+#article-container .ph-head-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+#article-container .ph-count {
+  margin: 0 0 0 auto;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+#article-container .ph-count b {
+  font-size: 28px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--theme-color, #49b1f5);
+}
+
+#article-container .ph-count span {
+  font-size: 13px;
+  letter-spacing: .2px;
+  color: var(--ph-dim);
+}
+
+#article-container .ph-tabs {
+  position: relative;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+}
+
+/* 原生 radio 只留键盘可达性，视觉上彻底让位给 label */
+#article-container .ph-radio {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#article-container .ph-tab {
+  display: inline-block;
+  padding: 13px 34px;
+  border: 1px solid var(--ph-line);
+  border-radius: 13px;
+  font-size: 16.5px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: .04em;
+  white-space: nowrap;
+  color: var(--ph-ink);
+  background: var(--ph-soft);
+  cursor: pointer;
+  user-select: none;
+  transition: background .18s, color .18s, box-shadow .18s, transform .18s, border-color .18s;
+}
+
+#article-container .ph-tab:hover {
+  border-color: var(--theme-color, #49b1f5);
+  color: var(--theme-color, #49b1f5);
+}
+
+/* 选中态：radio 就是 label 的前一个兄弟 */
+#article-container .ph-radio:checked + .ph-tab {
+  color: #fff;
+  background: var(--theme-color, #49b1f5);
+  border-color: var(--theme-color, #49b1f5);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, .18);
+}
+
+#article-container .ph-radio:checked + .ph-tab:hover {
+  color: #fff;
+}
+
+#article-container .ph-radio:focus-visible + .ph-tab {
+  outline: 2px solid var(--ph-accent);
+  outline-offset: 2px;
+}
+
+#article-container .ph-hint {
+  margin: 10px 0 0;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--ph-ink);
+  opacity: .72;
+}
+
+/* ------------------------------------------------------- 面板切换
+ * 第 n 个标签对应第 n 个面板（两者由脚本按同一顺序输出）。
+ * 目前最多认到 6 台设备；以后工作簿里再多一张表，照抄一行 :nth-child(n) 即可。
+ */
+#article-container .ph-panels > .ph-panel {
+  display: none;
+}
+
+#article-container .ph-app:has(.ph-radio:nth-of-type(1):checked) .ph-panels > .ph-panel:nth-child(1),
+#article-container .ph-app:has(.ph-radio:nth-of-type(2):checked) .ph-panels > .ph-panel:nth-child(2),
+#article-container .ph-app:has(.ph-radio:nth-of-type(3):checked) .ph-panels > .ph-panel:nth-child(3),
+#article-container .ph-app:has(.ph-radio:nth-of-type(4):checked) .ph-panels > .ph-panel:nth-child(4),
+#article-container .ph-app:has(.ph-radio:nth-of-type(5):checked) .ph-panels > .ph-panel:nth-child(5),
+#article-container .ph-app:has(.ph-radio:nth-of-type(6):checked) .ph-panels > .ph-panel:nth-child(6) {
+  display: block;
+}
+
+/* 老浏览器没有 :has() 时不做切换，直接把各设备的表依次铺开，信息不丢 */
+@supports not (selector(:has(*))) {
+  #article-container .ph-panels > .ph-panel { display: block; }
+  #article-container .ph-panels > .ph-panel + .ph-panel { margin-top: 18px; }
+}
+
+#article-container .ph-foot {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  color: var(--ph-dim);
+}
+
+/* ---------------------------------------------------------- 表格外框
+ * 本页宽度不动（跟站内其它页面一致），14 列放不下就交给外层横滑；
+ * 主题会给 <table> 自动套一层 .table-wrap（自己带 overflow-x），
+ * 必须把它放平成 visible，否则手机上是「容器里再套一个滚动条」，很难滑。
+ */
+#article-container .ph-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--ph-line);
+  border-radius: 12px;
+  background: var(--ph-card);
+}
+
+#article-container .ph-scroll .table-wrap {
+  overflow: visible !important;
+  margin: 0;
+}
+
+#article-container .ph-table {
+  width: 100%;
+  min-width: 900px;
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
+}
+
+/* ---------------------------------------------------------------- 表头 */
+#article-container .ph-table th {
+  padding: 8px 10px;
+  color: #fff;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  background: var(--theme-color, #49b1f5);
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, .28);
+}
+
+#article-container .ph-table thead tr:first-child th { font-size: 14.5px; }
+
+#article-container .ph-table thead tr:last-child th {
+  font-size: 12.5px;
+  font-weight: 500;
+  opacity: .96;
+}
+
+#article-container .ph-table th.ph-key-col,
+#article-container .ph-table th.ph-total-col,
+#article-container .ph-table th.ph-dl-col { background: var(--theme-color, #49b1f5); }
+
+#article-container .ph-table th.ph-total-col { line-height: 1.35; }
+
+#article-container .ph-table th.ph-total-col span {
+  font-size: 11px;
+  font-weight: 400;
+  opacity: .85;
+}
+
+/* OP 分组四色：与螺纹表列色同一套，扫一眼就知道哪三列属于同一道工序 */
+#article-container .ph-table th.ph-op-1 { background: #5b6cff; }
+#article-container .ph-table th.ph-op-2 { background: #e4572e; }
+#article-container .ph-table th.ph-op-3 { background: #2fa84f; }
+#article-container .ph-table th.ph-op-4 { background: #9b6dff; }
+
+#article-container .ph-table thead tr:first-child th:first-child { border-top-left-radius: 11px; }
+#article-container .ph-table thead tr:first-child th:last-child { border-top-right-radius: 11px; }
+
+/* ---------------------------------------------------------------- 数据 */
+#article-container .ph-table td {
+  padding: 7px 10px;
+  text-align: center;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  border-bottom: 1px solid var(--ph-line);
+}
+
+#article-container .ph-table tbody tr:last-child td { border-bottom: 0; }
+
+#article-container .ph-table tbody tr:nth-child(even) { background: var(--ph-soft); }
+
+#article-container .ph-table tbody tr:hover { background: color-mix(in srgb, var(--ph-accent) 9%, transparent); }
+
+#article-container .ph-table .ph-key {
+  text-align: left;
+  font-weight: 700;
+  letter-spacing: .2px;
+  color: var(--ph-accent);
+}
+
+/* 未录入的格子压到背景里，但仍占位对齐 */
+#article-container .ph-table .ph-na {
+  color: var(--ph-dim);
+  opacity: .55;
+}
+
+#article-container .ph-table .ph-total {
+  font-weight: 700;
+  background: color-mix(in srgb, var(--ph-accent) 6%, transparent);
+}
+
+/* 图纸下载：图号后面那一列，是按钮不是链接文字 */
+#article-container .ph-table td.ph-dl {
+  padding: 5px 8px;
+}
+
+#article-container .ph-dl-btn {
+  display: inline-block;
+  padding: 3px 12px;
+  border: 1px solid color-mix(in srgb, var(--ph-accent) 45%, transparent);
+  border-radius: 999px;
+  font-size: 12.5px;
+  line-height: 1.7;
+  white-space: nowrap;
+  color: var(--ph-accent);
+  background: color-mix(in srgb, var(--ph-accent) 8%, transparent);
+  text-decoration: none !important;
+  transition: background .18s, color .18s;
+}
+
+#article-container .ph-dl-btn:hover {
+  color: #fff;
+  background: var(--ph-accent);
+}
+
+#article-container .ph-dl-off {
+  font-size: 12.5px;
+  color: var(--ph-dim);
+  opacity: .5;
+}
+
+/* ---------------------------------------------------------------- 手机 */
+@media screen and (max-width: 767px) {
+  #article-container .ph-head-top {
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  #article-container .ph-count b { font-size: 22px; }
+
+  /* 按钮尺寸跟宏程序页一致地缩一档 */
+  #article-container .ph-tab {
+    padding: 11px 22px;
+    font-size: 15.5px;
+  }
+
+  #article-container .ph-hint { font-size: 12px; }
+
+  #article-container .ph-table {
+    min-width: 760px;
+    font-size: 12.5px;
+  }
+
+  #article-container .ph-table th { padding: 6px 7px; }
+
+  #article-container .ph-table td { padding: 6px 7px; }
+
+  #article-container .ph-table thead tr:first-child th { font-size: 13px; }
+
+  #article-container .ph-table thead tr:last-child th { font-size: 11px; }
+}

@@ -272,7 +272,7 @@ html[data-theme="light"] #post .post-copyright:before {
 }
 
 /* ── 5/12  #listPagination  ← 原 _config.chengic.yml:1437-1437 ── */
-/* 归档 / 标签 / 分类等列表页的翻页按钮：样式对齐首页（卡片圆角 + 悬浮反馈 + 统一尺寸） */
+/* 文章总览 / 标签 / 分类等列表页的翻页按钮：样式对齐首页（卡片圆角 + 悬浮反馈 + 统一尺寸） */
 .layout > div:not(.recent-posts) #pagination .pagination > *{display:inline-block;margin:0 6px;width:2.5em;height:2.5em;line-height:2.5em;text-align:center}.layout > div:not(.recent-posts) #pagination .pagination > *:not(.space){border-radius:8px;background:var(--card-bg);box-shadow:var(--card-box-shadow);transition:all .3s}.layout > div:not(.recent-posts) #pagination .pagination > *:not(.space):hover{background:var(--btn-hover-color);color:var(--btn-color);box-shadow:var(--card-hover-box-shadow)}
 
 /* ── 6/12  #pageWidthLimit  ← 原 _config.chengic.yml:1438-1438 ── */
@@ -1319,7 +1319,7 @@ html.beauty-cursor-on .winbox .wb-body * { cursor: inherit !important; }
    内边距按主题默认 40px 15px，右侧再按第 4/12 块的侧栏规则给悬浮工具条留位：
      901~1400px 视口 → padding-right 78px
      1401px 以上     → padding-right 随居中余量动态回收（最少 15px）
-   首页布局是 recent-posts 卡片流，跟内容页（文章/归档/音乐馆）不是一套排版，
+   首页布局是 recent-posts 卡片流，跟内容页（文章/文章总览/音乐馆）不是一套排版，
    所以单独恢复，不跟全站统一。 */
 @media screen and (min-width: 861px) {
   #body-wrap.home .layout {
@@ -1534,7 +1534,7 @@ html[data-theme="dark"] {
  * rgba(169,169,169,.7) 这道偏亮的灰 —— 每页观感都不一样。
  *
  * 这里**只统一外壳**：圆角、边框、投影、悬停。各页内部的排版、配色、字号一律不动。
- * ⚠ 大容器（#post 正文 / #page 页面 / #archive 归档）**不加**悬停上浮：
+ * ⚠ 大容器（#post 正文 / #page 页面 / #archive 文章总览）**不加**悬停上浮：
  *    整篇文章跟着鼠标跳一下很怪，只有列表卡 / 音乐馆卡这种"可点的块"才上浮。
  * ⚠ 不动 --border-style 那个主题 token —— 它还管着磁贴、胶囊、日程格一堆小件。
  * ========================================================================== */
@@ -1939,7 +1939,9 @@ html[data-theme="dark"] #footer::after {
   align-items: baseline;
   justify-content: center;
   gap: 0 7px;
-  margin-top: 18px;
+  /* 2026-11-18 与「站点运行 / 恋爱计时」对调后，这行变成页脚最后一行次要信息，
+     大间距交给上面的 .footer_custom_text，这里只留 6px 作行距 */
+  margin-top: 6px;
   color: var(--ft-mid);
   font-size: 13px;
   line-height: 1.9;
@@ -1972,9 +1974,51 @@ html[data-theme="dark"] #footer::after {
   text-decoration: none;
 }
 
-/* ⑧ 第三行：站点运行 + 恋爱计时（#ftRun 在行首；#ftLove 由 love-days.js 接管） */
+/* 两个备案号之间的 ·（2026-11-18 加公安备案时补的）：比两侧再淡一档，
+   只起分隔作用；窄屏那两个备案各占一行时它会多余，见下面的 640px 断点 */
+#footer-wrap .copyright .ft-dot {
+  color: var(--ft-dim);
+  font-weight: 400;
+}
+
+/* ICP 备案前的图标：官方那张 bg_logo（819×772 的橙红徽标，已缩到 68×64 存成
+   source/assets/badge/icp-mii.png）。彩色图不能走 mask，改用背景图；
+   尺寸/基线跟右边警徽那套参数保持完全一致，两颗图标才排得齐。
+   hover 只提一点亮度，不做变色（实色图染色会脏）。 */
+#footer-wrap .copyright .ft-icp-icon {
+  display: inline-block;
+  width: .95em;
+  height: .95em;
+  margin-right: .3em;
+  vertical-align: -.12em;
+  background: url('/assets/badge/icp-mii.png') center / contain no-repeat;
+  transition: filter .2s;
+}
+
+#footer-wrap .copyright .ft-icp:hover .ft-icp-icon {
+  filter: brightness(1.15);
+}
+
+/* 公安备案的警徽小图标（官方 ghs.png 20×20）。
+   用背景图而不是 <img>：主题 post_lazyload 会把所有 img 换成占位 GIF，
+   页脚图标不该等 JS 才显示。
+   尺寸用 em 而不是 px —— 跟着字号走，手机端 12px 字时不会显得"高一截"：
+     0.95em ≈ 字高，vertical-align -0.12em 让图标的几何中点落在汉字中部，
+     而不是吊在字顶（之前 16px + -3px 就是那个效果）。 */
+#footer-wrap .copyright .ft-police-icon {
+  display: inline-block;
+  width: .95em;
+  height: .95em;
+  margin-right: .3em;
+  vertical-align: -.12em;
+  background: url('/assets/badge/beian.png') center / contain no-repeat;
+}
+
+/* ⑧ 站点运行 + 恋爱计时（#ftRun 在行首；#ftLove 由 love-days.js 接管）。
+   2026-11-18 起这行排到了「© + 备案」上面，所以大间距（离链接行 18px）挂在这里，
+   下面那行备案只留 6px。 */
 #footer-wrap .footer_custom_text {
-  margin-top: 6px;
+  margin-top: 18px;
   color: var(--ft-mid);
   font-size: 13px;
   line-height: 2;
@@ -2064,7 +2108,7 @@ html[data-theme="dark"] #footer::after {
   transform: translate(-50%, 0);
 }
 
-/* ⑨ 第四行「站点统计 + 去归档翻翻」（#workboard）于 2026-11-09 整行删除，
+/* ⑨ 第四行「站点统计 + 去文章111翻翻」（#workboard）于 2026-11-09 整行删除，
    对应的 flex 排版与 .ft-arch 样式一并移除。 */
 
 /* ⑩ 响应式：窄屏收紧字号与间距，并给左下角那组固定胶囊（#fps / #ds-mini，
@@ -2078,8 +2122,9 @@ html[data-theme="dark"] #footer::after {
   #footer-wrap .ft-links { font-size: 12.5px; row-gap: 6px; }
   #footer-wrap .ft-links a + a { margin-left: 18px; }
   #footer-wrap .ft-links a + a::before { left: -11px; }
-  #footer-wrap .copyright { margin-top: 14px; font-size: 12.5px; }
-  #footer-wrap .footer_custom_text { font-size: 12.5px; }
+  /* 换行后大间距在前一行（运行/恋爱），备案行仍只留 6px */
+  #footer-wrap .footer_custom_text { margin-top: 14px; font-size: 12.5px; }
+  #footer-wrap .copyright { margin-top: 6px; font-size: 12.5px; }
   #footer-wrap .footer_custom_text #ftRun { font-size: 12.5px; }
   /* 这一档底部留白收到 30px，悬停气泡（高 28px）的间距同步收到 2px，
      免得上悬停时气泡探出页脚底边、页面凭空多出几像素滚动范围 */
@@ -2098,6 +2143,8 @@ html[data-theme="dark"] #footer::after {
      干脆拆成两行：© + 作者一行、备案号一行，各自居中 */
   #footer-wrap .copyright { font-size: 12px; display: block; }
   #footer-wrap .copyright .ft-icp { display: block; }
+  /* 两个备案各占一行，中间的 · 就不用留了 */
+  #footer-wrap .copyright .ft-dot { display: none; }
   /* 拆成块级后 flex 的 gap 失效，这里补回 © 与作者名之间的间距 */
   #footer-wrap .copyright .ft-by { margin-left: 6px; }
   /* 第三行（站点运行 + 恋爱时长）窄屏就让它整段自然折行，每段各自 nowrap */
