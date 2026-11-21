@@ -6,7 +6,8 @@
  *
  * 约定：
  *   - 深度类参数一律填正数，程序内部取负（#4=-20.）
- *   - 内孔顺铣走 G02，外圆顺铣走 G03；要逆铣就把两者对调
+ *   - 每个加工中心模板都带 dir 字段（1 顺铣 / -1 逆铣）：内孔顺铣 G02、外圆顺铣 G03；
+ *     换方向时圆弧、绕行顺序、刀补 G41/G42 一起翻，统一走 dirField/rev/arcIn/arcOut/comp
  *   - 程序号 O0001~O0039 对应加工中心，O0040~ 对应车床
  * ============================================================ */
 (function () {
@@ -93,7 +94,10 @@
     ['当前 Z', 'CURRENT Z'],
     ['本圈 Z', 'Z THIS RING'],
     ['绕孔一圈', 'ONE CIRCLE AROUND HOLE'],
+    ['斜线进刀', 'RAMP IN'],
     ['逆时针绕外圆下行', 'CCW AROUND OD, DOWNWARD'],
+    ['绕外圆下行', 'AROUND OD, DOWNWARD'],
+    ['逆铣从最后一点往回走', 'CONVENTIONAL - WALK BACK FROM LAST POINT'],
     ['退回圆心', 'RETURN TO CENTER'],
     ['回中心', 'RETURN TO CENTER'],
     ['整圆一圈', 'FULL CIRCLE'],
@@ -374,6 +378,41 @@
     L.push('M30');
   }
 
+  /* ================================================================
+   *  走刀方向（顺铣 / 逆铣）
+   *  每个加工中心模板的表单里都带这个下拉，值存在 p.dir：1 = 顺铣，-1 = 逆铣。
+   *  换成逆铣要动三样东西，所以统一收在这里，模板里只调函数、不写死方向：
+   *    · 圆弧：内孔/内腔顺铣走 G02、逆铣走 G03；外圆/凸台反过来（arcIn / arcOut）
+   *    · 刀补：M03 右旋刀顺铣时刀具在轨迹右侧用 G42，逆铣用 G41（comp）
+   *    · 直线类：顺铣就是掉头往回走，用 rev 判断后对调起终点（sgn 取方向系数）
+   *  顺铣切屑由厚到薄、表面光；逆铣由薄到厚、刀具寿命长，粗加工常用逆铣。
+   * ================================================================ */
+  function dirField() {
+    return {
+      k: 'dir', label: '走刀方向', type: 'select', def: 1,
+      opts: [{ v: 1, t: '顺铣（默认）' }, { v: -1, t: '逆铣' }],
+      tip: '顺铣表面光洁、逆铣刀具寿命长；换方向时圆弧 G02/G03 与刀补 G41/G42 自动跟着对调'
+    };
+  }
+
+  /* 是否逆铣 */
+  function rev(p) { return Number(p.dir) === -1; }
+
+  /* 内孔/内腔：顺铣顺时针 G02，逆铣逆时针 G03 */
+  function arcIn(p) { return rev(p) ? 'G03' : 'G02'; }
+
+  /* 外圆/凸台：顺铣逆时针 G03，逆铣顺时针 G02 */
+  function arcOut(p) { return rev(p) ? 'G02' : 'G03'; }
+
+  /* 刀补：顺铣 G42（刀在轨迹右），逆铣 G41（刀在轨迹左） */
+  function comp(p) { return rev(p) ? 'G41' : 'G42'; }
+
+  /* G41 ↔ G42 互换：点表类模板要保住「同一个零件」，换方向时走向和刀补得一起翻 */
+  function flipComp(g) { return g === 'G41' ? 'G42' : 'G41'; }
+
+  /* 方向系数：顺铣 +1，逆铣 -1，给角度增量 / 行距这类要跟着翻的数值用 */
+  function sgn(p) { return rev(p) ? -1 : 1; }
+
   var TPL = {
 
     /* ================================================================
@@ -394,7 +433,8 @@
         { k: 'fin', label: '精加工余量', def: 0.5, step: 0.1, min: 0 },
         { k: 's', label: '转速 S', def: 2000, step: 50 },
         { k: 'f', label: '进给 F', def: 1000, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         var r = (p.d - p.td) / 2 - p.fin;
@@ -425,10 +465,10 @@
         L.push('WHILE [#9 GT #4] DO 1');
         L.push('  #9=#9-#6');
         L.push('  IF [#9 LT #4] THEN #9=#4    (最后一圈不超深)');
-        L.push('  G02 X[#1+#8] Y#2 Z#9 I-[#8] J0 F' + num(p.f));
+        L.push('  ' + arcIn(p) + ' X[#1+#8] Y#2 Z#9 I-[#8] J0 F' + num(p.f));
         L.push('END 1');
         L.push('');
-        L.push('G02 X[#1+#8] Y#2 I-[#8] J0 F' + num(p.f * 0.8) + '   (到底光整一圈)');
+        L.push(arcIn(p) + ' X[#1+#8] Y#2 I-[#8] J0 F' + num(p.f * 0.8) + '   (到底光整一圈)');
         L.push('G01 X#1 F' + num(p.f * 0.6) + '       (退回圆心)');
         millEnd(L);
         return L.join('\n');
@@ -449,7 +489,8 @@
         { k: 'fin', label: '精加工余量', def: 0.3, step: 0.1, min: 0 },
         { k: 's', label: '转速 S', def: 1800, step: 50 },
         { k: 'f', label: '进给 F', def: 800, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         var r = (p.d - p.td) / 2 - p.fin;
@@ -481,10 +522,10 @@
         L.push('WHILE [#9 LT 0] DO 1');
         L.push('  #9=#9+#6');
         L.push('  IF [#9 GT 0] THEN #9=0      (到孔口为止)');
-        L.push('  G02 X[#1+#8] Y#2 Z#9 I-[#8] J0 F' + num(p.f));
+        L.push('  ' + arcIn(p) + ' X[#1+#8] Y#2 Z#9 I-[#8] J0 F' + num(p.f));
         L.push('END 1');
         L.push('');
-        L.push('G02 X[#1+#8] Y#2 I-[#8] J0 F' + num(p.f * 0.8) + '   (孔口光整一圈)');
+        L.push(arcIn(p) + ' X[#1+#8] Y#2 I-[#8] J0 F' + num(p.f * 0.8) + '   (孔口光整一圈)');
         L.push('G01 X#1 F' + num(p.f * 0.6));
         millEnd(L);
         return L.join('\n');
@@ -505,7 +546,8 @@
         { k: 'fin', label: '精加工余量', def: 0.3, step: 0.1, min: 0 },
         { k: 's', label: '转速 S', def: 1500, step: 50 },
         { k: 'f', label: '进给 F', def: 600, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         var r = (p.d - p.td) / 2 - p.fin;
@@ -535,7 +577,7 @@
         L.push('  IF [#9 LT #4] THEN #9=#4');
         L.push('  G01 Z#9 F' + num(p.f * 0.5) + '       (中心下刀一层)');
         L.push('  G01 X[#1+#8] F' + num(p.f) + '      (径向进刀)');
-        L.push('  G02 I-[#8] J0           (整圆一圈)');
+        L.push('  ' + arcIn(p) + ' I-[#8] J0           (整圆一圈)');
         L.push('  G01 X#1                 (回中心)');
         L.push('END 1');
         millEnd(L);
@@ -558,7 +600,8 @@
         { k: 'fin', label: '精加工余量', def: 0.2, step: 0.1, min: 0 },
         { k: 's', label: '转速 S', def: 2000, step: 50 },
         { k: 'f', label: '进给 F', def: 800, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.d2 >= p.d1) return '底部直径必须小于口部直径，否则不是锥孔';
@@ -591,7 +634,7 @@
         L.push('  #10=[#3/2]+[[#4-#3]/2]*[-#9/#5]-#6/2-#8   (本层锥面半径)');
         L.push('  G01 Z#9 F' + num(p.f * 0.5) + '       (中心下刀)');
         L.push('  G01 X[#1+#10] F' + num(p.f) + '     (径向进到锥面)');
-        L.push('  G02 I-[#10] J0');
+        L.push('  ' + arcIn(p) + ' I-[#10] J0');
         L.push('  G01 X#1');
         L.push('END 1');
         millEnd(L);
@@ -613,7 +656,8 @@
         { k: 'fin', label: '精加工余量', def: 0.5, step: 0.1, min: 0, tip: '外形留量时填正数，一刀到位填 0' },
         { k: 's', label: '转速 S', def: 2000, step: 50 },
         { k: 'f', label: '进给 F', def: 1000, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.td <= 0) return '刀具直径必须大于 0';
@@ -624,7 +668,7 @@
         var r = (p.d + p.td) / 2 + p.fin;
         var z = -Math.abs(p.z);
         var L = [];
-        pushHeader(L, 'O0005 (OD HELICAL MILL)', 'OD HELICAL MILL - COUNTER CLOCKWISE DOWNWARD');
+        pushHeader(L, 'O0005 (OD HELICAL MILL)', 'OD HELICAL MILL - ' + (rev(p) ? 'CLOCKWISE' : 'COUNTER CLOCKWISE') + ' DOWNWARD');
         millHead(L, p);
 
         L.push(v('#1', num(p.x), '圆心 X'));
@@ -644,10 +688,10 @@
         L.push('WHILE [#9 GT #4] DO 1');
         L.push('  #9=#9-#6');
         L.push('  IF [#9 LT #4] THEN #9=#4');
-        L.push('  G03 X[#1+#8] Y#2 Z#9 I-[#8] J0 F' + num(p.f) + '   (逆时针绕外圆下行)');
+        L.push('  ' + arcOut(p) + ' X[#1+#8] Y#2 Z#9 I-[#8] J0 F' + num(p.f) + '   (绕外圆下行)');
         L.push('END 1');
         L.push('');
-        L.push('G03 X[#1+#8] Y#2 I-[#8] J0 F' + num(p.f * 0.8) + '   (底面光整一圈)');
+        L.push(arcOut(p) + ' X[#1+#8] Y#2 I-[#8] J0 F' + num(p.f * 0.8) + '   (底面光整一圈)');
         millEnd(L);
         return L.join('\n');
       }
@@ -667,7 +711,8 @@
         { k: 'fin', label: '精加工余量', def: 0.5, step: 0.1, min: 0 },
         { k: 's', label: '转速 S', def: 1800, step: 50 },
         { k: 'f', label: '进给 F', def: 800, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.td <= 0) return '刀具直径必须大于 0';
@@ -697,7 +742,7 @@
         L.push('  #9=#9-#6');
         L.push('  IF [#9 LT #4] THEN #9=#4');
         L.push('  G01 Z#9 F' + num(p.f * 0.5));
-        L.push('  G03 X[#1+#8] Y#2 I-[#8] J0 F' + num(p.f) + '   (本层整圆一圈)');
+        L.push('  ' + arcOut(p) + ' X[#1+#8] Y#2 I-[#8] J0 F' + num(p.f) + '   (本层整圆一圈)');
         L.push('END 1');
         millEnd(L);
         return L.join('\n');
@@ -707,7 +752,7 @@
     sideMill: {
       kind: 'mill', g: 'hole', no: 'O0007',
       name: '侧边铣',
-      desc: '沿一条直边把侧面余量分层铣掉，用 G41 左刀补，程序里按图纸轮廓编程、刀补号里填实际刀半径。径向一次切宽取「径向切宽」参数，一般不超过刀径的 0.7 倍，切宽大就分几刀或改用矩形铣。',
+      desc: '沿一条直边把侧面余量分层铣掉，按图纸轮廓编程、刀补号 D 里填实际刀半径；顺铣 G42、逆铣 G41 自动联动。径向一次切宽取「径向切宽」参数，一般不超过刀径的 0.7 倍，切宽大就分几刀或改用矩形铣。',
       fields: [
         { k: 'x', label: '起点 X', def: 0, step: 0.1 },
         { k: 'y', label: '起点 Y', def: 0, step: 0.1, tip: '轮廓线上的点，刀会偏在这条线的 +Y 一侧' },
@@ -719,7 +764,8 @@
         { k: 'dn', label: '刀补号 D', def: 1, step: 1, min: 1, tip: '机床刀补表里 D 值应等于实际刀半径' },
         { k: 's', label: '转速 S', def: 1800, step: 50 },
         { k: 'f', label: '进给 F', def: 700, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.w > p.td * 0.75) return '径向切宽 ' + num(p.w) + ' 超过刀径的 0.75 倍（' + num(p.td * 0.75) + '），请分刀或换大刀';
@@ -730,7 +776,7 @@
         var z = -Math.abs(p.z);
         var out = p.td + 2;
         var L = [];
-        pushHeader(L, 'O0007 (SIDE MILLING G41)', 'SIDE MILLING - LAYER CUT, G41 LEFT COMP');
+        pushHeader(L, 'O0007 (SIDE MILLING ' + comp(p) + ')', 'SIDE MILLING - LAYER CUT, ' + comp(p) + ' COMP');
         millHead(L, p);
 
         L.push(v('#1', num(p.x), '起点 X'));
@@ -750,8 +796,8 @@
         L.push('  #10=#10-#6');
         L.push('  IF [#10 LT #5] THEN #10=#5');
         L.push('  G01 Z#10 F' + num(p.f * 0.4) + '       (下刀一层)');
-        L.push('  G41 D' + p.dn + ' G01 X#1 Y#2 F' + num(p.f * 0.5) + '   (斜线进刀, 建立左刀补)');
-        L.push('  G01 X[#1+#3] F' + num(p.f) + '        (沿轮廓走一刀)');
+        L.push('  ' + comp(p) + ' D' + p.dn + ' G01 X#1 Y#2 F' + num(p.f * 0.5) + '   (斜线进刀, 建立刀补)');
+        L.push('  G01 X[#1' + (rev(p) ? '+' : '-') + '#3] F' + num(p.f) + '        (沿轮廓走一刀)');
         L.push('  G40 G01 Y[#2+#9] F' + num(p.f * 0.5) + '   (取消刀补, 引出)');
         L.push('END 1');
         millEnd(L);
@@ -772,7 +818,8 @@
         { k: 'a', label: '角度步距', def: 5, step: 1, min: 1, tip: '每圈转过的圆弧角，越小越光但程序越长' },
         { k: 's', label: '转速 S', def: 3000, step: 100 },
         { k: 'f', label: '进给 F', def: 400, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.r <= p.td / 2) return '圆角 R（' + num(p.r) + '）必须大于球刀半径（' + num(p.td / 2) + '），否则球刀下不到根部';
@@ -804,7 +851,7 @@
         L.push('  #11=-#4+#8*SIN[#9]      (本圈 Z)');
         L.push('  G01 Z#11 F' + num(p.f * 0.4) + '      (中心下到本圈高度)');
         L.push('  G01 X[#1+#10] F' + num(p.f) + '    (径向进刀)');
-        L.push('  G02 I-[#10] J0          (绕孔一圈)');
+        L.push('  ' + arcIn(p) + ' I-[#10] J0          (绕孔一圈)');
         L.push('  G01 X#1 Y#2             (回中心)');
         L.push('  #9=#9-#6');
         L.push('END 1');
@@ -832,7 +879,8 @@
         { k: 'q', label: '每层切深', def: 2, step: 0.1, min: 0.1 },
         { k: 's', label: '转速 S', def: 1800, step: 50 },
         { k: 'f', label: '进给 F', def: 900, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.td >= p.l || p.td >= p.w) return '刀具直径必须小于区域的长和宽';
@@ -872,7 +920,7 @@
         L.push('  G01 Z#20 F' + num(p.f * 0.4));
         L.push('  #21=0                   (已走行数)');
         L.push('  #22=-#11                (当前 Y 偏移)');
-        L.push('  #23=1                   (走刀方向)');
+        L.push('  #23=' + (rev(p) ? '1 ' : '-1') + '                   (走刀方向)');
         L.push('  G01 Y[#2+#22] F' + num(p.f));
         L.push('  WHILE [#21 LT #13] DO 2');
         L.push('    #24=#1+#10*#23');
@@ -904,7 +952,8 @@
         { k: 'q', label: '每层切深', def: 2, step: 0.1, min: 0.1 },
         { k: 's', label: '转速 S', def: 1800, step: 50 },
         { k: 'f', label: '进给 F', def: 900, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.td >= p.d) return '刀具直径必须小于区域直径';
@@ -938,13 +987,13 @@
         L.push('  #21=#12                 (当前圈半径)');
         L.push('  G01 X[#1+#21] F' + num(p.f));
         L.push('  WHILE [#21 LT #10] DO 2');
-        L.push('    G02 I-[#21] J0        (整圆一圈)');
+        L.push('    ' + arcIn(p) + ' I-[#21] J0        (整圆一圈)');
         L.push('    G01 X#1');
         L.push('    #21=#21+#11');
         L.push('    IF [#21 GT #10] THEN #21=#10');
         L.push('    G01 X[#1+#21]');
         L.push('  END 2');
-        L.push('  G02 I-[#21] J0          (最外圈光一刀)');
+        L.push('  ' + arcIn(p) + ' I-[#21] J0          (最外圈光一刀)');
         L.push('  G01 X#1');
         L.push('END 1');
         millEnd(L);
@@ -967,7 +1016,8 @@
         { k: 'q', label: '每层切深', def: 1, step: 0.1, min: 0.1 },
         { k: 's', label: '转速 S', def: 2500, step: 50 },
         { k: 'f', label: '进给 F', def: 1200, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.td >= p.d) return '刀具直径必须小于区域直径';
@@ -1003,13 +1053,13 @@
         L.push('  #20=#20-#8');
         L.push('  IF [#20 LT #7] THEN #20=#7');
         L.push('  G01 Z#20 F' + num(p.f * 0.4));
-        L.push('  #21=0                   (当前角度)');
-        L.push('  G01 X#1 Y#2 F' + num(p.f));
-        L.push('  WHILE [#21 LE #13] DO 2');
+        L.push('  #21=' + (rev(p) ? '#13' : '0') + '                   (当前角度)');
+        L.push('  G01 X[#1' + (rev(p) ? '' : '+#10*COS[#13]') + '] Y[#2' + (rev(p) ? '' : '+#10*SIN[#13]') + '] F' + num(p.f));
+        L.push('  WHILE [#21 ' + (rev(p) ? 'GE 0' : 'LE #13') + '] DO 2');
         L.push('    #22=#21/360*#11       (当前半径)');
         L.push('    IF [#22 GT #10] THEN #22=#10');
         L.push('    G01 X[#1+#22*COS[#21]] Y[#2+#22*SIN[#21]] F' + num(p.f));
-        L.push('    #21=#21+#6');
+        L.push('    #21=#21' + (rev(p) ? '-#6' : '+#6'));
         L.push('  END 2');
         L.push('END 1');
         millEnd(L);
@@ -1031,7 +1081,8 @@
         { k: 'z', label: '切深', def: 1.5, step: 0.1, min: 0.1, tip: '飞刀通常一刀 0.5~3mm，不分层' },
         { k: 's', label: '转速 S', def: 800, step: 50 },
         { k: 'f', label: '进给 F', def: 600, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.w < p.td) return '覆盖宽度小于刀盘直径，一行就能盖完，检查参数';
@@ -1057,15 +1108,15 @@
         L.push(v('#11', '[#4-#5]/2', 'Y 向半行程 ' + num((p.w - p.td) / 2)));
         L.push('');
 
-        L.push('G00 X#1 Y[#2+#11]       (从最上一行开始)');
+        L.push('G00 X' + (rev(p) ? '[#1+#3]' : '#1') + ' Y[#2+#11]       (从最上一行开始)');
         L.push('G01 Z#7 F' + num(p.f * 0.4));
         L.push('');
         L.push('#20=#11                 (当前 Y 偏移)');
         L.push('WHILE [#20 GE -#11-0.001] DO 1');
         L.push('  G00 Y[#2+#20]');
-        L.push('  G01 X[#1+#3] F' + num(p.f) + '        (单向切削)');
+        L.push('  G01 X' + (rev(p) ? '#1' : '[#1+#3]') + ' F' + num(p.f) + '        (单向切削)');
         L.push('  G00 Z[#7+5]           (抬刀)');
-        L.push('  G00 X#1               (快速回起点)');
+        L.push('  G00 X' + (rev(p) ? '[#1+#3]' : '#1') + '               (快速回起点)');
         L.push('  G00 Z#7');
         L.push('  #20=#20-#10');
         L.push('END 1');
@@ -1084,7 +1135,7 @@
         { k: 'r', label: '圆弧半径', def: 50, step: 0.1, min: 0.1, tip: '刀心走的半径，不是工件外缘' },
         { k: 'a1', label: '起始角', def: 0, step: 1, tip: '度，0° 在 X+ 方向，逆时针为正' },
         { k: 'a2', label: '终止角', def: 180, step: 1, tip: '与起始角相同即为整圆' },
-        { k: 'dir', label: '走向', type: 'select', def: 0, opts: [{ v: 0, t: '逆时针 G03' }, { v: 1, t: '顺时针 G02' }] },
+        { k: 'cw', label: '走向', type: 'select', def: 0, opts: [{ v: 0, t: '逆时针 G03' }, { v: 1, t: '顺时针 G02' }] },
         { k: 'z', label: '总深度', def: 5, step: 0.1, min: 0.1 },
         { k: 'q', label: '每层切深', def: 1, step: 0.1, min: 0.1 },
         { k: 's', label: '转速 S', def: 1800, step: 50 },
@@ -1097,7 +1148,7 @@
       },
       gen: function (p) {
         var z = -Math.abs(p.z);
-        var g = Number(p.dir) ? 'G02' : 'G03';
+        var g = Number(p.cw) ? 'G02' : 'G03';
         var L = [];
         pushHeader(L, 'O0013 (ARC MILL)', 'ARC MILL - LAYER BY LAYER ALONG ARC');
         millHead(L, p);
@@ -1145,7 +1196,8 @@
         { k: 'k', label: '行距系数', def: 0.75, step: 0.05, min: 0.2, max: 0.95 },
         { k: 's', label: '转速 S', def: 1200, step: 50 },
         { k: 'f', label: '进给 F', def: 400, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.w < p.td) return '槽宽 ' + num(p.w) + ' 小于刀径 ' + num(p.td) + '，刀下不去，请换小刀';
@@ -1182,11 +1234,11 @@
         L.push('  #21=0                   (第几刀)');
         L.push('  #22=-#10/2              (当前 Y 偏移)');
         L.push('  WHILE [#21 LE #12] DO 2');
-        L.push('    G00 X#1 Y[#2+#22]');
+        L.push('    G00 X' + (rev(p) ? '[#1+#3]' : '#1') + ' Y[#2+#22]');
         L.push('    G01 Z#20 F' + num(p.f * 0.4) + '      (下刀)');
-        L.push('    G01 X[#1+#3] F' + num(p.f) + '      (走一刀)');
+        L.push('    G01 X' + (rev(p) ? '#1' : '[#1+#3]') + ' F' + num(p.f) + '      (走一刀)');
         L.push('    G00 Z[#20+2]          (抬刀)');
-        L.push('    G00 X#1');
+        L.push('    G00 X' + (rev(p) ? '[#1+#3]' : '#1'));
         L.push('    #22=#22+#11');
         L.push('    #21=#21+1');
         L.push('  END 2');
@@ -1210,7 +1262,8 @@
         { k: 'td', label: '刀具直径', def: 8, step: 0.1, min: 1 },
         { k: 's', label: '转速 S', def: 1500, step: 50 },
         { k: 'f', label: '进给 F', def: 350, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.w < p.td) return '槽宽 ' + num(p.w) + ' 小于刀径 ' + num(p.td) + '，刀下不去';
@@ -1234,17 +1287,20 @@
         L.push(v('#8', num(hr), '螺旋半径 = 刀径/4'));
         L.push('');
 
-        L.push('G00 X[#1+#8] Y#2');
+        var hs = rev(p) ? '[#1+#3-#8]' : '[#1+#8]';   // 螺旋下刀起点：顺铣从槽另一端起刀
+        var hi = rev(p) ? 'I[#8]' : 'I-[#8]';
+        var xe = rev(p) ? '#1' : '[#1+#3]';
+        L.push('G00 X' + hs + ' Y#2');
         L.push('G01 Z1 F' + num(p.f * 0.5));
         L.push('');
         L.push('#20=0           (当前 Z)');
         L.push('WHILE [#20 GT #6] DO 1');
         L.push('  #20=#20-#7');
         L.push('  IF [#20 LT #6] THEN #20=#6');
-        L.push('  G02 X[#1+#8] Y#2 Z#20 I-[#8] J0 F' + num(p.f * 0.6) + '   (螺旋下刀一层)');
-        L.push('  G01 X[#1+#3] F' + num(p.f) + '          (沿槽走到另一端)');
+        L.push('  ' + arcIn(p) + ' X' + hs + ' Y#2 Z#20 ' + hi + ' J0 F' + num(p.f * 0.6) + '   (螺旋下刀一层)');
+        L.push('  G01 X' + xe + ' F' + num(p.f) + '          (沿槽走到另一端)');
         L.push('  G00 Z[#20+1]               (抬刀)');
-        L.push('  G00 X[#1+#8]               (回起点)');
+        L.push('  G00 X' + hs + '               (回起点)');
         L.push('  G01 Z#20 F' + num(p.f * 0.5));
         L.push('END 1');
         millEnd(L);
@@ -1267,7 +1323,8 @@
         { k: 'k', label: '行距系数', def: 0.7, step: 0.05, min: 0.2, max: 0.95 },
         { k: 's', label: '转速 S', def: 1800, step: 50 },
         { k: 'f', label: '进给 F', def: 900, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.td >= p.l || p.td >= p.w) return '刀具直径必须小于腔体的长和宽';
@@ -1308,14 +1365,14 @@
         L.push('  G01 Z#20 F' + num(p.f * 0.4));
         L.push('  (先沿壁清一圈)');
         L.push('  G01 X[#1-#10] Y[#2-#11] F' + num(p.f));
-        L.push('  G01 X[#1+#10]');
-        L.push('  G01 Y[#2+#11]');
-        L.push('  G01 X[#1-#10]');
-        L.push('  G01 Y[#2-#11]');
+        L.push('  G01 ' + (rev(p) ? 'X[#1+#10]' : 'Y[#2+#11]'));
+        L.push('  G01 ' + (rev(p) ? 'Y[#2+#11]' : 'X[#1+#10]'));
+        L.push('  G01 ' + (rev(p) ? 'X[#1-#10]' : 'Y[#2-#11]'));
+        L.push('  G01 ' + (rev(p) ? 'Y[#2-#11]' : 'X[#1-#10]'));
         L.push('  (中间光栅)');
         L.push('  #21=0                   (已走行数)');
         L.push('  #22=-#11');
-        L.push('  #23=1');
+        L.push('  #23=' + (rev(p) ? '1 ' : '-1'));
         L.push('  WHILE [#21 LT #13] DO 2');
         L.push('    #24=#1+#10*#23');
         L.push('    G01 X#24 F' + num(p.f));
@@ -1348,7 +1405,8 @@
         { k: 'k', label: '环距系数', def: 0.7, step: 0.05, min: 0.2, max: 0.95 },
         { k: 's', label: '转速 S', def: 1800, step: 50 },
         { k: 'f', label: '进给 F', def: 800, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         var hx = (p.l - p.td) / 2;
@@ -1393,10 +1451,10 @@
         L.push('    #22=#10-#21*#12           (本环 X 半行程)');
         L.push('    #23=#11-#21*#12           (本环 Y 半行程)');
         L.push('    G01 X[#1-#22] Y[#2-#23] F' + num(p.f));
-        L.push('    G01 X[#1+#22]');
-        L.push('    G01 Y[#2+#23]');
-        L.push('    G01 X[#1-#22]');
-        L.push('    G01 Y[#2-#23]');
+        L.push('    G01 ' + (rev(p) ? 'X[#1+#22]' : 'Y[#2+#23]'));
+        L.push('    G01 ' + (rev(p) ? 'Y[#2+#23]' : 'X[#1+#22]'));
+        L.push('    G01 ' + (rev(p) ? 'X[#1-#22]' : 'Y[#2-#23]'));
+        L.push('    G01 ' + (rev(p) ? 'Y[#2-#23]' : 'X[#1-#22]'));
         L.push('    #21=#21+1');
         L.push('  END 2');
         L.push('END 1');
@@ -1408,7 +1466,7 @@
     rectBoss: {
       kind: 'mill', g: 'slot', no: 'O0018',
       name: '矩形铣',
-      desc: '矩形凸台的外形铣，四角是直角，用 G41 左刀补按图纸轮廓编程，刀补号里填实际刀半径。分层往下走，适合方凸台、方块外形、模具镶块。要带 R 角的用「长方形倒圆角」。',
+      desc: '矩形凸台的外形铣，四角是直角，按图纸轮廓编程，刀补号 D 里填实际刀半径；顺铣走 G42、逆铣走 G41，选方向自动切换。分层往下走，适合方凸台、方块外形、模具镶块。要带 R 角的用「长方形倒圆角」。',
       fields: [
         { k: 'x', label: '中心 X', def: 0, step: 0.1 },
         { k: 'y', label: '中心 Y', def: 0, step: 0.1 },
@@ -1420,7 +1478,8 @@
         { k: 'dn', label: '刀补号 D', def: 1, step: 1, min: 1, tip: '机床刀补表 D 值 = 实际刀半径' },
         { k: 's', label: '转速 S', def: 1800, step: 50 },
         { k: 'f', label: '进给 F', def: 800, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.l <= 0 || p.w <= 0) return '长宽必须大于 0';
@@ -1433,7 +1492,7 @@
         var hy = p.w / 2;
         var out = p.td + 3;
         var L = [];
-        pushHeader(L, 'O0018 (RECT BOSS MILL)', 'RECT BOSS MILL - G41 LEFT COMP');
+        pushHeader(L, 'O0018 (RECT BOSS MILL)', 'RECT BOSS MILL - ' + comp(p) + ' COMP');
         millHead(L, p);
 
         L.push(v('#1', num(p.x), '中心 X'));
@@ -1453,11 +1512,11 @@
         L.push('  #20=#20-#7');
         L.push('  IF [#20 LT #6] THEN #20=#6');
         L.push('  G01 Z#20 F' + num(p.f * 0.4));
-        L.push('  G41 D' + p.dn + ' G01 X[#1-#3] Y[#2-#4] F' + num(p.f * 0.6) + '   (建立刀补)');
-        L.push('  G01 X[#1+#3] F' + num(p.f));
-        L.push('  G01 Y[#2+#4]');
-        L.push('  G01 X[#1-#3]');
-        L.push('  G01 Y[#2-#4]');
+        L.push('  ' + comp(p) + ' D' + p.dn + ' G01 X[#1-#3] Y[#2-#4] F' + num(p.f * 0.6) + '   (建立刀补)');
+        L.push('  G01 ' + (rev(p) ? 'Y[#2+#4]' : 'X[#1+#3]') + ' F' + num(p.f));
+        L.push('  G01 ' + (rev(p) ? 'X[#1+#3]' : 'Y[#2+#4]'));
+        L.push('  G01 ' + (rev(p) ? 'Y[#2-#4]' : 'X[#1-#3]'));
+        L.push('  G01 ' + (rev(p) ? 'X[#1-#3]' : 'Y[#2-#4]'));
         L.push('  G40 G01 X[#1-#3-#9] F' + num(p.f * 0.6) + '   (取消刀补, 引出)');
         L.push('END 1');
         millEnd(L);
@@ -1480,7 +1539,8 @@
         { k: 'k', label: '环距系数', def: 0.7, step: 0.05, min: 0.2, max: 0.95 },
         { k: 's', label: '转速 S', def: 1800, step: 50 },
         { k: 'f', label: '进给 F', def: 900, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.td >= p.l || p.td >= p.w) return '刀具直径必须小于腔体的长和宽';
@@ -1524,10 +1584,10 @@
         L.push('    IF [#22 LT #12] THEN #22=#12    (最内环别缩成一条线)');
         L.push('    IF [#23 LT #12] THEN #23=#12');
         L.push('    G01 X[#1-#22] Y[#2-#23] F' + num(p.f) + '   (移到本环左下角)');
-        L.push('    G01 X[#1+#22]');
-        L.push('    G01 Y[#2+#23]');
-        L.push('    G01 X[#1-#22]');
-        L.push('    G01 Y[#2-#23]');
+        L.push('    G01 ' + (rev(p) ? 'X[#1+#22]' : 'Y[#2+#23]'));
+        L.push('    G01 ' + (rev(p) ? 'Y[#2+#23]' : 'X[#1+#22]'));
+        L.push('    G01 ' + (rev(p) ? 'X[#1-#22]' : 'Y[#2-#23]'));
+        L.push('    G01 ' + (rev(p) ? 'Y[#2-#23]' : 'X[#1-#22]'));
         L.push('    #21=#21-1');
         L.push('  END 2');
         L.push('END 1');
@@ -1539,7 +1599,7 @@
     rectRound: {
       kind: 'mill', g: 'slot', no: 'O0020',
       name: '长方形倒圆角',
-      desc: '带 R 角的矩形轮廓铣：四条直边 + 四段圆弧，用 G41 左刀补按图纸编程。R 角是轮廓本身的圆角，不是刀尖自然圆弧，所以能做出任意大小的角 R（只要刀半径小于 R）。',
+      desc: '带 R 角的矩形轮廓铣：四条直边 + 四段圆弧，按图纸编程，顺铣 G42 / 逆铣 G41 自动切换。R 角是轮廓本身的圆角，不是刀尖自然圆弧，所以能做出任意大小的角 R（只要刀半径小于 R）。',
       fields: [
         { k: 'x', label: '中心 X', def: 0, step: 0.1 },
         { k: 'y', label: '中心 Y', def: 0, step: 0.1 },
@@ -1552,7 +1612,8 @@
         { k: 'dn', label: '刀补号 D', def: 1, step: 1, min: 1 },
         { k: 's', label: '转速 S', def: 1800, step: 50 },
         { k: 'f', label: '进给 F', def: 800, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.r * 2 >= Math.min(p.l, p.w)) return '圆角 R × 2 必须小于短边，否则两条圆角接上了';
@@ -1566,7 +1627,7 @@
         var r = p.r;
         var out = p.td + 3;
         var L = [];
-        pushHeader(L, 'O0020 (ROUNDED RECT BOSS)', 'ROUNDED RECT BOSS - G41 LEFT COMP');
+        pushHeader(L, 'O0020 (ROUNDED RECT BOSS)', 'ROUNDED RECT BOSS - ' + comp(p) + ' COMP');
         millHead(L, p);
 
         L.push(v('#1', num(p.x), '中心 X'));
@@ -1587,15 +1648,28 @@
         L.push('  #20=#20-#8');
         L.push('  IF [#20 LT #7] THEN #20=#7');
         L.push('  G01 Z#20 F' + num(p.f * 0.4));
-        L.push('  G41 D' + p.dn + ' G01 X[#1-#3] Y[#2-#4+#5] F' + num(p.f * 0.6) + '   (建立刀补)');
-        L.push('  G01 Y[#2+#4-#5] F' + num(p.f) + '        (左边直段)');
-        L.push('  G03 X[#1-#3+#5] Y[#2+#4] R#5           (左上圆角)');
-        L.push('  G01 X[#1+#3-#5]                        (上边直段)');
-        L.push('  G03 X[#1+#3] Y[#2+#4-#5] R#5           (右上圆角)');
-        L.push('  G01 Y[#2-#4+#5]                        (右边直段)');
-        L.push('  G03 X[#1+#3-#5] Y[#2-#4] R#5           (右下圆角)');
-        L.push('  G01 X[#1-#3+#5]                        (下边直段)');
-        L.push('  G03 X[#1-#3] Y[#2-#4+#5] R#5           (左下圆角)');
+        L.push('  ' + comp(p) + ' D' + p.dn + ' G01 X[#1-#3] Y[#2-#4+#5] F' + num(p.f * 0.6) + '   (建立刀补)');
+        // 顺铣从左边中点往上绕（逆时针），逆铣反过来往下绕，四个角 R 的 G02/G03 一起对调
+        var arc = rev(p) ? 'G02' : 'G03';
+        (rev(p) ? [
+          '  G01 Y[#2-#4+#5] F' + num(p.f) + '        (左边直段)',
+          '  ' + arc + ' X[#1-#3+#5] Y[#2-#4] R#5           (左下圆角)',
+          '  G01 X[#1+#3-#5]                        (下边直段)',
+          '  ' + arc + ' X[#1+#3] Y[#2-#4+#5] R#5           (右下圆角)',
+          '  G01 Y[#2+#4-#5]                        (右边直段)',
+          '  ' + arc + ' X[#1+#3-#5] Y[#2+#4] R#5           (右上圆角)',
+          '  G01 X[#1-#3+#5]                        (上边直段)',
+          '  ' + arc + ' X[#1-#3] Y[#2+#4-#5] R#5           (左上圆角)'
+        ] : [
+          '  G01 Y[#2+#4-#5] F' + num(p.f) + '        (左边直段)',
+          '  ' + arc + ' X[#1-#3+#5] Y[#2+#4] R#5           (左上圆角)',
+          '  G01 X[#1+#3-#5]                        (上边直段)',
+          '  ' + arc + ' X[#1+#3] Y[#2+#4-#5] R#5           (右上圆角)',
+          '  G01 Y[#2-#4+#5]                        (右边直段)',
+          '  ' + arc + ' X[#1+#3-#5] Y[#2-#4] R#5           (右下圆角)',
+          '  G01 X[#1-#3+#5]                        (下边直段)',
+          '  ' + arc + ' X[#1-#3] Y[#2-#4+#5] R#5           (左下圆角)'
+        ]).forEach(function (l) { L.push(l); });
         L.push('  G40 G01 X[#1-#3-#9] F' + num(p.f * 0.6) + '   (取消刀补, 引出)');
         L.push('END 1');
         millEnd(L);
@@ -1610,7 +1684,7 @@
     polygon: {
       kind: 'mill', g: 'contour', no: 'O0021',
       name: '铣多边形',
-      desc: '正 N 边形凸台的外形铣：只要给「对边宽」和边数，程序自动换算外接圆半径（R = 对边宽 / 2 ÷ cos(180°/N)），再用 COS/SIN 算出每个顶点。改边数不用重画图。用 G41 左刀补按轮廓编程。',
+      desc: '正 N 边形凸台的外形铣：只要给「对边宽」和边数，程序自动换算外接圆半径（R = 对边宽 / 2 ÷ cos(180°/N)），再用 COS/SIN 算出每个顶点。改边数不用重画图。按轮廓编程，顺铣 G42 / 逆铣 G41 自动切换。',
       fields: [
         { k: 'x', label: '中心 X', def: 0, step: 0.1 },
         { k: 'y', label: '中心 Y', def: 0, step: 0.1 },
@@ -1623,7 +1697,8 @@
         { k: 'dn', label: '刀补号 D', def: 1, step: 1, min: 1 },
         { k: 's', label: '转速 S', def: 1800, step: 50 },
         { k: 'f', label: '进给 F', def: 800, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.n < 3 || p.n !== Math.floor(p.n)) return '边数必须是不小于 3 的整数';
@@ -1634,7 +1709,7 @@
         var R = (p.sw / 2) / Math.cos(Math.PI / p.n);
         var z = -Math.abs(p.z);
         var L = [];
-        pushHeader(L, 'O0021 (POLYGON MILL)', 'POLYGON MILL - REGULAR N SIDES, G41 LEFT COMP');
+        pushHeader(L, 'O0021 (POLYGON MILL)', 'POLYGON MILL - REGULAR N SIDES, ' + comp(p) + ' COMP');
         millHead(L, p);
 
         L.push(v('#1', num(p.x), '中心 X'));
@@ -1654,10 +1729,10 @@
         L.push('  #20=#20-#7');
         L.push('  IF [#20 LT #6] THEN #20=#6');
         L.push('  G01 Z#20 F' + num(p.f * 0.4));
-        L.push('  G41 D' + p.dn + ' G01 X[#1+#10*COS[#5]] Y[#2+#10*SIN[#5]] F' + num(p.f * 0.6));
+        L.push('  ' + comp(p) + ' D' + p.dn + ' G01 X[#1+#10*COS[#5]] Y[#2+#10*SIN[#5]] F' + num(p.f * 0.6));
         L.push('  #21=1                     (第几个顶点)');
         L.push('  WHILE [#21 LT #3] DO 2');
-        L.push('    #22=#5+#21*360/#3');
+        L.push('    #22=#5' + (rev(p) ? '-#21' : '+#21') + '*360/#3');
         L.push('    G01 X[#1+#10*COS[#22]] Y[#2+#10*SIN[#22]] F' + num(p.f));
         L.push('    #21=#21+1');
         L.push('  END 2');
@@ -1684,7 +1759,8 @@
         { k: 'dn', label: '刀补号 D', def: 1, step: 1, min: 1 },
         { k: 's', label: '转速 S', def: 1800, step: 50 },
         { k: 'f', label: '进给 F', def: 800, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.n < 3) return '至少 3 个点才能围成轮廓';
@@ -1694,7 +1770,7 @@
         var n = Math.round(p.n);
         var z = -Math.abs(p.z);
         var L = [];
-        pushHeader(L, 'O0022 (POINT-TABLE CONTOUR)', 'POINT TABLE CONTOUR - G41 LEFT COMP');
+        pushHeader(L, 'O0022 (POINT-TABLE CONTOUR)', 'POINT TABLE CONTOUR - ' + comp(p) + ' COMP');
         millHead(L, p);
 
         L.push('(点表: #100 起存 X, #200 起存 Y, 按图纸改数值即可)');
@@ -1748,7 +1824,8 @@
         { k: 'dn', label: '刀补号 D', def: 1, step: 1, min: 1 },
         { k: 's', label: '转速 S', def: 1800, step: 50 },
         { k: 'f', label: '进给 F', def: 800, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.td / 2 >= p.sw / 2) return '刀半径不能大于内切圆半径（对边宽的一半）';
@@ -1758,7 +1835,7 @@
         var R = (p.sw / 2) / Math.cos(Math.PI / 6);
         var z = -Math.abs(p.z);
         var L = [];
-        pushHeader(L, 'O0023 (HEXAGON MILL)', 'HEXAGON MILL - G41 LEFT COMP');
+        pushHeader(L, 'O0023 (HEXAGON MILL)', 'HEXAGON MILL - ' + comp(p) + ' COMP');
         millHead(L, p);
 
         L.push(v('#1', num(p.x), '中心 X'));
@@ -1777,10 +1854,10 @@
         L.push('  #20=#20-#6');
         L.push('  IF [#20 LT #5] THEN #20=#5');
         L.push('  G01 Z#20 F' + num(p.f * 0.4));
-        L.push('  G41 D' + p.dn + ' G01 X[#1+#10*COS[#4]] Y[#2+#10*SIN[#4]] F' + num(p.f * 0.6));
+        L.push('  ' + comp(p) + ' D' + p.dn + ' G01 X[#1+#10*COS[#4]] Y[#2+#10*SIN[#4]] F' + num(p.f * 0.6));
         L.push('  #21=1');
         L.push('  WHILE [#21 LT 6] DO 2');
-        L.push('    #22=#4+#21*60');
+        L.push('    #22=#4' + (rev(p) ? '-#21' : '+#21') + '*60');
         L.push('    G01 X[#1+#10*COS[#22]] Y[#2+#10*SIN[#22]] F' + num(p.f));
         L.push('    #21=#21+1');
         L.push('  END 2');
@@ -1795,7 +1872,7 @@
     star: {
       kind: 'mill', g: 'contour', no: 'O0024',
       name: '五角星',
-      desc: '五角星轮廓：10 个顶点，外顶点在半径 R 的圆上、内凹点在 0.382R 的圆上（标准五角星比例），两点交替连线就是星形。每层走一圈，用 G41 补偿刀半径。',
+      desc: '五角星轮廓：10 个顶点，外顶点在半径 R 的圆上、内凹点在 0.382R 的圆上（标准五角星比例），两点交替连线就是星形。每层走一圈，用 G41/G42 补偿刀半径（随走刀方向切换）。',
       fields: [
         { k: 'x', label: '中心 X', def: 0, step: 0.1 },
         { k: 'y', label: '中心 Y', def: 0, step: 0.1 },
@@ -1807,7 +1884,8 @@
         { k: 'dn', label: '刀补号 D', def: 1, step: 1, min: 1 },
         { k: 's', label: '转速 S', def: 1800, step: 50 },
         { k: 'f', label: '进给 F', def: 700, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.r <= 0) return '外接半径必须大于 0';
@@ -1818,7 +1896,7 @@
         var rr = p.r * 0.381966;
         var z = -Math.abs(p.z);
         var L = [];
-        pushHeader(L, 'O0024 (FIVE-POINT STAR)', 'FIVE POINT STAR - G41 LEFT COMP');
+        pushHeader(L, 'O0024 (FIVE-POINT STAR)', 'FIVE POINT STAR - ' + comp(p) + ' COMP');
         millHead(L, p);
 
         L.push(v('#1', num(p.x), '中心 X'));
@@ -1837,10 +1915,10 @@
         L.push('  #20=#20-#7');
         L.push('  IF [#20 LT #6] THEN #20=#6');
         L.push('  G01 Z#20 F' + num(p.f * 0.4));
-        L.push('  G41 D' + p.dn + ' G01 X[#1+#3*COS[#5]] Y[#2+#3*SIN[#5]] F' + num(p.f * 0.6));
+        L.push('  ' + comp(p) + ' D' + p.dn + ' G01 X[#1+#3*COS[#5]] Y[#2+#3*SIN[#5]] F' + num(p.f * 0.6));
         L.push('  #21=1                     (第几个顶点, 奇数在内凹点)');
         L.push('  WHILE [#21 LT 10] DO 2');
-        L.push('    #22=#5+#21*36');
+        L.push('    #22=#5' + (rev(p) ? '-#21' : '+#21') + '*36');
         L.push('    #23=#3                  (默认外顶点)');
         L.push('    IF [[#21 MOD 2] EQ 1] THEN #23=#4    (奇数点用内凹半径)');
         L.push('    G01 X[#1+#23*COS[#22]] Y[#2+#23*SIN[#22]] F' + num(p.f));
@@ -1857,7 +1935,7 @@
     ellipse: {
       kind: 'mill', g: 'contour', no: 'O0025',
       name: '铣椭圆',
-      desc: '椭圆轮廓：X = 长半轴 × cos t，Y = 短半轴 × sin t，按角度步距分成很多小直线段连起来。步距 5° 时轮廓误差已经很小，要更光就调小。带 G41 补偿刀半径。',
+      desc: '椭圆轮廓：X = 长半轴 × cos t，Y = 短半轴 × sin t，按角度步距分成很多小直线段连起来。步距 5° 时轮廓误差已经很小，要更光就调小。带 G41/G42 补偿刀半径（随走刀方向切换）。',
       fields: [
         { k: 'x', label: '中心 X', def: 0, step: 0.1 },
         { k: 'y', label: '中心 Y', def: 0, step: 0.1 },
@@ -1870,7 +1948,8 @@
         { k: 'dn', label: '刀补号 D', def: 1, step: 1, min: 1 },
         { k: 's', label: '转速 S', def: 1800, step: 50 },
         { k: 'f', label: '进给 F', def: 800, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.ra <= 0 || p.rb <= 0) return '长短半轴必须大于 0';
@@ -1880,7 +1959,7 @@
       gen: function (p) {
         var z = -Math.abs(p.z);
         var L = [];
-        pushHeader(L, 'O0025 (ELLIPSE MILL)', 'ELLIPSE MILL - G41 LEFT COMP');
+        pushHeader(L, 'O0025 (ELLIPSE MILL)', 'ELLIPSE MILL - ' + comp(p) + ' COMP');
         millHead(L, p);
 
         L.push(v('#1', num(p.x), '中心 X'));
@@ -1899,11 +1978,11 @@
         L.push('  #20=#20-#7');
         L.push('  IF [#20 LT #6] THEN #20=#6');
         L.push('  G01 Z#20 F' + num(p.f * 0.4));
-        L.push('  G41 D' + p.dn + ' G01 X[#1+#3] Y#2 F' + num(p.f * 0.6));
-        L.push('  #21=0                     (当前角度)');
-        L.push('  WHILE [#21 LE 360] DO 2');
+        L.push('  ' + comp(p) + ' D' + p.dn + ' G01 X[#1+#3] Y#2 F' + num(p.f * 0.6));
+        L.push('  #21=' + (rev(p) ? '360' : '0') + '                     (当前角度)');
+        L.push('  WHILE [#21 ' + (rev(p) ? 'GE 0' : 'LE 360') + '] DO 2');
         L.push('    G01 X[#1+#3*COS[#21]] Y[#2+#4*SIN[#21]] F' + num(p.f));
-        L.push('    #21=#21+#5');
+        L.push('    #21=#21' + (rev(p) ? '-#5' : '+#5'));
         L.push('  END 2');
         L.push('  G01 X[#1+#3] Y#2          (闭合)');
         L.push('  G40 G01 X[#1+#3+#7] Y#2 F' + num(p.f * 0.6));
@@ -1928,7 +2007,8 @@
         { k: 'dn', label: '刀补号 D', def: 1, step: 1, min: 1 },
         { k: 's', label: '转速 S', def: 4000, step: 100 },
         { k: 'f', label: '进给 F', def: 500, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.w <= 0) return '图形宽度必须大于 0';
@@ -1957,9 +2037,9 @@
         L.push('  #20=#20-#6');
         L.push('  IF [#20 LT #5] THEN #20=#5');
         L.push('  G01 Z#20 F' + num(p.f * 0.4));
-        L.push('  G41 D' + p.dn + ' G01 X#1 Y[#2+#3*5] F' + num(p.f * 0.6));
-        L.push('  #21=0                     (参数 t, 度)');
-        L.push('  WHILE [#21 LE 360] DO 2');
+        L.push('  ' + comp(p) + ' D' + p.dn + ' G01 X#1 Y[#2+#3*5] F' + num(p.f * 0.6));
+        L.push('  #21=' + (rev(p) ? '360' : '0') + '                     (参数 t, 度)');
+        L.push('  WHILE [#21 ' + (rev(p) ? 'GE 0' : 'LE 360') + '] DO 2');
         L.push('    #22=#3*16*SIN[#21]*SIN[#21]*SIN[#21]                                    (x)');
         L.push('    #23=#3*[13*COS[#21]-5*COS[2*#21]-2*COS[3*#21]-COS[4*#21]]              (y)');
         L.push('    G01 X[#1+#22] Y[#2+#23] F' + num(p.f));
@@ -1988,7 +2068,8 @@
         { k: 'dn', label: '刀补号 D', def: 1, step: 1, min: 1 },
         { k: 's', label: '转速 S', def: 1800, step: 50 },
         { k: 'f', label: '进给 F', def: 800, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.n < 3) return '至少 3 个点才能围成轮廓';
@@ -1998,6 +2079,7 @@
         var n = Math.round(p.n);
         var z = -Math.abs(p.z);
         var g = Number(p.side) ? 'G42' : 'G41';
+        if (rev(p)) g = flipComp(g);   // 换走刀方向时刀补一起翻，零件形状不变
         var L = [];
         pushHeader(L, 'O0027 (CONTOUR MILL)', 'CLOSED POINT TABLE, ' + g + ' COMP');
         millHead(L, p);
@@ -2023,8 +2105,16 @@
         L.push('  IF [#20 LT #5] THEN #20=#5');
         L.push('  G01 Z#20 F' + num(p.f * 0.4));
         L.push('  ' + g + ' D' + p.dn + ' G01 X#100 Y#200 F' + num(p.f * 0.6));
-        for (var j = 1; j < n; j++) {
-          L.push('  G01 X#' + (100 + j) + ' Y#' + (200 + j) + ' F' + num(p.f));
+        if (rev(p)) {
+          L.push('  #23=#3-1                (逆铣从最后一点往回走)');
+          L.push('  WHILE [#23 GE 1] DO 3');
+          L.push('    G01 X#[100+#23] Y#[200+#23] F' + num(p.f));
+          L.push('    #23=#23-1');
+          L.push('  END 3');
+        } else {
+          for (var j = 1; j < n; j++) {
+            L.push('  G01 X#' + (100 + j) + ' Y#' + (200 + j) + ' F' + num(p.f));
+          }
         }
         L.push('  G01 X#100 Y#200             (闭合)');
         L.push('  G40 G01 X[#100+#4*1.5] Y#200 F' + num(p.f * 0.6));
@@ -2049,7 +2139,8 @@
         { k: 'td', label: '刀具直径', def: 10, step: 0.1, min: 1 },
         { k: 's', label: '转速 S', def: 1800, step: 50 },
         { k: 'f', label: '进给 F', def: 800, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.a <= 0 || p.d <= 0) return '方宽和圆直径都必须大于 0';
@@ -2081,9 +2172,9 @@
         L.push('  IF [#20 LT #5] THEN #20=#5');
         L.push('  #9=[-#20/#5]              (过渡比例 0=方 1=圆)');
         L.push('  G01 Z#20 F' + num(p.f * 0.4));
-        L.push('  #21=0                     (当前角度)');
+        L.push('  #21=' + (rev(p) ? '360' : '0') + '                     (当前角度)');
         L.push('  G00 X[#1+[#3/2-#8/2]] Y#2');
-        L.push('  WHILE [#21 LE 360] DO 2');
+        L.push('  WHILE [#21 ' + (rev(p) ? 'GE 0' : 'LE 360') + '] DO 2');
         L.push('    #22=ABS[COS[#21]]        (方形的极坐标半径)');
         L.push('    #23=ABS[SIN[#21]]');
         L.push('    IF [#23 GT #22] THEN #22=#23');
@@ -2091,7 +2182,7 @@
         L.push('    #24=#22+[[#4/2]-#22]*#9  (本层插值半径)');
         L.push('    #24=#24-#8/2             (扣掉刀半径)');
         L.push('    G01 X[#1+#24*COS[#21]] Y[#2+#24*SIN[#21]] F' + num(p.f));
-        L.push('    #21=#21+#7');
+        L.push('    #21=#21' + (rev(p) ? '-#7' : '+#7'));
         L.push('  END 2');
         L.push('END 1');
         millEnd(L);
@@ -2118,7 +2209,8 @@
         { k: 'seg', label: '分段长度', def: 2, step: 0.5, min: 0.5, tip: '每段小直线的长度，越小越准' },
         { k: 's', label: '转速 S', def: 2000, step: 50 },
         { k: 'f', label: '进给 F', def: 800, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.ang <= 0 || p.ang >= 90) return '斜面角度要在 0~90° 之间';
@@ -2147,21 +2239,21 @@
         L.push(v('#12', num(rows), '行数 ' + rows));
         L.push('');
 
-        L.push('G00 X#1 Y#2');
-        L.push('G01 Z0 F' + num(p.f * 0.4));
+        L.push('G00 X' + (rev(p) ? '#1' : '[#1+#3]') + ' Y#2');
+        L.push('G01 Z' + (rev(p) ? '0' : '[-#10*#3]') + ' F' + num(p.f * 0.4));
         L.push('#20=0           (第几行)');
         L.push('WHILE [#20 LT #12] DO 1');
         L.push('  #21=#2+#20*#11           (本行 Y)');
-        L.push('  #22=0                    (沿 X 已走距离)');
+        L.push('  #22=' + (rev(p) ? '0 ' : '#3') + '                    (沿 X 已走距离)');
         L.push('  G01 Y#21 F' + num(p.f));
-        L.push('  WHILE [#22 LE #3] DO 2');
+        L.push('  WHILE [#22 ' + (rev(p) ? 'LE' : 'GE') + ' ' + (rev(p) ? '#3' : '0') + '] DO 2');
         L.push('    #23=-#10*#22           (本点 Z)');
         L.push('    G01 X[#1+#22] Z#23 F' + num(p.f));
-        L.push('    #22=#22+#7');
+        L.push('    #22=#22' + (rev(p) ? '+#7' : '-#7'));
         L.push('  END 2');
         L.push('  G00 Z5');
-        L.push('  G00 X#1');
-        L.push('  G00 Z0');
+        L.push('  G00 X' + (rev(p) ? '#1' : '[#1+#3]'));
+        L.push('  G00 Z' + (rev(p) ? '0' : '[-#10*#3]'));
         L.push('  #20=#20+1');
         L.push('END 1');
         millEnd(L);
@@ -2184,7 +2276,8 @@
         { k: 'k', label: '行距系数', def: 0.7, step: 0.05, min: 0.2, max: 0.95 },
         { k: 's', label: '转速 S', def: 2000, step: 50 },
         { k: 'f', label: '进给 F', def: 800, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.ang <= 0 || p.ang >= 90) return '斜面角度要在 0~90° 之间';
@@ -2213,16 +2306,16 @@
         L.push('');
 
         L.push('G68 X#1 Y#2 R#3        (坐标系绕起点转 #3 度)');
-        L.push('G00 X#1 Y#2');
-        L.push('G01 Z0 F' + num(p.f * 0.4));
+        L.push('G00 X' + (rev(p) ? '[#1+#4]' : '#1') + ' Y#2');
+        L.push('G01 Z' + (rev(p) ? '[-#10*#4]' : '0') + ' F' + num(p.f * 0.4));
         L.push('#20=0           (第几行)');
         L.push('WHILE [#20 LT #12] DO 1');
         L.push('  #21=#2+#20*#11');
         L.push('  G01 Y#21 F' + num(p.f));
-        L.push('  G01 X[#1+#4] Z[-#10*#4] F' + num(p.f) + '    (斜着走一刀)');
+        L.push('  ' + (rev(p) ? 'G01 X#1 Z0' : 'G01 X[#1+#4] Z[-#10*#4]') + ' F' + num(p.f) + '    (斜着走一刀)');
         L.push('  G00 Z5');
-        L.push('  G00 X#1');
-        L.push('  G00 Z0');
+        L.push('  G00 X' + (rev(p) ? '[#1+#4]' : '#1'));
+        L.push('  G00 Z' + (rev(p) ? '[-#10*#4]' : '0'));
         L.push('  #20=#20+1');
         L.push('END 1');
         L.push('G69                    (取消坐标旋转)');
@@ -2244,7 +2337,8 @@
         { k: 'q', label: '层距 (Z)', def: 1, step: 0.1, min: 0.05 },
         { k: 's', label: '转速 S', def: 3000, step: 100 },
         { k: 'f', label: '进给 F', def: 800, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (Number(p.mode) === 1 && p.td / 2 >= p.r) return '凹球：刀半径必须小于球半径';
@@ -2277,7 +2371,7 @@
           L.push('  G00 Z[#20+1]');
           L.push('  G01 Z#20 F' + num(p.f * 0.4));
           L.push('  G01 X[#1+#21] F' + num(p.f));
-          L.push('  IF [#21 GT 0.01] THEN G02 I-[#21] J0');
+          L.push('  IF [#21 GT 0.01] THEN ' + arcOut(p) + ' I-[#21] J0');
           L.push('  G01 X#1 Y#2');
           L.push('  #20=#20-#6');
           L.push('END 1');
@@ -2289,7 +2383,7 @@
           L.push('  G00 X#1 Y#2');
           L.push('  G01 Z#20 F' + num(p.f * 0.4));
           L.push('  G01 X[#1+#21] F' + num(p.f));
-          L.push('  IF [#21 GT 0.01] THEN G02 I-[#21] J0');
+          L.push('  IF [#21 GT 0.01] THEN ' + arcIn(p) + ' I-[#21] J0');
           L.push('  G01 X#1 Y#2');
           L.push('  #20=#20+#6');
           L.push('END 1');
@@ -2314,7 +2408,7 @@
         { k: 'p', label: '螺距', def: 2, step: 0.25, min: 0.25 },
         { k: 'l', label: '螺纹长度', def: 25, step: 0.5, min: 0.5 },
         { k: 'td', label: '铣刀直径', def: 16, step: 0.1, min: 1, tip: '单齿螺纹铣刀的切削直径' },
-        { k: 'dir', label: '旋向', type: 'select', def: 0, opts: [{ v: 0, t: '右旋 (G02)' }, { v: 1, t: '左旋 (G03)' }] },
+        { k: 'dir', label: '走刀方向 / 旋向', type: 'select', def: 0, opts: [{ v: 0, t: '右旋 (G02)' }, { v: 1, t: '左旋 (G03)' }] },
         { k: 's', label: '转速 S', def: 2500, step: 100 },
         { k: 'f', label: '进给 F', def: 500, step: 10 },
         { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
@@ -2372,7 +2466,7 @@
         { k: 'p', label: '螺距', def: 2, step: 0.25, min: 0.25 },
         { k: 'l', label: '螺纹长度', def: 25, step: 0.5, min: 0.5 },
         { k: 'td', label: '铣刀直径', def: 16, step: 0.1, min: 1 },
-        { k: 'dir', label: '旋向', type: 'select', def: 0, opts: [{ v: 0, t: '右旋 (G02)' }, { v: 1, t: '左旋 (G03)' }] },
+        { k: 'dir', label: '走刀方向 / 旋向', type: 'select', def: 0, opts: [{ v: 0, t: '右旋 (G02)' }, { v: 1, t: '左旋 (G03)' }] },
         { k: 's', label: '转速 S', def: 2500, step: 100 },
         { k: 'f', label: '进给 F', def: 500, step: 10 },
         { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
@@ -2432,7 +2526,7 @@
         { k: 'l', label: '螺纹长度', def: 25, step: 0.5, min: 0.5 },
         { k: 'td', label: '铣刀直径', def: 16, step: 0.1, min: 1 },
         { k: 'a', label: '角度步距', def: 10, step: 1, min: 2, max: 45, tip: '每段圆弧角，10° 一档比较稳' },
-        { k: 'dir', label: '旋向', type: 'select', def: 0, opts: [{ v: 0, t: '右旋 (角度递增)' }, { v: 1, t: '左旋 (角度递减)' }] },
+        { k: 'dir', label: '走刀方向 / 旋向', type: 'select', def: 0, opts: [{ v: 0, t: '右旋 (角度递增)' }, { v: 1, t: '左旋 (角度递减)' }] },
         { k: 's', label: '转速 S', def: 2500, step: 100 },
         { k: 'f', label: '进给 F', def: 400, step: 10 },
         { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
@@ -2499,7 +2593,8 @@
         { k: 'rr', label: 'R 平面', def: 2, step: 0.1, min: 0 },
         { k: 's', label: '转速 S', def: 1200, step: 50 },
         { k: 'f', label: '进给 F', def: 150, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.n < 1 || p.n !== Math.floor(p.n)) return '孔数必须是大于 0 的整数';
@@ -2525,7 +2620,7 @@
         L.push('#11=360/#4      (角步距 ' + num(360 / p.n, 3) + ' 度)');
         L.push('');
         L.push('WHILE [#10 LT #4] DO 1');
-        L.push('  #12=#5+#10*#11          (当前角)');
+        L.push('  #12=#5' + (rev(p) ? '-#10' : '+#10') + '*#11          (当前角)');
         L.push('  #13=#1+#3*COS[#12]      (孔位 X)');
         L.push('  #14=#2+#3*SIN[#12]      (孔位 Y)');
         L.push('  G00 X#13 Y#14');
@@ -2555,7 +2650,8 @@
         { k: 'rr', label: 'R 平面', def: 2, step: 0.1, min: 0 },
         { k: 's', label: '转速 S', def: 1200, step: 50 },
         { k: 'f', label: '进给 F', def: 150, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.n < 1) return '每圈孔数至少为 1';
@@ -2585,7 +2681,7 @@
         L.push('  #21=#3+#20*#5           (本圈半径)');
         L.push('  #22=0                   (本圈第几个孔)');
         L.push('  WHILE [#22 LT #6] DO 2');
-        L.push('    #23=#7+#22*360/#6');
+        L.push('    #23=#7' + (rev(p) ? '-#22' : '+#22') + '*360/#6');
         L.push('    G00 X[#1+#21*COS[#23]] Y[#2+#21*SIN[#23]]');
         L.push('    G81 Z#8 R#9 F' + p.f);
         L.push('    #22=#22+1');
@@ -2614,7 +2710,8 @@
         { k: 'rr', label: 'R 平面', def: 2, step: 0.1, min: 0 },
         { k: 's', label: '转速 S', def: 1200, step: 50 },
         { k: 'f', label: '进给 F', def: 150, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.row < 1 || p.col < 1) return '行数和列数都至少为 1';
@@ -2636,15 +2733,15 @@
         L.push(v('#8', num(p.rr), 'R 平面'));
         L.push('');
 
-        L.push('#20=0           (行)');
-        L.push('WHILE [#20 LT #3] DO 1');
-        L.push('  #21=0                   (列)');
-        L.push('  WHILE [#21 LT #4] DO 2');
+        L.push('#20=' + (rev(p) ? '#3-1' : '0') + '           (行)');
+        L.push('WHILE [#20 ' + (rev(p) ? 'GE 0' : 'LT #3') + '] DO 1');
+        L.push('  #21=' + (rev(p) ? '#4-1' : '0') + '                   (列)');
+        L.push('  WHILE [#21 ' + (rev(p) ? 'GE 0' : 'LT #4') + '] DO 2');
         L.push('    G00 X[#1+#21*#6] Y[#2+#20*#5]');
         L.push('    G81 Z#7 R#8 F' + p.f);
-        L.push('    #21=#21+1');
+        L.push('    #21=#21' + (rev(p) ? '-1' : '+1'));
         L.push('  END 2');
-        L.push('  #20=#20+1');
+        L.push('  #20=#20' + (rev(p) ? '-1' : '+1'));
         L.push('END 1');
         L.push('');
         L.push('G80');
@@ -2669,7 +2766,8 @@
         { k: 'q', label: '每圈下刀', def: 2, step: 0.1, min: 0.05 },
         { k: 's', label: '转速 S', def: 1800, step: 50 },
         { k: 'f', label: '进给 F', def: 600, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         var r = (p.hd - p.td) / 2;
@@ -2709,9 +2807,9 @@
         L.push('  WHILE [#24 GT #7] DO 2');
         L.push('    #24=#24-#9');
         L.push('    IF [#24 LT #7] THEN #24=#7');
-        L.push('    G02 X[#22+#11] Y#23 Z#24 I-[#11] J0 F' + num(p.f));
+        L.push('    ' + arcIn(p) + ' X[#22+#11] Y#23 Z#24 I-[#11] J0 F' + num(p.f));
         L.push('  END 2');
-        L.push('  G02 X[#22+#11] Y#23 I-[#11] J0 F' + num(p.f * 0.8) + '   (孔底光整)');
+        L.push('  ' + arcIn(p) + ' X[#22+#11] Y#23 I-[#11] J0 F' + num(p.f * 0.8) + '   (孔底光整)');
         L.push('  G00 Z50');
         L.push('  #20=#20+1');
         L.push('END 1');
@@ -2738,7 +2836,8 @@
         { k: 'q', label: '锥面层深', def: 0.5, step: 0.1, min: 0.1 },
         { k: 's', label: '转速 S', def: 2500, step: 100 },
         { k: 'f', label: '进给 F', def: 400, step: 10 },
-        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 }
+        { k: 'h', label: '刀补号 H', def: 1, step: 1, min: 1 },
+        dirField()
       ],
       check: function (p) {
         if (p.d0 >= p.d1) return '底孔直径必须小于沉头大径';
@@ -2767,7 +2866,7 @@
 
         L.push('#20=0           (第几个孔)');
         L.push('WHILE [#20 LT #4] DO 1');
-        L.push('  #21=#5+#20*360/#4');
+        L.push('  #21=#5' + (rev(p) ? '-#20' : '+#20') + '*360/#4');
         L.push('  #22=#1+#3*COS[#21]       (孔心 X)');
         L.push('  #23=#2+#3*SIN[#21]       (孔心 Y)');
         L.push('  (1. 钻底孔)');
@@ -2784,7 +2883,7 @@
         L.push('    G00 X#22 Y#23             (回孔心)');
         L.push('    G01 Z#24 F' + num(p.f * 0.4) + '       (下到本层)');
         L.push('    G01 X[#22+#25] F' + num(p.f) + '     (径向进到锥面)');
-        L.push('    G02 I-[#25] J0');
+        L.push('    ' + arcIn(p) + ' I-[#25] J0');
         L.push('  END 2');
         L.push('  #20=#20+1');
         L.push('END 1');

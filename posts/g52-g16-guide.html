@@ -1,0 +1,1025 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><script>if ('serviceWorker' in navigator) {
+  var isLocalDev = ['localhost', '127.0.0.1', '0.0.0.0'].indexOf(location.hostname) !== -1
+  if (isLocalDev) {
+    navigator.serviceWorker.getRegistrations().then(function (rs) {
+      rs.forEach(function (r) { r.unregister() })
+    })
+  } else {
+    navigator.serviceWorker.register('/sw.js').then(function () {
+      if (localStorage.getItem('install') !== 'true') {
+        localStorage.setItem('install', 'true')
+        location.reload()
+      }
+    })
+  }
+}
+</script><head><div id="myscoll"></div><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>G52 与 G16 完全指南：局部坐标系与极坐标编程 | chengicli</title><meta name="keywords" content="CNC,G代码"><meta name="author" content="chengicli"><meta name="copyright" content="chengicli"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="ffffff"><meta name="description" content="以 FANUC 类系统为例，讲清 G52 局部坐标系和 G16 极坐标模式的原理、格式、示范程序、常见坑与上机前检查清单。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="G52 与 G16 完全指南：局部坐标系与极坐标编程">
+<meta property="og:url" content="https://www.lichengic.com/posts/g52-g16-guide.html">
+<meta property="og:site_name" content="chengicli">
+<meta property="og:description" content="以 FANUC 类系统为例，讲清 G52 局部坐标系和 G16 极坐标模式的原理、格式、示范程序、常见坑与上机前检查清单。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.lichengic.com/assets/covers/g52-g16-guide.png">
+<meta property="article:published_time" content="2026-11-22T00:30:00.000Z">
+<meta property="article:modified_time" content="2026-11-22T00:30:00.000Z">
+<meta property="article:author" content="chengicli">
+<meta property="article:tag" content="CNC">
+<meta property="article:tag" content="G代码">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.lichengic.com/assets/covers/g52-g16-guide.png"><link rel="shortcut icon" href="/"><link rel="canonical" href="https://www.lichengic.com/posts/g52-g16-guide"><link rel="preconnect" href="//events.vercount.one"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/External-link/css/fontawesome/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="/External-link/css/fancybox.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: {"appId":"XAPS1H9C4E","apiKey":"f23ce571987ecaf56e6fe0c2c9cfc9f3","indexName":"chengicli","hits":{"per_page":5},"languages":{"input_placeholder":"搜索文章","hits_empty":"找不到您查询的内容：${query}","hits_stats":"找到 ${hits} 条结果，用时 ${time} 毫秒"}},
+  localSearch: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":230},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: true,
+    post: true
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdnjs.cloudflare.com/ajax/libs/flickr-justified-gallery/2.1.2/fjGallery.min.js',
+      css: 'https://cdnjs.cloudflare.com/ajax/libs/flickr-justified-gallery/2.1.2/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isAnchor: false,
+  titlePrank: {"enable":false,"away":"别走呀...","back":"欢迎回来！","delay":2000}
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'G52 与 G16 完全指南：局部坐标系与极坐标编程',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2026-11-22 08:30:00'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', 'ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><link rel="stylesheet" href="/External-link/css/lxgw/lxgwwenkaigbscreen.css" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="/External-link/css/lxgw/lxgwwenkaigbscreen.css"></noscript><link rel="preconnect" href="https://sdk.51.la"><link rel="preconnect" href="https://sdk.51.la" crossorigin><link rel="stylesheet" href="/css/twikoo.css?v=20261117-anchor2"><link rel="stylesheet" href="/css/pdf-viewer.css?v=20261022b"><style id="themeColor"></style><style id="rightSide"></style><style id="transPercent"></style><style id="bgFilterParam"></style><span id="fps" aria-hidden="true"></span><style id="defineBg">:root{--default-bg:url(/Background-wallpaper/computer-Daytime-background.webp);--darkmode-bg:url(/Background-wallpaper/computer-Night-background.webp);--mobileday-bg:url(/Background-wallpaper/phone-Daytime-background.webp);--mobilenight-bg:url(/Background-wallpaper/phone-Night-background.webp);}</style><style id="menu_shadow"></style><style id="nav-display"></style><style id="aside-show"></style><style id="aside-pos"></style><link rel="stylesheet" href="/css/site-inject.css?v=20261121-unifywall"><link rel="stylesheet" href="/css/daily-say.css?v=20261102-hall"><link rel="stylesheet" href="/css/navigation.css?v=20261102-navtop"><link rel="stylesheet" href="/css/mobile-drawer.css?v=20261008"><link rel="stylesheet" href="/css/avatar-glow.css?v=20261004q"><script src="/js/inject/ping-route-boot.js"></script><script src="/js/inject/ping-route.js"></script><script src="/js/inject/beauty-boot.js?v=20261102-fcall"></script><script src="/js/inject/right-menu-state-boot.js"></script><script>window.fomalNightConfig=window.fomalNightConfig||{enabled:true,latLng:null,themeKey:'theme'}</script><script src="/js/inject/daynight-boot.js?v=20261014-nightboot2"></script><script src="/js/inject/typewriter.js?v=20261004b"></script><script>try{if(localStorage.getItem('chengic-lang')==='zh-Hant'){document.write('<style id="i18n-guard">html.i18n-pending body{visibility:hidden}</style>');document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},2500)}}catch(e){}</script><link rel="stylesheet" href="/css/typewriter.css?v=20261004"><link rel="stylesheet" href="/css/paperclip.css?v=20261005-mobile1"><link rel="stylesheet" href="/css/archive-page.css?v=20261118-tagfix"><svg aria-hidden="true" style="position:absolute; overflow:hidden; width:0; height:0"><symbol id="icon-sun" viewBox="0 0 1024 1024"><path d="M960 512l-128 128v192h-192l-128 128-128-128H192v-192l-128-128 128-128V192h192l128-128 128 128h192v192z" fill="#FFD878" p-id="8420"></path><path d="M736 512a224 224 0 1 0-448 0 224 224 0 1 0 448 0z" fill="#FFE4A9" p-id="8421"></path><path d="M512 109.248L626.752 224H800v173.248L914.752 512 800 626.752V800h-173.248L512 914.752 397.248 800H224v-173.248L109.248 512 224 397.248V224h173.248L512 109.248M512 64l-128 128H192v192l-128 128 128 128v192h192l128 128 128-128h192v-192l128-128-128-128V192h-192l-128-128z" fill="#4D5152" p-id="8422"></path><path d="M512 320c105.888 0 192 86.112 192 192s-86.112 192-192 192-192-86.112-192-192 86.112-192 192-192m0-32a224 224 0 1 0 0 448 224 224 0 0 0 0-448z" fill="#4D5152" p-id="8423"></path></symbol><symbol id="icon-moon" viewBox="0 0 1024 1024"><path d="M611.370667 167.082667a445.013333 445.013333 0 0 1-38.4 161.834666 477.824 477.824 0 0 1-244.736 244.394667 445.141333 445.141333 0 0 1-161.109334 38.058667 85.077333 85.077333 0 0 0-65.066666 135.722666A462.08 462.08 0 1 0 747.093333 102.058667a85.077333 85.077333 0 0 0-135.722666 65.024z" fill="#FFB531" p-id="11345"></path><path d="M329.728 274.133333l35.157333-35.157333a21.333333 21.333333 0 1 0-30.165333-30.165333l-35.157333 35.157333-35.114667-35.157333a21.333333 21.333333 0 0 0-30.165333 30.165333l35.114666 35.157333-35.114666 35.157334a21.333333 21.333333 0 1 0 30.165333 30.165333l35.114667-35.157333 35.157333 35.157333a21.333333 21.333333 0 1 0 30.165333-30.165333z" fill="#030835" p-id="11346"></path></symbol></svg><!-- hexo injector head_end start --><link rel="stylesheet" href="/External-link/css/animate.min.css" media="print" onload="this.media='screen'"><link rel="stylesheet" href="/External-link/css/font-awesome-animation.min.css" media="defer" onload="this.media='all'"><link rel="stylesheet" href="/External-link/css/tag_plugins.css" media="defer" onload="this.media='all'"><script src="/External-link/js/carousel-touch.js"></script><!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"><link rel="alternate" href="/atom.xml" title="chengicli" type="application/atom+xml">
+</head><body><div id="loading-box" onclick="document.getElementById(&quot;loading-box&quot;).classList.add(&quot;loaded&quot;)"><div class="loading-bg"><div class="loading-img"></div><div class="loading-image-dot"></div></div></div><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/assets/avatar.webp" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">9</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">17</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">4</div></a></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-home"></use></svg><span class="menu_word" style="font-size:17px"> 首页</span></a></div><div class="menus_item"><a class="site-page group faa-parent animated-hover hide" href="javascript:void(0);"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon--article"></use></svg><span class="menu_word" style="font-size:17px"> 文章</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child faa-parent animated-hover" href="/archives/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-guidang1">                   </use></svg><span class="menu_word" style="font-size:17px"> 文章总览</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/tags/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-shujutongji1">                   </use></svg><span class="menu_word" style="font-size:17px"> 文章统计</span></a></li><li><a class="site-page child faa-parent animated-hover" href="javascript:randomPost();"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-zuji1">                   </use></svg><span class="menu_word" style="font-size:17px"> 随便逛逛</span></a></li></ul></div><div class="menus_item"><a class="site-page group faa-parent animated-hover hide" href="javascript:void(0);"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-xiangzi"></use></svg><span class="menu_word" style="font-size:17px"> 八宝箱</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child faa-parent animated-hover" href="/thread/"><i class="fa-fw fas fa-screwdriver-wrench faa-tada"></i><span class="menu_word" style="font-size:17px"> 螺纹规格</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/macro/"><i class="fa-fw fas fa-code faa-tada"></i><span class="menu_word" style="font-size:17px"> 宏程序</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/warehouse/"><i class="fa-fw fas fa-warehouse faa-tada"></i><span class="menu_word" style="font-size:17px"> 刀具库</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/hours/"><i class="fa-fw fas fa-stopwatch faa-tada"></i><span class="menu_word" style="font-size:17px"> 产品工时</span></a></li></ul></div><div class="menus_item"><a class="site-page group faa-parent animated-hover hide" href="javascript:void(0);"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-wangye"></use></svg><span class="menu_word" style="font-size:17px"> 网站</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child faa-parent animated-hover" href="/nav/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-zhifengche">                   </use></svg><span class="menu_word" style="font-size:17px"> 网址导航</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/music/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-yinle">                   </use></svg><span class="menu_word" style="font-size:17px"> 音乐馆</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/about/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-paperplane">                   </use></svg><span class="menu_word" style="font-size:17px"> 关于</span></a></li></ul></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/message/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-liuyan"></use></svg><span class="menu_word" style="font-size:17px"> 留言板</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">chengicli</a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-home"></use></svg><span class="menu_word" style="font-size:17px"> 首页</span></a></div><div class="menus_item"><a class="site-page group faa-parent animated-hover hide" href="javascript:void(0);"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon--article"></use></svg><span class="menu_word" style="font-size:17px"> 文章</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child faa-parent animated-hover" href="/archives/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-guidang1">                   </use></svg><span class="menu_word" style="font-size:17px"> 文章总览</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/tags/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-shujutongji1">                   </use></svg><span class="menu_word" style="font-size:17px"> 文章统计</span></a></li><li><a class="site-page child faa-parent animated-hover" href="javascript:randomPost();"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-zuji1">                   </use></svg><span class="menu_word" style="font-size:17px"> 随便逛逛</span></a></li></ul></div><div class="menus_item"><a class="site-page group faa-parent animated-hover hide" href="javascript:void(0);"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-xiangzi"></use></svg><span class="menu_word" style="font-size:17px"> 八宝箱</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child faa-parent animated-hover" href="/thread/"><i class="fa-fw fas fa-screwdriver-wrench faa-tada"></i><span class="menu_word" style="font-size:17px"> 螺纹规格</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/macro/"><i class="fa-fw fas fa-code faa-tada"></i><span class="menu_word" style="font-size:17px"> 宏程序</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/warehouse/"><i class="fa-fw fas fa-warehouse faa-tada"></i><span class="menu_word" style="font-size:17px"> 刀具库</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/hours/"><i class="fa-fw fas fa-stopwatch faa-tada"></i><span class="menu_word" style="font-size:17px"> 产品工时</span></a></li></ul></div><div class="menus_item"><a class="site-page group faa-parent animated-hover hide" href="javascript:void(0);"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-wangye"></use></svg><span class="menu_word" style="font-size:17px"> 网站</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child faa-parent animated-hover" href="/nav/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-zhifengche">                   </use></svg><span class="menu_word" style="font-size:17px"> 网址导航</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/music/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-yinle">                   </use></svg><span class="menu_word" style="font-size:17px"> 音乐馆</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/about/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-paperplane">                   </use></svg><span class="menu_word" style="font-size:17px"> 关于</span></a></li></ul></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/message/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-liuyan"></use></svg><span class="menu_word" style="font-size:17px"> 留言板</span></a></div></div><center id="name-container"><a id="page-name" href="javascript:scrollToTop()">PAGE_NAME</a></center><div id="nav-right"><div id="search-button"><a class="search faa-parent animated-hover" title="检索站内任何你想要的信息"><svg class="faa-tada icon" style="height:24px;width:24px;fill:currentColor;position:relative;top:6px" aria-hidden="true"><use xlink:href="#icon-sousuo"></use></svg><span> 搜索</span></a></div><a class="meihua faa-parent animated-hover" onclick="toggleWinbox()" title="美化设置-自定义你的风格" id="meihua-button"><svg class="faa-tada icon" style="height:26px;width:26px;fill:currentColor;position:relative;top:8px" aria-hidden="true"><use xlink:href="#icon-huahua"></use></svg></a><a class="sun_moon faa-parent animated-hover" onclick="switchNightMode()" title="浅色和深色模式转换" id="nightmode-button"><svg class="faa-tada" style="height:25px;width:25px;fill:currentColor;position:relative;top:7px" viewBox="0 0 1024 1024"><use id="modeicon" xlink:href="#icon-moon">       </use></svg></a><div id="toggle-menu"><a><i class="fas fa-bars fa-fw"></i></a></div></div></div></nav><div id="post-info"><h1 class="post-title">G52 与 G16 完全指南：局部坐标系与极坐标编程</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><svg class="meta_icon post-meta-icon" style="width:30px;height:30px;position:relative;top:10px"><use xlink:href="#icon-rili"></use></svg><span class="post-meta-label">发表于 </span><time class="post-meta-date-created" datetime="2026-11-22T00:30:00.000Z" title="发表于 2026-11-22 08:30:00">2026-11-22</time><span class="post-meta-separator">|</span><svg class="meta_icon post-meta-icon" style="width:18px;height:18px;position:relative;top:5px"><use xlink:href="#icon-gengxin1"></use></svg><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-11-22T00:30:00.000Z" title="更新于 2026-11-22 08:30:00">2026-11-22</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><svg class="meta_icon post-meta-icon" style="width:18px;height:18px;position:relative;top:5px"><use xlink:href="#icon-biaoqian"></use></svg><a class="post-meta-categories" href="/categories/CNC%E5%B7%A5%E8%89%BA/">CNC工艺</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><svg class="meta_icon post-meta-icon" style="width:25px;height:25px;position:relative;top:8px"><use xlink:href="#icon-charuword"></use></svg><span class="post-meta-label">字数总计:</span><span class="word-count">4174</span><span class="post-meta-separator">|</span><svg class="meta_icon post-meta-icon" style="width:20px;height:20px;position:relative;top:5px"><use xlink:href="#icon-shizhong"></use></svg><span class="post-meta-label">阅读时长:</span><span>15分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="G52 与 G16 完全指南：局部坐标系与极坐标编程"><svg class="meta_icon post-meta-icon" style="width:25px;height:25px;position:relative;top:5px"><use xlink:href="#icon-eye"></use></svg><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv">—</span></span></div></div></div><section class="main-hero-waves-area waves-area"><svg class="waves-svg" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto"><defs><path id="gentle-wave" d="M -160 44 c 30 0 58 -18 88 -18 s 58 18 88 18 s 58 -18 88 -18 s 58 18 88 18 v 44 h -352 Z"></path></defs><g class="parallax"><use href="#gentle-wave" x="48" y="0"></use><use href="#gentle-wave" x="48" y="3"></use><use href="#gentle-wave" x="48" y="5"></use><use href="#gentle-wave" x="48" y="7"></use></g></svg></section></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><p>G52 和 G16 都属于“看懂说明书觉得很简单，上机却最容易出事”的 G 代码。</p>
+<p>G52 解决的是：<strong>我不想改 G54，但想临时换一个原点。</strong></p>
+<p>G16 解决的是：<strong>图纸给的是半径和角度，我不想手算 X、Y。</strong></p>
+<p>两个代码单独用都不难，但它们有一个共同危险点：<strong>都是模态状态</strong>。一行写错，后面整段程序都跟着错。这篇文章按“第一次接触”的起点写，把原理、示范和注意事项一次讲清。</p>
+<div class="note warning flat"><p>本文以常见 FANUC 类铣床 / 加工中心写法为例。不同系统（Siemens、Haas、Brother、新代、广数等）对细节的支持不完全一致，尤其是复位是否清除 G52、极坐标下圆弧和刀具半径补偿的处理。上机前必须查本机床手册并空运行验证。</p>
+</div>
+<h2 id="阅读路线">阅读路线</h2>
+<table>
+<thead>
+<tr>
+<th>你想解决什么</th>
+<th>看哪一步</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>我只是想搞懂两个代码的区别</td>
+<td>第 0 步</td>
+</tr>
+<tr>
+<td>我要临时换个原点加工重复特征</td>
+<td>第 1、2 步</td>
+</tr>
+<tr>
+<td>我担心 G52 忘了取消</td>
+<td>第 3 步</td>
+</tr>
+<tr>
+<td>图纸给的是 PCD 和角度</td>
+<td>第 4、5 步</td>
+</tr>
+<tr>
+<td>我要钻一圈等分孔</td>
+<td>第 6 步</td>
+</tr>
+<tr>
+<td>我想用 G91 + K 简化等分孔</td>
+<td>第 6.3 节</td>
+</tr>
+<tr>
+<td>我想把 G52 和 G16 一起用</td>
+<td>第 8 步</td>
+</tr>
+<tr>
+<td>我只想上机前过一遍</td>
+<td>第 10 步</td>
+</tr>
+</tbody>
+</table>
+<span id="more"></span>
+<h2 id="第-0-步：先分清它们各管什么">第 0 步：先分清它们各管什么</h2>
+<table>
+<thead>
+<tr>
+<th>代码</th>
+<th>名称</th>
+<th>解决什么问题</th>
+<th>取消方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>G52</code></td>
+<td>局部坐标系设定</td>
+<td>在 G54～G59 里再临时建一个子原点</td>
+<td><code>G52 X0 Y0 Z0</code></td>
+</tr>
+<tr>
+<td><code>G16</code></td>
+<td>极坐标模式</td>
+<td>用“半径 + 角度”代替 X、Y 直角坐标</td>
+<td><code>G15</code></td>
+</tr>
+</tbody>
+</table>
+<p>一句话记忆：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">G52 改的是“零点在哪里”</span><br><span class="line">G16 改的是“坐标怎么解释”</span><br></pre></td></tr></table></figure>
+<p>它们不冲突，甚至可以叠加：先用 G52 把零点搬到孔系中心，再用 G16 按半径和角度走孔位。</p>
+<hr>
+<h2 id="第-1-步：G52-到底是什么">第 1 步：G52 到底是什么</h2>
+<h3 id="1-1-它不是-G54，也不是-G92">1.1 它不是 G54，也不是 G92</h3>
+<p>G52 的全称是<strong>局部坐标系设定</strong>（Local Coordinate System）。它不会修改 G54 里的偏置值，也不会改变机械坐标系。</p>
+<p>可以把 G54 想成“厂房地址”，G52 想成“在厂房里临时画的一个小格子”。后续所有 <code>X_ Y_ Z_</code> 都按这个小格子来算。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">机床坐标系：不会变</span><br><span class="line">G54 工件坐标系：不会变</span><br><span class="line">当前生效坐标系 = G54 + G52 偏移量</span><br></pre></td></tr></table></figure>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/assets/cnc/g52-g16/fig-01-g52-local-origin.svg" alt="G52 局部原点示意：G54 原点与 G52 局部原点之间的关系" title="G52 不改 G54，只在当前坐标系上叠加偏移"></p>
+<p><em>图中粉色十字是 G52 建立的局部原点。设置完成后，<code>X0 Y0</code> 指的就是这个粉色点，而不是 G54 原点。</em></p>
+<h3 id="1-2-格式">1.2 格式</h3>
+<figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="name">G52</span> X_ Y_ Z_</span><br></pre></td></tr></table></figure>
+<p>例如：</p>
+<figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="name">G90</span> <span class="name">G54</span></span><br><span class="line"><span class="name">G52</span> X<span class="number">100.</span> Y<span class="number">50.</span> Z<span class="number">0.</span></span><br></pre></td></tr></table></figure>
+<p>表示：在当前 G54 坐标系的 <code>X100. Y50. Z0.</code> 位置，建立一个局部原点。</p>
+<p>从这一行之后：</p>
+<figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="name">G00</span> X<span class="number">0</span> Y<span class="number">0</span></span><br></pre></td></tr></table></figure>
+<p>刀具实际走到的是 G54 下的 <code>X100. Y50.</code>，而不是 G54 的原点。</p>
+<h3 id="1-3-取消一定要写全">1.3 取消一定要写全</h3>
+<figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="name">G52</span> X<span class="number">0</span> Y<span class="number">0</span> Z<span class="number">0</span></span><br></pre></td></tr></table></figure>
+<div class="note warning flat"><p>取消 G52 时，最好三个轴都写。只写 <code>G52 X0 Y0</code> 的话，如果之前设过 Z 偏移，Z 方向的局部偏移可能还留着。</p>
+</div>
+<hr>
+<h2 id="第-2-步：G52-的最小示范">第 2 步：G52 的最小示范</h2>
+<p>下面这个程序只做一件事：把局部原点搬到 G54 的 <code>X100. Y50.</code>，在那里定位，再取消。</p>
+<figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">%</span></span><br><span class="line"><span class="meta">O0520</span> <span class="comment">(G52 LOCAL OFFSET DEMO)</span></span><br><span class="line"><span class="name">G21</span> <span class="name">G17</span> <span class="name">G40</span> <span class="name">G49</span> <span class="name">G80</span> <span class="name">G90</span></span><br><span class="line"><span class="name">G15</span></span><br><span class="line"><span class="name">G54</span></span><br><span class="line"><span class="name">G52</span> X<span class="number">0</span> Y<span class="number">0</span> Z<span class="number">0</span>    <span class="comment">(先清干净，防止上一程序残留)</span></span><br><span class="line"></span><br><span class="line"><span class="name">G00</span> X<span class="number">0</span> Y<span class="number">0</span></span><br><span class="line"><span class="name">G43</span> H<span class="number">01</span> Z<span class="number">50.</span></span><br><span class="line"><span class="name">G00</span> Z<span class="number">5.</span></span><br><span class="line"></span><br><span class="line"><span class="name">G52</span> X<span class="number">100.</span> Y<span class="number">50.</span>  <span class="comment">(局部原点 = G54 的 X100 Y50)</span></span><br><span class="line"><span class="name">G00</span> X<span class="number">0</span> Y<span class="number">0</span>       <span class="comment">(实际到达 G54 的 X100 Y50)</span></span><br><span class="line"><span class="name">G00</span> Z<span class="number">2.</span></span><br><span class="line"></span><br><span class="line"><span class="comment">(这里可以调用围绕局部原点写的子程序)</span></span><br><span class="line"><span class="name">M98</span> P<span class="number">1000</span></span><br><span class="line"></span><br><span class="line"><span class="name">G00</span> Z<span class="number">50.</span></span><br><span class="line"><span class="name">G52</span> X<span class="number">0</span> Y<span class="number">0</span> Z<span class="number">0</span>    <span class="comment">(取消 G52)</span></span><br><span class="line"><span class="name">G00</span> X<span class="number">0</span> Y<span class="number">0</span>       <span class="comment">(回到 G54 原点)</span></span><br><span class="line"></span><br><span class="line"><span class="name">G91</span> <span class="name">G28</span> Z<span class="number">0</span></span><br><span class="line"><span class="name">G90</span></span><br><span class="line"><span class="name">M30</span></span><br><span class="line"><span class="meta">%</span></span><br></pre></td></tr></table></figure>
+<h3 id="2-1-什么时候用-G52">2.1 什么时候用 G52</h3>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>为什么用 G52</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>同一个特征在板上重复多处</td>
+<td>子程序都按 <code>X0 Y0</code> 写，换局部原点即可</td>
+</tr>
+<tr>
+<td>夹具上有多个工位</td>
+<td>每个工位一个 G52，程序主体不用改</td>
+</tr>
+<tr>
+<td>临时借用别人写好的子程序</td>
+<td>不改子程序，只改主程序的局部原点</td>
+</tr>
+<tr>
+<td>想要暂时偏移，不想动 G54</td>
+<td>G52 用完就撤，不影响长期基准</td>
+</tr>
+</tbody>
+</table>
+<h3 id="2-2-一个典型的多工位写法">2.2 一个典型的多工位写法</h3>
+<figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="name">G52</span> X<span class="number">0.</span>   Y<span class="number">0.</span></span><br><span class="line"><span class="name">M98</span> P<span class="number">1000</span></span><br><span class="line"></span><br><span class="line"><span class="name">G52</span> X<span class="number">120.</span> Y<span class="number">0.</span></span><br><span class="line"><span class="name">M98</span> P<span class="number">1000</span></span><br><span class="line"></span><br><span class="line"><span class="name">G52</span> X<span class="number">0.</span>   Y<span class="number">100.</span></span><br><span class="line"><span class="name">M98</span> P<span class="number">1000</span></span><br><span class="line"></span><br><span class="line"><span class="name">G52</span> X<span class="number">120.</span> Y<span class="number">100.</span></span><br><span class="line"><span class="name">M98</span> P<span class="number">1000</span></span><br><span class="line"></span><br><span class="line"><span class="name">G52</span> X<span class="number">0</span> Y<span class="number">0</span> Z<span class="number">0</span></span><br></pre></td></tr></table></figure>
+<p>同样的 <code>O1000</code> 子程序，被搬到了四个位置。子程序内部只管围绕自己的 <code>X0 Y0</code> 干活。</p>
+<hr>
+<h2 id="第-3-步：G52-最容易踩的五个坑">第 3 步：G52 最容易踩的五个坑</h2>
+<h3 id="3-1-忘了取消">3.1 忘了取消</h3>
+<p>这是最危险的一条。G52 在很多配置里是模态的，程序结束了还可能保留。下一个程序如果没写 <code>G52 X0 Y0 Z0</code>，一上来就整体偏移。</p>
+<div class="note warning flat"><p>把 <code>G52 X0 Y0 Z0</code> 写进程序开头和结尾，像写 <code>G40 G49 G80</code> 一样养成习惯。</p>
+</div>
+<h3 id="3-2-以为复位一定会清掉">3.2 以为复位一定会清掉</h3>
+<p>不同机床参数对“复位是否取消 G52”的处理不同。不要靠按 RESET 来兜底，必须程序里显式取消。</p>
+<h3 id="3-3-和-G92-混用">3.3 和 G92 混用</h3>
+<p>G92 也是坐标偏移，但语义不同：G92 是把当前点“告诉”系统它等于某个值。LinuxCNC 等系统甚至把 G52 和 G92 的内部偏移共用。</p>
+<p>一个程序里只选一种思路，不要 G52 和 G92 混着写。</p>
+<h3 id="3-4-和-G53-搞混">3.4 和 G53 搞混</h3>
+<p><code>G53</code> 是机械坐标移动，通常用于回参考点或安全换刀位置。它不走工件坐标系，也不吃 G52 的偏移。</p>
+<figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="name">G53</span> <span class="name">G00</span> Z<span class="number">0.</span></span><br></pre></td></tr></table></figure>
+<p>这条是按机械坐标走，不是按 G54 + G52 走。</p>
+<h3 id="3-5-增量模式下的误读">3.5 增量模式下的误读</h3>
+<p>在 <code>G91</code> 下，G52 后面的数值仍按增量语义理解，但很容易和当前位置混在一起。设置局部原点时，<strong>强烈建议先切回 <code>G90</code></strong>：</p>
+<figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="name">G90</span></span><br><span class="line"><span class="name">G52</span> X<span class="number">100.</span> Y<span class="number">50.</span> Z<span class="number">0.</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="第-4-步：G16-到底是什么">第 4 步：G16 到底是什么</h2>
+<p><code>G16</code> 打开极坐标模式。打开后，平面内的两个地址不再是“X 坐标、Y 坐标”，而是“半径、角度”。</p>
+<p>用 <code>G15</code> 取消，回到普通直角坐标。</p>
+<figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="name">G16</span></span><br><span class="line">... 极坐标定位 ...</span><br><span class="line"><span class="name">G15</span></span><br></pre></td></tr></table></figure>
+<div class="note info flat"><p>G16 是模态的。只要没写 G15，后面的定位点都会被当作极坐标解释。这也是为什么很多“孔全飞了”的事故，原因只是漏了一行 G15。</p>
+</div>
+<h3 id="4-1-角度单位">4.1 角度单位</h3>
+<p>角度通常用<strong>度</strong>，不是弧度。</p>
+<figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Y<span class="number">30.</span>    → <span class="number">30</span>°</span><br><span class="line">Y<span class="number">90.</span>    → <span class="number">90</span>°</span><br><span class="line">Y<span class="number">-15.</span>   → <span class="number">-15</span>°</span><br><span class="line">Y<span class="number">22.5</span>   → <span class="number">22.5</span>°</span><br></pre></td></tr></table></figure>
+<h3 id="4-2-半径不是直径">4.2 半径不是直径</h3>
+<p>图纸如果标的是 PCD（节圆直径）100，半径是 50：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">PCD 100  →  R50</span><br></pre></td></tr></table></figure>
+<p>这是新手最常见的错误之一：把直径 100 直接写进 X，孔圈瞬间放大一倍。</p>
+<hr>
+<h2 id="第-5-步：G16-在三个平面下的地址含义">第 5 步：G16 在三个平面下的地址含义</h2>
+<p>极坐标和加工平面绑定，所以必须先确定 <code>G17 / G18 / G19</code>。</p>
+<table>
+<thead>
+<tr>
+<th>平面</th>
+<th>极轴（半径地址）</th>
+<th>角度地址</th>
+<th>高度地址</th>
+<th>正角度方向</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>G17</code></td>
+<td><code>X</code> = 半径</td>
+<td><code>Y</code> = 角度</td>
+<td><code>Z</code> = 高度</td>
+<td>从 +X 转向 +Y</td>
+</tr>
+<tr>
+<td><code>G18</code></td>
+<td><code>Z</code> = 半径</td>
+<td><code>X</code> = 角度</td>
+<td><code>Y</code> = 高度</td>
+<td>从 +Z 转向 +X</td>
+</tr>
+<tr>
+<td><code>G19</code></td>
+<td><code>Y</code> = 半径</td>
+<td><code>Z</code> = 角度</td>
+<td><code>X</code> = 高度</td>
+<td>从 +Y 转向 +Z</td>
+</tr>
+</tbody>
+</table>
+<p>日常铣床上最常用的是 <code>G17 XY 平面</code>：</p>
+<figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="name">G17</span> <span class="name">G16</span></span><br><span class="line">X<span class="number">50.</span> Y<span class="number">30.</span>   <span class="comment">(半径 50，角度 30°)</span></span><br></pre></td></tr></table></figure>
+<p>它在直角坐标里等价于：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">X = 50 × cos30° ≈ 43.30</span><br><span class="line">Y = 50 × sin30° = 25.00</span><br></pre></td></tr></table></figure>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/assets/cnc/g52-g16/fig-02-g16-polar.svg" alt="G16 极坐标六孔等分示意：R50 与 0/60/120/180/240/300 度" title="G16 用半径和角度直接描述孔位"></p>
+<p><em>看图时记住：蓝色数字是角度，粉色线是半径。图纸给 PCD 时，先除以 2 才是这里的半径。</em></p>
+<h3 id="5-1-G90-G91-仍然有效">5.1 G90 / G91 仍然有效</h3>
+<table>
+<thead>
+<tr>
+<th>模式</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>G90</code></td>
+<td>半径和角度按绝对值解释</td>
+</tr>
+<tr>
+<td><code>G91</code></td>
+<td>半径和角度按增量解释</td>
+</tr>
+</tbody>
+</table>
+<p>新手一律建议：</p>
+<figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="name">G90</span> <span class="name">G17</span> <span class="name">G16</span></span><br></pre></td></tr></table></figure>
+<p>先把绝对模式定死，再谈增量技巧。</p>
+<hr>
+<h2 id="第-6-步：用-G16-钻一圈等分孔">第 6 步：用 G16 钻一圈等分孔</h2>
+<p>图纸：6 个孔，PCD 100，第一孔在 0°，每孔间隔 60°。</p>
+<p>半径：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">PCD 100 ÷ 2 = R50</span><br></pre></td></tr></table></figure>
+<p>不用 G16 时，你要算 6 组 X、Y；用 G16 后，角度直接写。</p>
+<p>下面两种写法<strong>都完整列出</strong>，不是二选一删掉。先看两段核心代码：</p>
+<p><strong>写法 A：逐孔写坐标</strong></p>
+<figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="name">G16</span></span><br><span class="line"><span class="name">G81</span> <span class="name">G99</span> X<span class="number">50.</span> Y<span class="number">0.</span> R<span class="number">1.</span> Z<span class="number">-8.</span> F<span class="number">80</span></span><br><span class="line">X<span class="number">50.</span> Y<span class="number">60.</span></span><br><span class="line">X<span class="number">50.</span> Y<span class="number">120.</span></span><br><span class="line">X<span class="number">50.</span> Y<span class="number">180.</span></span><br><span class="line">X<span class="number">50.</span> Y<span class="number">240.</span></span><br><span class="line">X<span class="number">50.</span> Y<span class="number">300.</span></span><br><span class="line"><span class="name">G80</span></span><br><span class="line"><span class="name">G15</span></span><br></pre></td></tr></table></figure>
+<p><strong>写法 B：G91 + K 增量重复</strong></p>
+<figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="name">G16</span></span><br><span class="line"><span class="name">G81</span> <span class="name">G99</span> X<span class="number">50.</span> Y<span class="number">0.</span> R<span class="number">1.</span> Z<span class="number">-8.</span> F<span class="number">80</span></span><br><span class="line"><span class="name">G91</span> Y<span class="number">60.</span> K<span class="number">5</span></span><br><span class="line"><span class="name">G80</span></span><br><span class="line"><span class="name">G90</span></span><br><span class="line"><span class="name">G15</span></span><br></pre></td></tr></table></figure>
+<p>新手建议先跑通写法 A，再换写法 B。两种写出来的孔位完全一样。</p>
+<h3 id="6-1-写法-A：逐孔列出（最稳妥）">6.1 写法 A：逐孔列出（最稳妥）</h3>
+<figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">%</span></span><br><span class="line"><span class="meta">O0160</span> <span class="comment">(G16 BOLT CIRCLE 6X PCD100)</span></span><br><span class="line"><span class="name">G21</span> <span class="name">G17</span> <span class="name">G40</span> <span class="name">G49</span> <span class="name">G80</span> <span class="name">G90</span></span><br><span class="line"><span class="name">G15</span></span><br><span class="line"><span class="name">G54</span></span><br><span class="line"><span class="name">G52</span> X<span class="number">0</span> Y<span class="number">0</span> Z<span class="number">0</span></span><br><span class="line"></span><br><span class="line"><span class="name">G00</span> X<span class="number">0</span> Y<span class="number">0</span></span><br><span class="line"><span class="name">G43</span> H<span class="number">02</span> Z<span class="number">50.</span></span><br><span class="line"><span class="name">G00</span> Z<span class="number">5.</span></span><br><span class="line"></span><br><span class="line"><span class="name">G16</span>                  <span class="comment">(打开极坐标)</span></span><br><span class="line"></span><br><span class="line"><span class="name">G00</span> X<span class="number">50.</span> Y<span class="number">0.</span></span><br><span class="line"><span class="name">G00</span> Z<span class="number">2.</span></span><br><span class="line"><span class="name">G81</span> <span class="name">G99</span> R<span class="number">1.</span> Z<span class="number">-8.</span> F<span class="number">80</span></span><br><span class="line">X<span class="number">50.</span> Y<span class="number">0.</span></span><br><span class="line">X<span class="number">50.</span> Y<span class="number">60.</span></span><br><span class="line">X<span class="number">50.</span> Y<span class="number">120.</span></span><br><span class="line">X<span class="number">50.</span> Y<span class="number">180.</span></span><br><span class="line">X<span class="number">50.</span> Y<span class="number">240.</span></span><br><span class="line">X<span class="number">50.</span> Y<span class="number">300.</span></span><br><span class="line"><span class="name">G80</span></span><br><span class="line"></span><br><span class="line"><span class="name">G15</span>                  <span class="comment">(取消极坐标)</span></span><br><span class="line"><span class="name">G00</span> Z<span class="number">50.</span></span><br><span class="line"><span class="name">G52</span> X<span class="number">0</span> Y<span class="number">0</span> Z<span class="number">0</span></span><br><span class="line"><span class="name">G91</span> <span class="name">G28</span> Z<span class="number">0</span></span><br><span class="line"><span class="name">G90</span></span><br><span class="line"><span class="name">M30</span></span><br><span class="line"><span class="meta">%</span></span><br></pre></td></tr></table></figure>
+<h3 id="6-2-逐行看关键点（写法-A）">6.2 逐行看关键点（写法 A）</h3>
+<table>
+<thead>
+<tr>
+<th>程序段</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>G17 G16</code></td>
+<td>在 XY 平面使用极坐标</td>
+</tr>
+<tr>
+<td><code>X50. Y0.</code></td>
+<td>半径 50，角度 0°</td>
+</tr>
+<tr>
+<td><code>X50. Y60.</code></td>
+<td>半径仍是 50，角度 60°</td>
+</tr>
+<tr>
+<td><code>G80</code></td>
+<td>取消钻孔循环</td>
+</tr>
+<tr>
+<td><code>G15</code></td>
+<td>取消极坐标，恢复普通 X/Y</td>
+</tr>
+</tbody>
+</table>
+<p>对应的直角坐标（用于核对仿真或调试）：</p>
+<table>
+<thead>
+<tr>
+<th>孔号</th>
+<th>极坐标写法</th>
+<th style="text-align:right">X（mm）</th>
+<th style="text-align:right">Y（mm）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>X50. Y0.</code></td>
+<td style="text-align:right">50.000</td>
+<td style="text-align:right">0.000</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>X50. Y60.</code></td>
+<td style="text-align:right">25.000</td>
+<td style="text-align:right">43.301</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>X50. Y120.</code></td>
+<td style="text-align:right">-25.000</td>
+<td style="text-align:right">43.301</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>X50. Y180.</code></td>
+<td style="text-align:right">-50.000</td>
+<td style="text-align:right">0.000</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>X50. Y240.</code></td>
+<td style="text-align:right">-25.000</td>
+<td style="text-align:right">-43.301</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>X50. Y300.</code></td>
+<td style="text-align:right">25.000</td>
+<td style="text-align:right">-43.301</td>
+</tr>
+</tbody>
+</table>
+<div class="note warning flat"><p>在 G16 下，<code>Y60.</code> 不是直角坐标 Y=60，而是角度 60°。如果后面忘了 G15，下一句普通定位 <code>X100. Y50.</code> 会被理解成“半径 100，角度 50°”，结果完全不同。</p>
+</div>
+<h3 id="6-3-写法-B：G16-G91-K-增量重复">6.3 写法 B：G16 + G91 + K 增量重复</h3>
+<p>可以，这正是 <code>K</code> 最常见的用法之一。</p>
+<p>在 FANUC 类系统里，<code>K</code> 是固定循环<strong>本程序段执行的孔数</strong>（Haas 用 <code>L</code>，Fagor 用 <code>N</code>）。在 <code>G91</code> 增量模式下，<code>G81</code> 段里的 <code>X/Y</code> 是每次移动的增量；而在 <code>G16</code> 极坐标里，<code>Y</code> 是角度，所以 <code>Y60.</code> 就表示“每次角度 +60°”。</p>
+<p>6 个孔的写法是：<strong>先在 G90 下用 G81 钻第一孔，再切 G91 用 K5 补 5 孔</strong>。</p>
+<figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">%</span></span><br><span class="line"><span class="meta">O0161</span> <span class="comment">(G16 + G91 K BOLT CIRCLE)</span></span><br><span class="line"><span class="name">G21</span> <span class="name">G17</span> <span class="name">G40</span> <span class="name">G49</span> <span class="name">G80</span> <span class="name">G90</span></span><br><span class="line"><span class="name">G15</span></span><br><span class="line"><span class="name">G54</span></span><br><span class="line"><span class="name">G52</span> X<span class="number">0</span> Y<span class="number">0</span> Z<span class="number">0</span></span><br><span class="line"></span><br><span class="line"><span class="name">G00</span> X<span class="number">0</span> Y<span class="number">0</span></span><br><span class="line"><span class="name">G43</span> H<span class="number">02</span> Z<span class="number">50.</span></span><br><span class="line"><span class="name">G00</span> Z<span class="number">5.</span></span><br><span class="line"></span><br><span class="line"><span class="name">G16</span></span><br><span class="line"><span class="name">G00</span> X<span class="number">50.</span> Y<span class="number">0.</span></span><br><span class="line"><span class="name">G00</span> Z<span class="number">2.</span></span><br><span class="line"></span><br><span class="line"><span class="name">G81</span> <span class="name">G99</span> X<span class="number">50.</span> Y<span class="number">0.</span> R<span class="number">1.</span> Z<span class="number">-8.</span> F<span class="number">80</span>  <span class="comment">(G90 绝对极坐标，先钻 0° 孔)</span></span><br><span class="line"><span class="name">G91</span> Y<span class="number">60.</span> K<span class="number">5</span>                     <span class="comment">(增量角度 +60°，再钻 5 孔)</span></span><br><span class="line"></span><br><span class="line"><span class="name">G80</span></span><br><span class="line"><span class="name">G90</span></span><br><span class="line"><span class="name">G15</span></span><br><span class="line"><span class="name">G00</span> Z<span class="number">50.</span></span><br><span class="line"><span class="name">G52</span> X<span class="number">0</span> Y<span class="number">0</span> Z<span class="number">0</span></span><br><span class="line"><span class="name">G91</span> <span class="name">G28</span> Z<span class="number">0</span></span><br><span class="line"><span class="name">G90</span></span><br><span class="line"><span class="name">M30</span></span><br><span class="line"><span class="meta">%</span></span><br></pre></td></tr></table></figure>
+<p>孔位顺序：</p>
+<table>
+<thead>
+<tr>
+<th>孔号</th>
+<th>来自哪一行</th>
+<th>极坐标</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>G81 ... X50. Y0.</code></td>
+<td>R50 / 0°</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>G91 Y60. K5</code> 第 1 次</td>
+<td>R50 / 60°</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>G91 Y60. K5</code> 第 2 次</td>
+<td>R50 / 120°</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>G91 Y60. K5</code> 第 3 次</td>
+<td>R50 / 180°</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>G91 Y60. K5</code> 第 4 次</td>
+<td>R50 / 240°</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>G91 Y60. K5</code> 第 5 次</td>
+<td>R50 / 300°</td>
+</tr>
+</tbody>
+</table>
+<div class="note warning flat"><p><code>K5</code> 是“这一段再钻 5 孔”，不是“总共 5 孔”。因为第一孔已经由上一行 G81 完成，所以 <code>1 + 5 = 6</code>。另外，G91 是模态的，K 段跑完必须依次写 <code>G80 / G90 / G15</code>，把钻孔循环、增量模式、极坐标模式全部还原。</p>
+</div>
+<p>如果写成：</p>
+<figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="name">G81</span> <span class="name">G91</span> X<span class="number">50.</span> Y<span class="number">0.</span> Z<span class="number">-8.</span> R<span class="number">1.</span> K<span class="number">6</span></span><br></pre></td></tr></table></figure>
+<p>结果通常不是“从 0° 开始钻 6 孔”，而是从当前位置开始按每次 +60° 钻 6 孔，第一孔落在 60°，0° 反而没有孔。除非你就是想要这个效果，否则不要这样写。</p>
+<h3 id="6-4-第一孔不在-0°-怎么办">6.4 第一孔不在 0° 怎么办</h3>
+<p>如果图纸写“第一孔从 X 轴正方向逆时针 15° 开始”，直接把角度改掉：</p>
+<figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">X<span class="number">50.</span> Y<span class="number">15.</span></span><br><span class="line">X<span class="number">50.</span> Y<span class="number">75.</span></span><br><span class="line">X<span class="number">50.</span> Y<span class="number">135.</span></span><br><span class="line">X<span class="number">50.</span> Y<span class="number">195.</span></span><br><span class="line">X<span class="number">50.</span> Y<span class="number">255.</span></span><br><span class="line">X<span class="number">50.</span> Y<span class="number">315.</span></span><br></pre></td></tr></table></figure>
+<p>不用重新算 sin / cos。</p>
+<hr>
+<h2 id="第-7-步：G16-的进阶注意点">第 7 步：G16 的进阶注意点</h2>
+<h3 id="7-1-负角度可以用">7.1 负角度可以用</h3>
+<figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">X<span class="number">50.</span> Y<span class="number">-30.</span></span><br></pre></td></tr></table></figure>
+<p>等价于 <code>Y330.</code>。两种写法到同一个位置，选哪个看图纸标注习惯。</p>
+<h3 id="7-2-G16-下不要随便写圆弧">7.2 G16 下不要随便写圆弧</h3>
+<p>G16 主要解决<strong>定位点</strong>问题。圆弧的 <code>I / J / K</code>、刀具半径补偿 <code>G41 / G42</code> 在极坐标模式下的解释，各系统差异比较大。</p>
+<p>稳妥做法：</p>
+<figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="name">G16</span></span><br><span class="line"><span class="comment">(只做孔位定位)</span></span><br><span class="line"><span class="name">G15</span></span><br><span class="line"><span class="comment">(再切轮廓、圆弧和刀补)</span></span><br></pre></td></tr></table></figure>
+<div class="note warning flat"><p>不要在还没搞清机床行为前，把 G16 和 G41/G42、圆弧插补、G68 坐标旋转全叠在一起。一次只引入一个变量，才能知道到底是哪一行出了问题。</p>
+</div>
+<h3 id="7-3-注意机床的极坐标原点">7.3 注意机床的极坐标原点</h3>
+<p>常见有两种约定：</p>
+<ol>
+<li>以当前工件坐标系原点为极点；</li>
+<li>以刀具当前位置为极点。</li>
+</ol>
+<p>FANUC 类系统在 <code>G90</code> 下通常以工件坐标系原点为极点；<code>G91</code> 下按增量解释。第一次用某台机床时，先用单段和坐标显示确认，不要直接切贵金属。</p>
+<hr>
+<h2 id="第-8-步：G52-G16-组合示范">第 8 步：G52 + G16 组合示范</h2>
+<p>假设一块板上有 4 组孔系，每组 4 孔，孔系中心分别在 G54 的：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(100, 50)</span><br><span class="line">(220, 50)</span><br><span class="line">(100, 150)</span><br><span class="line">(220, 150)</span><br></pre></td></tr></table></figure>
+<p>每组孔为 PCD 80，第一孔 0°，每 90° 一孔。</p>
+<p>主程序可以把 G52 当“搬工位”，G16 当“在工位里画圆”。</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/assets/cnc/g52-g16/fig-03-combined.svg" alt="G52 加 G16 组合加工示意：四组孔系共用一个子程序" title="G52 负责搬原位，G16 负责画孔圈"></p>
+<p><em>粉色点是每组的局部原点，蓝色圆是 G16 画出来的孔圈。四个位置调用的是同一个 <code>O9001</code> 子程序。</em></p>
+<figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">%</span></span><br><span class="line"><span class="meta">O5216</span> <span class="comment">(G52 + G16 FOUR PATTERNS)</span></span><br><span class="line"><span class="name">G21</span> <span class="name">G17</span> <span class="name">G40</span> <span class="name">G49</span> <span class="name">G80</span> <span class="name">G90</span></span><br><span class="line"><span class="name">G15</span></span><br><span class="line"><span class="name">G54</span></span><br><span class="line"><span class="name">G52</span> X<span class="number">0</span> Y<span class="number">0</span> Z<span class="number">0</span></span><br><span class="line"></span><br><span class="line"><span class="name">G00</span> X<span class="number">0</span> Y<span class="number">0</span></span><br><span class="line"><span class="name">G43</span> H<span class="number">03</span> Z<span class="number">50.</span></span><br><span class="line"><span class="name">G00</span> Z<span class="number">5.</span></span><br><span class="line"></span><br><span class="line"><span class="comment">(---------- 第 1 组 ----------)</span></span><br><span class="line"><span class="name">G52</span> X<span class="number">100.</span> Y<span class="number">50.</span></span><br><span class="line"><span class="name">G16</span></span><br><span class="line"><span class="name">G00</span> X<span class="number">40.</span> Y<span class="number">0.</span></span><br><span class="line"><span class="name">G00</span> Z<span class="number">2.</span></span><br><span class="line"><span class="name">G81</span> <span class="name">G99</span> R<span class="number">1.</span> Z<span class="number">-6.</span> F<span class="number">90</span></span><br><span class="line">X<span class="number">40.</span> Y<span class="number">0.</span></span><br><span class="line">X<span class="number">40.</span> Y<span class="number">90.</span></span><br><span class="line">X<span class="number">40.</span> Y<span class="number">180.</span></span><br><span class="line">X<span class="number">40.</span> Y<span class="number">270.</span></span><br><span class="line"><span class="name">G80</span></span><br><span class="line"><span class="name">G15</span></span><br><span class="line"></span><br><span class="line"><span class="comment">(---------- 第 2 组 ----------)</span></span><br><span class="line"><span class="name">G52</span> X<span class="number">220.</span> Y<span class="number">50.</span></span><br><span class="line"><span class="name">G16</span></span><br><span class="line"><span class="name">G00</span> X<span class="number">40.</span> Y<span class="number">0.</span></span><br><span class="line"><span class="name">G00</span> Z<span class="number">2.</span></span><br><span class="line"><span class="name">G81</span> <span class="name">G99</span> R<span class="number">1.</span> Z<span class="number">-6.</span> F<span class="number">90</span></span><br><span class="line">X<span class="number">40.</span> Y<span class="number">0.</span></span><br><span class="line">X<span class="number">40.</span> Y<span class="number">90.</span></span><br><span class="line">X<span class="number">40.</span> Y<span class="number">180.</span></span><br><span class="line">X<span class="number">40.</span> Y<span class="number">270.</span></span><br><span class="line"><span class="name">G80</span></span><br><span class="line"><span class="name">G15</span></span><br><span class="line"></span><br><span class="line"><span class="comment">(只列两组，后两组同理)</span></span><br><span class="line"></span><br><span class="line"><span class="name">G00</span> Z<span class="number">50.</span></span><br><span class="line"><span class="name">G15</span></span><br><span class="line"><span class="name">G52</span> X<span class="number">0</span> Y<span class="number">0</span> Z<span class="number">0</span></span><br><span class="line"><span class="name">G00</span> X<span class="number">0</span> Y<span class="number">0</span></span><br><span class="line"><span class="name">G91</span> <span class="name">G28</span> Z<span class="number">0</span></span><br><span class="line"><span class="name">G90</span></span><br><span class="line"><span class="name">M30</span></span><br><span class="line"><span class="meta">%</span></span><br></pre></td></tr></table></figure>
+<h3 id="8-1-这个程序的执行顺序">8.1 这个程序的执行顺序</h3>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">G54 原点</span><br><span class="line">  → G52 搬到第 1 组中心</span><br><span class="line">  → G16 按半径 40、角度 0/90/180/270 打 4 孔</span><br><span class="line">  → G15 取消极坐标</span><br><span class="line">  → G52 搬到第 2 组中心</span><br><span class="line">  → 再打 4 孔</span><br><span class="line">  → 最后 G15 + G52 全部取消</span><br></pre></td></tr></table></figure>
+<h3 id="8-2-更简洁的写法">8.2 更简洁的写法</h3>
+<p>如果四组完全一样，可以把孔系做成子程序：</p>
+<figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">O9001</span> <span class="comment">(4-HOLE PATTERN R40)</span></span><br><span class="line"><span class="name">G16</span></span><br><span class="line"><span class="name">G81</span> <span class="name">G99</span> R<span class="number">1.</span> Z<span class="number">-6.</span> F<span class="number">90</span></span><br><span class="line">X<span class="number">40.</span> Y<span class="number">0.</span></span><br><span class="line">X<span class="number">40.</span> Y<span class="number">90.</span></span><br><span class="line">X<span class="number">40.</span> Y<span class="number">180.</span></span><br><span class="line">X<span class="number">40.</span> Y<span class="number">270.</span></span><br><span class="line"><span class="name">G80</span></span><br><span class="line"><span class="name">G15</span></span><br><span class="line"><span class="name">M99</span></span><br></pre></td></tr></table></figure>
+<p>主程序只负责搬原位：</p>
+<figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="name">G52</span> X<span class="number">100.</span> Y<span class="number">50.</span>  <span class="name">M98</span> P<span class="number">9001</span></span><br><span class="line"><span class="name">G52</span> X<span class="number">220.</span> Y<span class="number">50.</span>  <span class="name">M98</span> P<span class="number">9001</span></span><br><span class="line"><span class="name">G52</span> X<span class="number">100.</span> Y<span class="number">150.</span> <span class="name">M98</span> P<span class="number">9001</span></span><br><span class="line"><span class="name">G52</span> X<span class="number">220.</span> Y<span class="number">150.</span> <span class="name">M98</span> P<span class="number">9001</span></span><br><span class="line"><span class="name">G52</span> X<span class="number">0</span> Y<span class="number">0</span> Z<span class="number">0</span></span><br></pre></td></tr></table></figure>
+<div class="note info flat"><p>这就是 G52 最舒服的用法：子程序永远只按自己的局部原点写，主程序只负责“把它放到哪儿”。</p>
+</div>
+<hr>
+<h2 id="第-9-步：常见错误对照表">第 9 步：常见错误对照表</h2>
+<table>
+<thead>
+<tr>
+<th>现象</th>
+<th>最可能原因</th>
+<th>怎么查</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>整个程序整体偏移了 100 mm</td>
+<td>G52 忘了取消</td>
+<td>查程序头尾有没有 <code>G52 X0 Y0 Z0</code></td>
+</tr>
+<tr>
+<td>下一把刀位置全错</td>
+<td>上一把刀留下 G52 / G16</td>
+<td>每把刀开头写 <code>G15</code> 和 <code>G52 X0 Y0 Z0</code></td>
+</tr>
+<tr>
+<td>孔圈变成两倍大</td>
+<td>把 PCD 当半径用</td>
+<td>半径 = 直径 ÷ 2</td>
+</tr>
+<tr>
+<td>孔位像镜像 / 角度反了</td>
+<td>正方向判断错</td>
+<td>查 G17/G18/G19 和平面正方向</td>
+</tr>
+<tr>
+<td>只有 Z 方向偏了</td>
+<td>G52 只取消了 X、Y</td>
+<td>取消时写全 <code>X0 Y0 Z0</code></td>
+</tr>
+<tr>
+<td><code>Y60.</code> 被当成直角坐标</td>
+<td>G15 忘写，还在极坐标模式</td>
+<td>在极坐标段后立刻 <code>G15</code></td>
+</tr>
+<tr>
+<td>圆弧走错</td>
+<td>G16 下 I/J/K 解释和预期不同</td>
+<td>极坐标只用于定位，切轮廓前先 G15</td>
+</tr>
+<tr>
+<td>复位后以为 G52 没了</td>
+<td>复位清不清除取决于参数</td>
+<td>不要依赖复位，程序里显式取消</td>
+</tr>
+<tr>
+<td>仿真正常，机床不对</td>
+<td>系统支持细节不同</td>
+<td>查本机床手册，单段空运行</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="第-10-步：上机前检查清单">第 10 步：上机前检查清单</h2>
+<ul>
+<li>[ ] 程序开头写了 <code>G21 G17 G40 G49 G80 G90</code></li>
+<li>[ ] 程序开头写了 <code>G15</code> 和 <code>G52 X0 Y0 Z0</code></li>
+<li>[ ] G52 的偏移值来自图纸或夹具基准，不是随手估的</li>
+<li>[ ] 取消 G52 时三个轴都写了 <code>X0 Y0 Z0</code></li>
+<li>[ ] 使用 G16 前确认了加工平面 <code>G17 / G18 / G19</code></li>
+<li>[ ] PCD 已除以 2 得到半径</li>
+<li>[ ] 第一孔角度和角度增量方向与图纸一致</li>
+<li>[ ] 用 <code>K</code> 时确认了孔数：<code>1 + K = 总孔数</code>（第一孔单独钻的情况）</li>
+<li>[ ] <code>G91</code> 段结束后写了 <code>G80</code> 和 <code>G90</code>，把增量模式还原</li>
+<li>[ ] G16 段结束后写了 <code>G15</code></li>
+<li>[ ] 没有在极坐标模式下混用不确定的刀补和圆弧</li>
+<li>[ ] 程序结尾再写一次 <code>G15</code> 和 <code>G52 X0 Y0 Z0</code></li>
+<li>[ ] 单段 + 低倍率空运行，重点看第一孔和最后一个孔</li>
+<li>[ ] 首件留余量，测量孔位后再决定要不要正式切深</li>
+</ul>
+<div class="note warning flat"><p>G52 和 G16 都是“看不见的状态”。程序看着短，但一个漏写的取消指令会让后面整段程序换一套坐标规则。空运行时不要只看刀具轨迹，还要盯着坐标显示和孔位顺序。</p>
+</div>
+<hr>
+<h2 id="第-11-步：速查卡">第 11 步：速查卡</h2>
+<table>
+<thead>
+<tr>
+<th>目的</th>
+<th>写法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>建立局部原点</td>
+<td><code>G52 X100. Y50. Z0.</code></td>
+</tr>
+<tr>
+<td>取消局部原点</td>
+<td><code>G52 X0 Y0 Z0</code></td>
+</tr>
+<tr>
+<td>打开极坐标</td>
+<td><code>G16</code></td>
+</tr>
+<tr>
+<td>取消极坐标</td>
+<td><code>G15</code></td>
+</tr>
+<tr>
+<td>G17 极坐标定位</td>
+<td><code>X半径 Y角度</code></td>
+</tr>
+<tr>
+<td>G18 极坐标定位</td>
+<td><code>Z半径 X角度</code></td>
+</tr>
+<tr>
+<td>G19 极坐标定位</td>
+<td><code>Y半径 Z角度</code></td>
+</tr>
+<tr>
+<td>PCD 换算半径</td>
+<td><code>R = PCD ÷ 2</code></td>
+</tr>
+<tr>
+<td>6 孔均布增量</td>
+<td><code>360 ÷ 6 = 60°</code></td>
+</tr>
+<tr>
+<td>K 重复钻孔（Fanuc）</td>
+<td><code>G91 Y60. K5</code>（配合前面 1 孔，共 6 孔）</td>
+</tr>
+<tr>
+<td>K 的其他系统写法</td>
+<td>Haas 用 <code>L</code>，Fagor 用 <code>N</code></td>
+</tr>
+<tr>
+<td>安全开头</td>
+<td><code>G15</code> + <code>G52 X0 Y0 Z0</code></td>
+</tr>
+<tr>
+<td>安全结尾</td>
+<td><code>G15</code> + <code>G52 X0 Y0 Z0</code></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="最后说一句">最后说一句</h2>
+<p>G52 和 G16 都不是“高级功能”，它们只是把原本要手工计算的坐标工作交给了系统。</p>
+<p>真正的新手分水岭不是会不会写这两行代码，而是有没有意识到：</p>
+<blockquote>
+<p>它们改变的是后续所有坐标的解释方式。</p>
+</blockquote>
+<p>所以最好的使用习惯不是“记得开”，而是<strong>开之前先清状态，关之后再看一眼坐标显示</strong>。把 G15 和 G52 X0 Y0 Z0 写进程序头尾，你就已经避开了这类事故里的大部分。</p>
+</article><div class="post-copyright"><div class="post-copyright__title"><span class="post-copyright-info"><h>G52 与 G16 完全指南：局部坐标系与极坐标编程</h></span></div><div class="post-copyright__type"><span class="post-copyright-info"><a href="/posts/g52-g16-guide.html">/posts/g52-g16-guide.html</a></span></div><div class="post-copyright-m"><div class="post-copyright-m-info"><div class="post-copyright-a"><h>作者</h><div class="post-copyright-cc-info"><h>chengicli</h></div></div><div class="post-copyright-c"><h>发布于</h><div class="post-copyright-cc-info"><h>2026-11-22</h></div></div><div class="post-copyright-u"><h>更新于</h><div class="post-copyright-cc-info"><h>2026-11-22</h></div></div><div class="post-copyright-c"><h>许可协议</h><div class="post-copyright-cc-info"><a class="icon" rel="noopener" target="_blank" title="Creative Commons" href="https://creativecommons.org/"><i class="fab fa-creative-commons"></i></a><a rel="noopener" target="_blank" title="CC BY-NC-SA 4.0" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a></div></div></div></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/CNC/"><div class="tags-punctuation"><svg class="faa-tada icon" style="height:1.1em;width:1.1em;fill:currentColor;position:relative;top:2px;margin-right:3px" aria-hidden="true"><use xlink:href="#icon-sekuaibiaoqian"></use></svg></div>CNC</a><a class="post-meta__tags" href="/tags/G%E4%BB%A3%E7%A0%81/"><div class="tags-punctuation"><svg class="faa-tada icon" style="height:1.1em;width:1.1em;fill:currentColor;position:relative;top:2px;margin-right:3px" aria-hidden="true"><use xlink:href="#icon-sekuaibiaoqian"></use></svg></div>G代码</a></div></div><nav class="pagination-post" id="pagination"><div class="next-post pull-full"><a href="/posts/music-capsule-guide.html"><img class="next-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/assets/covers/music-capsule-guide.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">不用音乐插件，也能做出本站同款左下角音乐胶囊</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/posts/beginner.html" title="CNC 初学者在按下启动键之前要知道的事"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/assets/covers/beginner.png" alt="cover"><div class="content is-center"><div class="date"><i class="fas fa-history fa-fw"></i> 2026-10-28</div><div class="title">CNC 初学者在按下启动键之前要知道的事</div></div></a></div><div><a href="/posts/6061-t6-cutting.html" title="6061-T6 铝合金加工参数"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/assets/covers/6061-t6-cutting.png" alt="cover"><div class="content is-center"><div class="date"><i class="fas fa-history fa-fw"></i> 2026-11-05</div><div class="title">6061-T6 铝合金加工参数</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><svg class="meta_icon" style="width:22px;height:22px;position:relative;top:5px"><use xlink:href="#icon-mulu1"></use></svg><span style="font-weight:bold">目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%98%85%E8%AF%BB%E8%B7%AF%E7%BA%BF"><span class="toc-text">阅读路线</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-0-%E6%AD%A5%EF%BC%9A%E5%85%88%E5%88%86%E6%B8%85%E5%AE%83%E4%BB%AC%E5%90%84%E7%AE%A1%E4%BB%80%E4%B9%88"><span class="toc-text">第 0 步：先分清它们各管什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-1-%E6%AD%A5%EF%BC%9AG52-%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-text">第 1 步：G52 到底是什么</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-%E5%AE%83%E4%B8%8D%E6%98%AF-G54%EF%BC%8C%E4%B9%9F%E4%B8%8D%E6%98%AF-G92"><span class="toc-text">1.1 它不是 G54，也不是 G92</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-%E6%A0%BC%E5%BC%8F"><span class="toc-text">1.2 格式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-3-%E5%8F%96%E6%B6%88%E4%B8%80%E5%AE%9A%E8%A6%81%E5%86%99%E5%85%A8"><span class="toc-text">1.3 取消一定要写全</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-2-%E6%AD%A5%EF%BC%9AG52-%E7%9A%84%E6%9C%80%E5%B0%8F%E7%A4%BA%E8%8C%83"><span class="toc-text">第 2 步：G52 的最小示范</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E7%94%A8-G52"><span class="toc-text">2.1 什么时候用 G52</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E4%B8%80%E4%B8%AA%E5%85%B8%E5%9E%8B%E7%9A%84%E5%A4%9A%E5%B7%A5%E4%BD%8D%E5%86%99%E6%B3%95"><span class="toc-text">2.2 一个典型的多工位写法</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-3-%E6%AD%A5%EF%BC%9AG52-%E6%9C%80%E5%AE%B9%E6%98%93%E8%B8%A9%E7%9A%84%E4%BA%94%E4%B8%AA%E5%9D%91"><span class="toc-text">第 3 步：G52 最容易踩的五个坑</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-%E5%BF%98%E4%BA%86%E5%8F%96%E6%B6%88"><span class="toc-text">3.1 忘了取消</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E4%BB%A5%E4%B8%BA%E5%A4%8D%E4%BD%8D%E4%B8%80%E5%AE%9A%E4%BC%9A%E6%B8%85%E6%8E%89"><span class="toc-text">3.2 以为复位一定会清掉</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-%E5%92%8C-G92-%E6%B7%B7%E7%94%A8"><span class="toc-text">3.3 和 G92 混用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-4-%E5%92%8C-G53-%E6%90%9E%E6%B7%B7"><span class="toc-text">3.4 和 G53 搞混</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-5-%E5%A2%9E%E9%87%8F%E6%A8%A1%E5%BC%8F%E4%B8%8B%E7%9A%84%E8%AF%AF%E8%AF%BB"><span class="toc-text">3.5 增量模式下的误读</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-4-%E6%AD%A5%EF%BC%9AG16-%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-text">第 4 步：G16 到底是什么</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-%E8%A7%92%E5%BA%A6%E5%8D%95%E4%BD%8D"><span class="toc-text">4.1 角度单位</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-%E5%8D%8A%E5%BE%84%E4%B8%8D%E6%98%AF%E7%9B%B4%E5%BE%84"><span class="toc-text">4.2 半径不是直径</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-5-%E6%AD%A5%EF%BC%9AG16-%E5%9C%A8%E4%B8%89%E4%B8%AA%E5%B9%B3%E9%9D%A2%E4%B8%8B%E7%9A%84%E5%9C%B0%E5%9D%80%E5%90%AB%E4%B9%89"><span class="toc-text">第 5 步：G16 在三个平面下的地址含义</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-1-G90-G91-%E4%BB%8D%E7%84%B6%E6%9C%89%E6%95%88"><span class="toc-text">5.1 G90 &#x2F; G91 仍然有效</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-6-%E6%AD%A5%EF%BC%9A%E7%94%A8-G16-%E9%92%BB%E4%B8%80%E5%9C%88%E7%AD%89%E5%88%86%E5%AD%94"><span class="toc-text">第 6 步：用 G16 钻一圈等分孔</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#6-1-%E5%86%99%E6%B3%95-A%EF%BC%9A%E9%80%90%E5%AD%94%E5%88%97%E5%87%BA%EF%BC%88%E6%9C%80%E7%A8%B3%E5%A6%A5%EF%BC%89"><span class="toc-text">6.1 写法 A：逐孔列出（最稳妥）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-2-%E9%80%90%E8%A1%8C%E7%9C%8B%E5%85%B3%E9%94%AE%E7%82%B9%EF%BC%88%E5%86%99%E6%B3%95-A%EF%BC%89"><span class="toc-text">6.2 逐行看关键点（写法 A）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-3-%E5%86%99%E6%B3%95-B%EF%BC%9AG16-G91-K-%E5%A2%9E%E9%87%8F%E9%87%8D%E5%A4%8D"><span class="toc-text">6.3 写法 B：G16 + G91 + K 增量重复</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-4-%E7%AC%AC%E4%B8%80%E5%AD%94%E4%B8%8D%E5%9C%A8-0%C2%B0-%E6%80%8E%E4%B9%88%E5%8A%9E"><span class="toc-text">6.4 第一孔不在 0° 怎么办</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-7-%E6%AD%A5%EF%BC%9AG16-%E7%9A%84%E8%BF%9B%E9%98%B6%E6%B3%A8%E6%84%8F%E7%82%B9"><span class="toc-text">第 7 步：G16 的进阶注意点</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#7-1-%E8%B4%9F%E8%A7%92%E5%BA%A6%E5%8F%AF%E4%BB%A5%E7%94%A8"><span class="toc-text">7.1 负角度可以用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-2-G16-%E4%B8%8B%E4%B8%8D%E8%A6%81%E9%9A%8F%E4%BE%BF%E5%86%99%E5%9C%86%E5%BC%A7"><span class="toc-text">7.2 G16 下不要随便写圆弧</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-3-%E6%B3%A8%E6%84%8F%E6%9C%BA%E5%BA%8A%E7%9A%84%E6%9E%81%E5%9D%90%E6%A0%87%E5%8E%9F%E7%82%B9"><span class="toc-text">7.3 注意机床的极坐标原点</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-8-%E6%AD%A5%EF%BC%9AG52-G16-%E7%BB%84%E5%90%88%E7%A4%BA%E8%8C%83"><span class="toc-text">第 8 步：G52 + G16 组合示范</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#8-1-%E8%BF%99%E4%B8%AA%E7%A8%8B%E5%BA%8F%E7%9A%84%E6%89%A7%E8%A1%8C%E9%A1%BA%E5%BA%8F"><span class="toc-text">8.1 这个程序的执行顺序</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8-2-%E6%9B%B4%E7%AE%80%E6%B4%81%E7%9A%84%E5%86%99%E6%B3%95"><span class="toc-text">8.2 更简洁的写法</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-9-%E6%AD%A5%EF%BC%9A%E5%B8%B8%E8%A7%81%E9%94%99%E8%AF%AF%E5%AF%B9%E7%85%A7%E8%A1%A8"><span class="toc-text">第 9 步：常见错误对照表</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-10-%E6%AD%A5%EF%BC%9A%E4%B8%8A%E6%9C%BA%E5%89%8D%E6%A3%80%E6%9F%A5%E6%B8%85%E5%8D%95"><span class="toc-text">第 10 步：上机前检查清单</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-11-%E6%AD%A5%EF%BC%9A%E9%80%9F%E6%9F%A5%E5%8D%A1"><span class="toc-text">第 11 步：速查卡</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%80%E5%90%8E%E8%AF%B4%E4%B8%80%E5%8F%A5"><span class="toc-text">最后说一句</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-color: transparent;"><div id="footer-wrap"><div class="ft-sign">chengicli</div><div class="ft-deco"></div><nav class="ft-links"><a href="/archives/">文章总览</a><a href="/categories/">文章分类</a><a href="/tags/">文章标签</a><a href="/gallery/">我的画廊</a><a href="/links/">我的朋友</a><a href="/music/">治愈音乐</a><a href="/nav/">网址导航</a><a href="/macro/">程序生成</a><a href="/thread/">螺纹规格</a><a href="/about/">关于作者</a></nav><div class="footer_custom_text"><span id="ftRun"></span><span class="ft-sep">｡･ﾟﾟ･🌸･ﾟﾟ･｡</span><span id="ftLove">已经和女朋友--啦</span><svg class="ft-love-heart" width="30" height="27" viewBox="0 0 30 27" aria-hidden="true"><defs><clipPath id="ft-love-clip"><path d="M15 26C15 26 2 17.5 2 9.5 2 5.5 5 3 8.5 3 11.2 3 13.4 4.4 15 6.5 16.6 4.4 18.8 3 21.5 3 25 3 28 5.5 28 9.5 28 17.5 15 26 15 26Z"></path></clipPath><linearGradient id="ft-love-grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff8fb3"></stop><stop offset="1" stop-color="#ff2e63"></stop></linearGradient></defs><g class="ft-love-clip"><rect class="ft-love-base" x="0" y="0" width="30" height="27"></rect><rect class="ft-love-bar b1" x="3.4" y="0" width="2.55" height="26"></rect><rect class="ft-love-bar b2" x="6.1" y="0" width="2.55" height="26"></rect><rect class="ft-love-bar b3" x="8.8" y="0" width="2.55" height="26"></rect><rect class="ft-love-bar b4" x="11.5" y="0" width="2.55" height="26"></rect><rect class="ft-love-bar b5" x="14.2" y="0" width="2.55" height="26"></rect><rect class="ft-love-bar b6" x="16.9" y="0" width="2.55" height="26"></rect><rect class="ft-love-bar b7" x="19.6" y="0" width="2.55" height="26"></rect><rect class="ft-love-bar b8" x="22.3" y="0" width="2.55" height="26"></rect><rect class="ft-love-bar b9" x="25" y="0" width="2.55" height="26"></rect></g></svg></div><div class="copyright"><span><b>&copy;2023-2026</b></span><span class="ft-by"><b>By chengicli</b></span><a class="ft-icp" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener"><span class="ft-icp-icon" aria-hidden="true"></span>豫ICP备2026057580号</a><span class="ft-dot">·</span><a class="ft-icp ft-police" href="https://beian.mps.gov.cn/#/query/webSearch?code=32040002010816" target="_blank" rel="noopener noreferrer"><span class="ft-police-icon" aria-hidden="true"></span>苏公网安备32040002010816号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><a class="icon-V hidden" onclick="switchNightMode()" title="浅色和深色模式转换"><svg width="25" height="25" viewBox="0 0 1024 1024"><use id="modeicon" xlink:href="#icon-moon"></use></svg></a><button class="share" type="button" title="右键模式" onclick="changeMouseMode()"><i class="fas fa-mouse"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog right_side"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button class="share" type="button" title="分享链接" onclick="share()"><i class="fas fa-share-nodes"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i><span id="percent">0<span>%</span></span></button><button id="go-down" type="button" title="直达底部" onclick="btf.scrollToDest(document.body.scrollHeight, 500)"><i class="fas fa-arrow-down"></i></button></div></div><div id="algolia-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="search-wrap"><div id="algolia-search-input"></div><hr/><div id="algolia-search-results"><div id="algolia-hits"></div><div id="algolia-pagination"></div><div id="algolia-info"><div class="algolia-stats"></div></div></div></div></div><div id="search-mask"></div></div><div class="js-pjax" id="rightMenu"><div class="rightMenu-group rightMenu-small"><a class="rightMenu-item" href="javascript:window.history.back();"><i class="fa fa-arrow-left"></i></a><a class="rightMenu-item" href="javascript:window.history.forward();"><i class="fa fa-arrow-right"></i></a><a class="rightMenu-item" href="javascript:window.location.reload();"><i class="fa fa-refresh"></i></a><a class="rightMenu-item" href="javascript:rmf.scrollToTop();"><i class="fa fa-arrow-up"></i></a></div><div class="rightMenu-group rightMenu-line hide" id="menu-text"><a class="rightMenu-item" href="javascript:rmf.copySelect();"><i class="fa fa-copy"></i><span>复制</span></a><a class="rightMenu-item" href="javascript:window.open(&quot;https://www.baidu.com/s?wd=&quot;+window.getSelection().toString());window.location.reload();"><i class="fa fa-search"></i><span>百度搜索</span></a></div><div class="rightMenu-group rightMenu-line hide" id="menu-too"><a class="rightMenu-item" href="javascript:window.open(window.getSelection().toString());window.location.reload();"><i class="fa fa-link"></i><span>转到链接</span></a></div><div class="rightMenu-group rightMenu-line hide" id="menu-paste"><a class="rightMenu-item" href="javascript:rmf.paste()"><i class="fa fa-copy"></i><span>粘贴</span></a></div><div class="rightMenu-group rightMenu-line hide" id="menu-post"><a class="rightMenu-item" href="#post-comment"><i class="fas fa-comment"></i><span>空降评论</span></a><a class="rightMenu-item" href="javascript:rmf.copyWordsLink()"><i class="fa fa-link"></i><span>复制本文地址</span></a></div><div class="rightMenu-group rightMenu-line hide" id="menu-to"><a class="rightMenu-item" href="javascript:rmf.openWithNewTab()"><i class="fa fa-window-restore"></i><span>新窗口打开</span></a><a class="rightMenu-item" id="menu-too" href="javascript:rmf.open()"><i class="fa fa-link"></i><span>转到链接</span></a><a class="rightMenu-item" href="javascript:rmf.copyLink()"><i class="fa fa-copy"></i><span>复制链接</span></a></div><div class="rightMenu-group rightMenu-line hide" id="menu-img"><a class="rightMenu-item" href="javascript:rmf.saveAs()"><i class="fa fa-download"></i><span>保存图片</span></a><a class="rightMenu-item" href="javascript:rmf.openWithNewTab()"><i class="fa fa-window-restore"></i><span>在新窗口打开</span></a><a class="rightMenu-item" href="javascript:rmf.copyLink()"><i class="fa fa-copy"></i><span>复制图片链接</span></a></div><div class="rightMenu-group rightMenu-line"><a class="rightMenu-item" href="javascript:randomPost()"><i class="fa fa-paper-plane"></i><span>随便逛逛</span></a><a class="rightMenu-item" href="javascript:switchNightMode();"><i class="fa fa-moon"></i><span>昼夜切换</span></a><a class="rightMenu-item" href="javascript:rmf.switchReadMode();"><i class="fa fa-book"></i><span>阅读模式</span></a><a class="rightMenu-item" href="/about/"><i class="fa fa-info-circle"></i><span>关于博客</span></a><a class="rightMenu-item" href="javascript:toggleWinbox();"><i class="fas fa-cog"></i><span>美化设置</span></a><a class="rightMenu-item" href="javascript:rmf.fullScreen();"><i class="fas fa-expand"></i><span>切换全屏</span></a><a class="rightMenu-item" href="javascript:window.print();"><i class="fa-solid fa-print"></i><span>打印页面</span></a></div></div><div><script src="/js/utils.js?v=20261005-scroll1"></script><script src="/js/main.js?v=20261117-scrollfn"></script><script src="/External-link/js/fancybox.umd.js"></script><script src="/External-link/js/instantpage.js" type="module"></script><script src="/External-link/js/lazyload.iife.min.js"></script><script>window.__SEARCH_LAZY__ = ["/External-link/js/algoliasearch-lite.umd.js","/External-link/js/instantsearch.production.min.js","/js/search/algolia.js"]</script><script async="async">var preloader = {
+  endLoading: () => {
+    document.body.style.overflow = 'auto';
+    document.getElementById('loading-box').classList.add("loaded")
+  },
+  initLoading: () => {
+    document.body.style.overflow = '';
+    document.getElementById('loading-box').classList.remove("loaded")
+
+  }
+}
+window.addEventListener('load',preloader.endLoading())
+setTimeout(function(){preloader.endLoading();}, 5000);
+document.getElementById('loading-box').addEventListener('click',()=> {preloader.endLoading()})</script><div class="js-pjax"><script>(() => {
+  const $mermaidWrap = document.querySelectorAll('#article-container .mermaid-wrap')
+  if ($mermaidWrap.length) {
+    window.runMermaid = () => {
+      window.loadMermaid = true
+      const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+      Array.from($mermaidWrap).forEach((item, index) => {
+        const mermaidSrc = item.firstElementChild
+        const mermaidThemeConfig = '%%{init:{ \'theme\':\'' + theme + '\'}}%%\n'
+        const mermaidID = 'mermaid-' + index
+        const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+        mermaid.mermaidAPI.render(mermaidID, mermaidDefinition, (svgCode) => {
+          mermaidSrc.insertAdjacentHTML('afterend', svgCode)
+        })
+      })
+    }
+
+    const loadMermaid = () => {
+      window.loadMermaid ? runMermaid() : getScript('https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.1.2/mermaid.min.js').then(runMermaid)
+    }
+
+    window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+  }
+})()</script><script>(()=>{
+  const init = () => {
+    twikoo.init(Object.assign({
+      el: '#twikoo-wrap',
+      envId: 'https://twikoo.lichengic.com',
+      region: '',
+      onCommentLoaded: function () {
+        btf.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
+      }
+    }, null))
+  }
+
+  const getCount = () => {
+    const countELement = document.getElementById('twikoo-count')
+    if(!countELement) return
+    twikoo.getCommentsCount({
+      envId: 'https://twikoo.lichengic.com',
+      region: '',
+      urls: [window.location.pathname],
+      includeReply: false
+    }).then(function (res) {
+      countELement.innerText = res[0].count
+    }).catch(function (err) {
+      console.error(err);
+    });
+  }
+
+  const runFn = () => {
+    init()
+    
+  }
+
+  const loadTwikoo = () => {
+    if (typeof twikoo === 'object') {
+      setTimeout(runFn,0)
+      return
+    } 
+    getScript('/External-link/js/twikoo.all.min.js').then(runFn)
+  }
+
+  if ('Twikoo' === 'Twikoo' || !true) {
+    if (true) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else loadTwikoo()
+  } else {
+    window.loadOtherComment = () => {
+      loadTwikoo()
+    }
+  }
+})()</script></div><script defer src="/js/pdf-viewer.js?v=20261026-mimefix"></script><script defer src="/js/unlock-secret.js?v=20261117-scroll1"></script><script defer src="/js/open-assets-blank.js?v=20261025"></script><script defer src="/js/love-days.js?v=20261109-icp-copyright"></script><script defer charset="UTF-8" id="LA_COLLECT" src="https://sdk.51.la/js-sdk-pro.min.js"></script><script defer src="https://sdk.51.la/perf/js-sdk-perf.min.js" crossorigin="anonymous"></script><script defer src="/js/51la.js"></script><script src="/js/jquery.min.js"></script><script>window.jQuery || document.write('<script src="/js/jquery.min.js"><\/script>')</script><script async src="/External-link/js/clipboard.min.js"></script><script async src="/External-link/js/pace.min.js"></script><script defer src="/js/winbox.bundle.min.js"></script><script async src="/External-link/js/iconfont/font_3586335.js"></script><script async src="/External-link/js/iconfont/font_3636804.js"></script><script async src="/External-link/js/iconfont/font_3612150.js"></script><script async src="/External-link/js/iconfont/font_5239918.js"></script><canvas id="universe"></canvas><canvas id="snow"></canvas><script defer src="/js/notify.js"></script><script defer src="/js/lunar.js"></script><script defer src="/js/data/holidays.js"></script><script defer src="/js/modules/console-art.js"></script><script defer src="/js/modules/shell.js?v=20261121-titlecfg2"></script><script defer src="/js/modules/snow.js?v=20261010-snow1"></script><script defer src="/js/modules/effects.js?v=20261010-snow1"></script><script defer src="/js/modules/reading.js?v=20261028-fpsbadge"></script><script defer src="/js/modules/nav.js?v=20261102-flickerfix"></script><script defer src="/js/inject/nav-scroll-rebind.js?v=20261102a"></script><script defer src="/js/music-bus.js?v=20261102-resume5"></script><script defer src="/js/music-page.js?v=20261031a"></script><script defer src="/js/daily-say.js?v=20261102-resume"></script><script defer src="/js/modules/cursor.js?v=20261028-dot"></script><script defer src="/js/modules/footer-time.js?v=20261109-third-line"></script><script defer src="/js/inject/archive-page.js?v=20261118-tagtotal"></script><script defer src="/js/modules/appearance-fonts.js?v=20261102-fc2"></script><script defer src="/js/modules/appearance-backgrounds.js?v=20261105-wallpaper3"></script><script defer src="/js/modules/fireflies.js?v=20261010-fireflies1"></script><script defer src="/js/modules/ripple.js?v=20261014-ripple1"></script><script defer src="/js/modules/settings.js?v=20261105-wallpaper1"></script><script defer src="/js/stats.js?v=20261102-neutral"></script><script defer src="/js/hours-search.js?v=20261122gap"></script><script defer src="/js/fomal.js"></script><script defer src="/js/wechat-qr.js?v=20261028-qr"></script><script defer src="/js/festival.js"></script><script defer src="/js/author-status.js"></script><script defer src="/js/pjax-guard.js?v=20261005"></script><script defer src="/js/pjax-relink.js?v=20261030-about2"></script><script defer src="/js/inject/search-lazy.js?v=20261011b"></script><script src="/js/inject/scroll-gap-fix.js?v=20261011"></script><script src="/js/inject/webinfo-card.js"></script><script defer src="/js/i18n-zh.js?v=20261112c"></script><script src="/js/inject/pc-local-link.js"></script><script defer src="/js/inject/about-route-probe.js?v=20261030"></script><script defer src="/js/inject/about-live.js?v=20261030"></script><script defer src="/js/twikoo-anchor.js?v=20261117-anchor2"></script><link rel="stylesheet" href="/External-link/css/APlayer.min.css" media="print" onload="this.media='all'"><script src="/External-link/js/APlayer.min.js"></script><script src="/External-link/js/Meting.min.js"></script><script src="/External-link/js/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show","#web_bg",".js-pjax","body > title","#app","#tag-echarts","#posts-echart","#categories-echarts"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener scroll 
+  ;['tocScrollFn', 'scrollCollect'].forEach(name => {
+    const handler = window[name]
+    if (!handler) return
+    window.removeEventListener('scroll', handler)
+    if (typeof handler.cancel === 'function') handler.cancel()
+    window[name] = null
+  })
+
+  typeof preloader === 'object' && preloader.initLoading()
+  document.getElementById('rightside').style.cssText = "opacity: ''; transform: ''"
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//events.vercount.one/js"></script></div><!-- hexo injector body_end start --><script id="swiper-lazyload-fix">
+(function () {
+  if (window.__swiperLazyFix) return;
+  window.__swiperLazyFix = true;
+
+  function sync () {
+    try {
+      var inst = window.lazyLoadInstance;
+      if (inst && typeof inst.update === 'function') inst.update();
+    } catch (e) {}
+  }
+
+  function burst () {
+    [0, 120, 300, 700, 1500, 2600].forEach(function (d) { setTimeout(sync, d); });
+  }
+
+  // 1) 首次加载 + 站内 pjax 返回后：等异步的 data-pjax 脚本（swiper_init.js）跑完再补登记
+  document.addEventListener('pjax:complete', burst);
+  window.addEventListener('load', burst);
+  if (document.readyState !== 'loading') burst();
+  else document.addEventListener('DOMContentLoaded', burst);
+
+  // 2) Swiper 重建循环克隆时会增删 .blog-slider__wrp 的子节点（pjax 换页后容器会被替换，故持续重挂）
+  setTimeout(function watchWrp () {
+    var wrp = document.querySelector('.blog-slider__wrp');
+    if (wrp && wrp !== window.__swiperLazyWrp) {
+      try { if (window.__swiperLazyMo) window.__swiperLazyMo.disconnect(); } catch (e) {}
+      window.__swiperLazyWrp = wrp;
+      try {
+        window.__swiperLazyMo = new MutationObserver(function () {
+          clearTimeout(window.__swiperLazyTimer);
+          window.__swiperLazyTimer = setTimeout(sync, 100);
+        });
+        window.__swiperLazyMo.observe(wrp, { childList: true });
+      } catch (e) {}
+    }
+    setTimeout(watchWrp, 800);
+  }, 800);
+})();
+</script><script id="wow-pjax-rehook">
+(function () {
+  if (window.__wowPjaxRehook) return;
+  window.__wowPjaxRehook = true;
+
+  // 插件生成的加类脚本特征：调 classList.add 又写 data-wow-duration 的，就是它
+  function isWowInjector(code) {
+    return !!code && code.indexOf('classList.add') > -1 && code.indexOf('data-wow-duration') > -1;
+  }
+
+  // 把 .js-pjax 里哑火的加类脚本重放一遍（照抄 pjax.pug 的重放手法：换新节点才会执行）
+  function replayInjectors() {
+    var scripts = document.querySelectorAll('.js-pjax script');
+    for (var i = 0; i < scripts.length; i++) {
+      var old = scripts[i];
+      if (old.getAttribute('data-pjax') !== null) continue; // 主题自己会重放，别跑两遍
+      var code = old.text || old.textContent || old.innerHTML || '';
+      if (!isWowInjector(code)) continue;
+      var neu = document.createElement('script');
+      neu.setAttribute('data-wow-pjax-replay', '');
+      neu.appendChild(document.createTextNode(code));
+      old.parentNode.replaceChild(neu, old);
+    }
+  }
+
+  // wow 实例兜底 + 清理被 pjax 换掉的旧节点（否则 wow.boxes 会一直 accumulate）
+  function resyncBoxes() {
+    var wow = window.wow;
+    if (!wow && typeof window.WOW === 'function') {
+      // 等价于 node_modules/hexo-butterfly-wowjs/lib/wow_init.js
+      window.wow = new window.WOW({
+        boxClass: 'wow',
+        animateClass: 'animate__animated',
+        offset: 0,
+        mobile: false,
+        live: true
+      });
+      window.wow.init();
+      return;
+    }
+    if (!wow) return;
+    try {
+      if (wow.boxes && wow.boxes.length) {
+        wow.boxes = wow.boxes.filter(function (el) { return el && document.contains(el); });
+      }
+      // 关键一步：让 wow 自己把新插入的 .wow 卡片登记进 boxes（会顺手隐藏 + 置 scrolled）
+      if (typeof wow.doSync === 'function') {
+        wow.doSync(document.body);
+      } else if (wow.boxes && wow.applyStyle) {
+        // 老版本 wow.js 没有 doSync，手动补：从没被 wow 摸过的块（没有 inline visibility）收进来
+        var nodes = document.querySelectorAll('.wow');
+        for (var i = 0; i < nodes.length; i++) {
+          var el = nodes[i];
+          if (el.style.visibility) continue;
+          if (wow.all && wow.all.indexOf(el) > -1) continue;
+          wow.boxes.push(el);
+          if (wow.all) wow.all.push(el);
+          wow.applyStyle(el, true);
+        }
+        wow.scrolled = true;
+      }
+      // 再补一次 scroll 事件，保证 50ms 轮询这一拍立刻跑
+      window.dispatchEvent(new Event('scroll'));
+    } catch (e) {}
+  }
+
+  function run() {
+    try { replayInjectors(); } catch (e) {}
+    try { resyncBoxes(); } catch (e) {}
+  }
+
+  document.addEventListener('pjax:complete', function () {
+    // 主题的 pjax:complete 监听器（pjax.pug）先重放 script[data-pjax]（轮播/磁贴注入脚本在里面），
+    // 所以这里延后一拍，保证重放顺序在它之后；300ms 那次兜底给异步补内容的场景。
+    setTimeout(run, 0);
+    setTimeout(run, 300);
+  });
+
+  // 调试用：控制台里 window.__wowPjaxRehookNow() 可手动触发一次
+  window.__wowPjaxRehookNow = run;
+})();
+</script><div class="js-pjax"><script async="async">var arr = document.getElementsByClassName('recent-post-item');
+for(var i = 0;i<arr.length;i++){
+    arr[i].classList.add('wow');
+    arr[i].classList.add('animate__fadeIn');
+    arr[i].setAttribute('data-wow-duration', '700ms');
+    arr[i].setAttribute('data-wow-delay', '0');
+    arr[i].setAttribute('data-wow-offset', '0');
+    arr[i].setAttribute('data-wow-iteration', '1');
+  }</script><script async="async">var arr = document.getElementsByClassName('card-widget');
+for(var i = 0;i<arr.length;i++){
+    arr[i].classList.add('wow');
+    arr[i].classList.add('animate__fadeIn');
+    arr[i].setAttribute('data-wow-duration', '700ms');
+    arr[i].setAttribute('data-wow-delay', '0');
+    arr[i].setAttribute('data-wow-offset', '0');
+    arr[i].setAttribute('data-wow-iteration', '1');
+  }</script></div><script defer src="/External-link/js/wow.min.js"></script><script defer src="/External-link/js/wow_init.js"></script><!-- hexo injector body_end end --></body></html>

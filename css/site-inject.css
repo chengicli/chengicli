@@ -35,6 +35,9 @@
  *   15. cardGlassOff       ← 2026-10-04 新增（关闭卡片毛玻璃特效）
  *   16. searchPanelUX      ← 2026-10-11 新增（搜索加载提示位置修正 + 搜索历史）
  *   17. darkModeSpeed      ← 2026-10-11 新增（昼夜切换动画时长调整：覆盖天空/星球/日月互换时长，整屏遮挡 ~1.5s）
+ *   18. hideHeroWaves      ← 2026-11-21 新增（隐藏标题区白色波浪装饰）
+ *   19. unifyWallpaperMask ← 2026-11-21 新增（banner 与正文统一遮罩，消除颜色分层硬边）
+ *   20. clearBannerMask    ← 2026-11-22 新增（banner 遮罩改全透明，露出壁纸）
  * ========================================================================== */
 
 /* ── 1/12  #scroll-gap-css  ← 原 _config.chengic.yml:1209-1212 ── */
@@ -1338,6 +1341,20 @@ html.beauty-cursor-on .winbox .wb-body * { cursor: inherit !important; }
   #body-wrap.home .layout { padding-right: max(15px, calc(78px - (100vw - 1400px) / 2)); }
 }
 
+/* 首页 multicard 三栏标题：主题源码在 ≥1069px 把标题压成 1 行，长标题全被省略。
+   这里恢复成 2 行；标题区本来就有 75px（19px × 2 行足够），不会挤压下面的 meta。
+   同时把标题块从 flex-end（贴着 meta）改成上下居中：两行标题整体居中，一行标题也不会偏下。 */
+@media screen and (min-width: 1069px) {
+  #recent-posts .recent-post-item .recent-post-info .article-title .article-title-link {
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+}
+
+#recent-posts .recent-post-item .recent-post-info .article-title {
+  justify-content: center;
+}
+
 /* --- 音乐馆页：左右留白相等，整体比全站略窄 ---
    作者原话：「右边的距离菜单按钮距离就刚刚好 我告诉你该到多大…
    比如说右边的距离菜单按钮距离是10px 那么现在就改为20px
@@ -2049,9 +2066,8 @@ html[data-theme="dark"] #footer::after {
      看着就像"开头多打了个空格"；现在无论哪块落到行首，行首都是零外边距。
    · nowrap：这串装饰里的 ･ ﾟ 是 NS 类、🌸 是 ID 类，本来就不该被拆开；写死 nowrap
      是为了不依赖浏览器的 Unicode 断行表，而不是为了调整折行点（折行点见下方说明）。
-   · 折行点：窄屏下第三行会断成「站点运行 …天 ｡ﾟﾟ･🌸･ﾟﾟ･｡」+「已经和女朋友…啦 ♥」——
-     「天」后面不能断（UAX#14 禁止在 CL 类字符前断行，装饰符首字符 ｡ 正是 CL 类），
-     所以装饰符留在第一行末尾收尾，第二行从正文开始，比让它孤零零起一行好看。 */
+   · 折行点：宽屏仍让装饰符跟在「站点运行 …天」后面；≤640px 按作者要求改成
+     装饰符独占一行、夹在两段时长中间（见响应式断点里的 display:block 覆盖）。 */
 #footer-wrap .footer_custom_text #ftRun {
   margin-right: 8px;
 }
@@ -2068,10 +2084,8 @@ html[data-theme="dark"] #footer::after {
    气泡文字由脚本写进 data-tip 属性：
      #ftRun  ← source/js/modules/footer-time.js  「建站至今 N 天」
      #ftLove ← source/js/love-days.js             「在一起 N 天」
-   气泡放**下方**（2026-11-14 作者反馈）：原先往上弹会盖住上面那行
-   「© 2023-2026 By chengicli · 豫ICP备2026057580号-1」，看着像把字吃掉。
-   往下弹正好落进 #footer-wrap 底部留白里（base 34px / ≤640px 86px 都装得下），
-   页脚又紧贴页面底边，所以不会压到正文任何东西。
+   气泡放**上方、夹在链接行与计时文字中间**（2026-11-21 作者反馈）：位置再往下压，
+   让气泡上下两侧与链接行、计时文字的视觉距离接近，不偏上也不压字。
    只在 :hover 出现，不加 delay —— 鼠标一进就展示，不用等。 */
 #footer-wrap .footer_custom_text #ftRun,
 #footer-wrap .footer_custom_text #ftLove {
@@ -2082,7 +2096,7 @@ html[data-theme="dark"] #footer::after {
   content: attr(data-tip);
   position: absolute;
   left: 50%;
-  top: calc(100% + 6px);
+  bottom: calc(100% - 2px);
   z-index: 3;
   padding: 4px 10px;
   border: 1px solid rgba(255, 255, 255, .14);
@@ -2098,8 +2112,8 @@ html[data-theme="dark"] #footer::after {
   text-shadow: none;
   pointer-events: none;
   opacity: 0;
-  /* 初始位置在目标位置上方 4px，出现时往下落到原位（跟气泡在下方的方向一致） */
-  transform: translate(-50%, -4px);
+  /* 初始位置在目标位置下方 4px，出现时往上落到原位（跟气泡在上方的方向一致） */
+  transform: translate(-50%, 4px);
   transition: opacity .18s ease, transform .18s ease;
 }
 
@@ -2126,9 +2140,8 @@ html[data-theme="dark"] #footer::after {
   #footer-wrap .footer_custom_text { margin-top: 14px; font-size: 12.5px; }
   #footer-wrap .copyright { margin-top: 6px; font-size: 12.5px; }
   #footer-wrap .footer_custom_text #ftRun { font-size: 12.5px; }
-  /* 这一档底部留白收到 30px，悬停气泡（高 28px）的间距同步收到 2px，
-     免得上悬停时气泡探出页脚底边、页面凭空多出几像素滚动范围 */
-  #footer-wrap .footer_custom_text [data-tip]::after { top: calc(100% + 2px); }
+  /* 窄屏行距更小，气泡再往下压一点，和上下两行保持视觉居中 */
+  #footer-wrap .footer_custom_text [data-tip]::after { bottom: calc(100% - 4px); }
 }
 
 @media screen and (max-width: 640px) {
@@ -2147,11 +2160,70 @@ html[data-theme="dark"] #footer::after {
   #footer-wrap .copyright .ft-dot { display: none; }
   /* 拆成块级后 flex 的 gap 失效，这里补回 © 与作者名之间的间距 */
   #footer-wrap .copyright .ft-by { margin-left: 6px; }
-  /* 第三行（站点运行 + 恋爱时长）窄屏就让它整段自然折行，每段各自 nowrap */
+  /* 手机端：三段各占一行，装饰符单独夹在两段时长中间；
+     fit-content + margin auto 保证居中，悬停气泡也仍跟着文字走 */
   #footer-wrap .footer_custom_text { font-size: 12px; }
+  #footer-wrap .footer_custom_text #ftRun,
+  #footer-wrap .footer_custom_text #ftLove,
+  #footer-wrap .footer_custom_text .ft-sep {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+  #footer-wrap .footer_custom_text .ft-sep { line-height: 1.6; }
 }
 
 /* 系统开了「减少动态效果」：下划线滑入保留（纯视觉、无位移），hover 位移全部停掉 */
 @media (prefers-reduced-motion: reduce) {
   #footer-wrap .ft-links a { transition: color .2s; }
+}
+
+/* ── 18. hideHeroWaves ← 2026-11-21 新增（隐藏文章页/首页标题区的白色波浪装饰） ── */
+/* 主题在 header/index.pug 输出 section.main-hero-waves-area.waves-area，
+   白天的白色波浪由主题 _custom/custom.css 控制；夜间模式主题已 display:none。
+   这里全局隐藏，夜间亦保持隐藏，避免标题区下方出现白色波浪带。 */
+.main-hero-waves-area.waves-area {
+  display: none !important;
+}
+
+/* ── 19. unifyWallpaperMask ← 2026-11-21 新增（banner 与正文统一遮罩，消除颜色分层硬边） ── */
+/* 现象：文章页顶部 banner 用主题自带的「日间 rgba(0,0,0,.2) / 夜间 transparent」遮罩，
+   正文卡片用 --trans-light / --trans-dark，两者罩层不同，在 banner 400px 底边形成硬色带。
+   #web_bg 是 position:fixed 全屏壁纸（上半亮天空、下半暗城市），本身明暗是平滑过渡的。
+   做法：让 banner 与正文卡片改用同一个变量做罩层 —— 透出的是同一张壁纸、罩的是同一层色，
+   400px 处不再有突变，整页靠壁纸自身的明暗过渡衔接。
+   卡片透多少由美化面板「卡片不透明度」滑块写入的 --trans-* 决定，调低即可让壁纸更多透出。 */
+#page-header.post-bg::before,
+#page-header.not-home-page::before {
+  background: var(--trans-light, rgba(250, 250, 250, .97)) !important;
+  z-index: -3;
+}
+[data-theme="dark"] #page-header.post-bg::before,
+[data-theme="dark"] #page-header.not-home-page::before {
+  background: var(--trans-dark, rgba(28, 28, 28, .97)) !important;
+}
+
+/* ── 20. clearBannerMask ← 2026-11-22 新增（banner 遮罩改全透明） ──
+ * 现象：文章页顶部那块「大黑框」不是壁纸、也不是特效，是第 19 节给 banner 铺的
+ *   ::before 遮罩（--trans-dark / --trans-light，不透明度 97%，几乎不透明）。
+ *   它在 400px 高度上刷了一层纯色，跟下面的壁纸一对比就是一块突兀的黑板。
+ * 做法：把 banner 的遮罩彻底透明化，让壁纸原样透上来，跟正文区域连成一片。
+ *   壁纸本身保持不动（#web_bg 一个字没改）。
+ * 想恢复第 19 节的统一遮罩：删掉本节即可。
+ */
+#page-header.post-bg::before,
+#page-header.not-home-page::before,
+[data-theme="dark"] #page-header.post-bg::before,
+[data-theme="dark"] #page-header.not-home-page::before,
+[data-theme="light"] #page-header.post-bg::before,
+[data-theme="light"] #page-header.not-home-page::before {
+  background: transparent !important;
+}
+/* banner 透明后标题是白字压在壁纸的亮部上，浅色模式补一道暗投影保证可读。
+   深色模式壁纸本来就深，原有的霓虹发光够用，不动。 */
+[data-theme="light"] #post-info .post-title,
+[data-theme="light"] #post-info #post-meta,
+[data-theme="light"] #post-info #post-meta a {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .85), 0 2px 14px rgba(0, 0, 0, .55) !important;
 }

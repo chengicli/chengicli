@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" width="900" height="460" role="img" aria-label="G16 极坐标六孔等分示意">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#374151"/>
+    </marker>
+  </defs>
+  <rect width="900" height="460" fill="#f7f8fa"/>
+  <text x="40" y="52" font-family="'Microsoft YaHei','PingFang SC',Arial,sans-serif" font-size="23" font-weight="700" fill="#1f2937">G16：把“半径 + 角度”直接写进程序</text>
+  <text x="40" y="84" font-family="'Microsoft YaHei','PingFang SC',Arial,sans-serif" font-size="15" fill="#4b5563">G17 平面下，X 是半径，Y 是角度；PCD100 要先除以 2，得到 R50。</text>
+
+  <g transform="translate(330,275)">
+    <line x1="-170" y1="0" x2="190" y2="0" stroke="#9ca3af" stroke-width="2" marker-end="url(#arrow)"/>
+    <line x1="0" y1="150" x2="0" y2="-170" stroke="#9ca3af" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="198" y="20" font-family="Arial,sans-serif" font-size="14" fill="#6b7280">X（半径轴）</text>
+    <text x="14" y="-176" font-family="Arial,sans-serif" font-size="14" fill="#6b7280">Y（角度轴）</text>
+
+    <circle r="145" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="6 5"/>
+    <line x1="0" y1="0" x2="125" y2="-72.5" stroke="#db2777" stroke-width="3"/>
+    <circle cx="125" cy="-72.5" r="9" fill="#db2777"/>
+    <text x="136" y="-84" font-family="Consolas,monospace" font-size="14" font-weight="700" fill="#db2777">R50 / 60°</text>
+
+    <g fill="#2563eb">
+      <circle cx="145" cy="0" r="7"/>
+      <circle cx="72.5" cy="125.6" r="7"/>
+      <circle cx="-72.5" cy="125.6" r="7"/>
+      <circle cx="-145" cy="0" r="7"/>
+      <circle cx="-72.5" cy="-125.6" r="7"/>
+      <circle cx="72.5" cy="-125.6" r="7"/>
+    </g>
+    <g font-family="Arial,sans-serif" font-size="12" fill="#4b5563">
+      <text x="158" y="4">0°</text>
+      <text x="84" y="142">60°</text>
+      <text x="-112" y="142">120°</text>
+      <text x="-172" y="4">180°</text>
+      <text x="-112" y="-130">240°</text>
+      <text x="80" y="-130">300°</text>
+    </g>
+    <circle r="5" fill="#1f2937"/>
+  </g>
+
+  <g transform="translate(610,150)">
+    <rect width="240" height="215" rx="14" fill="#ffffff" stroke="#d1d5db" stroke-width="2"/>
+    <text x="20" y="40" font-family="'Microsoft YaHei',Arial,sans-serif" font-size="17" font-weight="700" fill="#1f2937">第一孔之后</text>
+    <text x="20" y="78" font-family="Consolas,monospace" font-size="15" fill="#2563eb">G91 Y60. K5</text>
+    <text x="20" y="108" font-family="'Microsoft YaHei',Arial,sans-serif" font-size="14" fill="#4b5563">每次角度 +60°</text>
+    <text x="20" y="134" font-family="'Microsoft YaHei',Arial,sans-serif" font-size="14" fill="#4b5563">再钻 5 孔</text>
+    <line x1="20" y1="154" x2="220" y2="154" stroke="#e5e7eb" stroke-width="2"/>
+    <text x="20" y="184" font-family="'Microsoft YaHei',Arial,sans-serif" font-size="14" font-weight="700" fill="#db2777">1 + 5 = 6 孔</text>
+  </g>
+</svg>

@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://www.lichengic.com/posts/canon-r50.html</loc>
-    <lastmod>2026-11-18</lastmod>
+    <loc>https://www.lichengic.com/posts/g52-g16-guide.html</loc>
+    <lastmod>2026-11-22</lastmod>
   </url>
   <url>
-    <loc>https://www.lichengic.com/posts/beginner.html</loc>
-    <lastmod>2026-11-18</lastmod>
+    <loc>https://www.lichengic.com/posts/music-capsule-guide.html</loc>
+    <lastmod>2026-11-21</lastmod>
+  </url>
+  <url>
+    <loc>https://www.lichengic.com/posts/hexo-encrypt-guide.html</loc>
+    <lastmod>2026-11-21</lastmod>
   </url>
   <url>
     <loc>https://www.lichengic.com/posts/4axis-a-shortest-path.html</loc>
@@ -15,5 +19,13 @@
   <url>
     <loc>https://www.lichengic.com/posts/6061-t6-cutting.html</loc>
     <lastmod>2026-11-05</lastmod>
+  </url>
+  <url>
+    <loc>https://www.lichengic.com/posts/canon-r50.html</loc>
+    <lastmod>2026-10-30</lastmod>
+  </url>
+  <url>
+    <loc>https://www.lichengic.com/posts/beginner.html</loc>
+    <lastmod>2026-10-28</lastmod>
   </url>
 </urlset> 

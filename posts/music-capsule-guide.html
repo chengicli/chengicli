@@ -1,0 +1,847 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><script>if ('serviceWorker' in navigator) {
+  var isLocalDev = ['localhost', '127.0.0.1', '0.0.0.0'].indexOf(location.hostname) !== -1
+  if (isLocalDev) {
+    navigator.serviceWorker.getRegistrations().then(function (rs) {
+      rs.forEach(function (r) { r.unregister() })
+    })
+  } else {
+    navigator.serviceWorker.register('/sw.js').then(function () {
+      if (localStorage.getItem('install') !== 'true') {
+        localStorage.setItem('install', 'true')
+        location.reload()
+      }
+    })
+  }
+}
+</script><head><div id="myscoll"></div><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>不用音乐插件，也能做出本站同款左下角音乐胶囊 | chengicli</title><meta name="keywords" content="Hexo,新手入门,音乐胶囊,原生JavaScript"><meta name="author" content="chengicli"><meta name="copyright" content="chengicli"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="ffffff"><meta name="description" content="从零开始用原生 audio + JavaScript + CSS 做一个常驻左下角、竖排歌词、悬停展开控制键、支持切歌与 pjax 的音乐胶囊，不依赖 APlayer、MetingJS 或任何音乐插件。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="不用音乐插件，也能做出本站同款左下角音乐胶囊">
+<meta property="og:url" content="https://www.lichengic.com/posts/music-capsule-guide.html">
+<meta property="og:site_name" content="chengicli">
+<meta property="og:description" content="从零开始用原生 audio + JavaScript + CSS 做一个常驻左下角、竖排歌词、悬停展开控制键、支持切歌与 pjax 的音乐胶囊，不依赖 APlayer、MetingJS 或任何音乐插件。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.lichengic.com/assets/covers/music-capsule-guide.png">
+<meta property="article:published_time" content="2026-11-21T10:20:00.000Z">
+<meta property="article:modified_time" content="2026-11-21T10:20:00.000Z">
+<meta property="article:author" content="chengicli">
+<meta property="article:tag" content="Hexo">
+<meta property="article:tag" content="新手入门">
+<meta property="article:tag" content="音乐胶囊">
+<meta property="article:tag" content="原生JavaScript">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.lichengic.com/assets/covers/music-capsule-guide.png"><link rel="shortcut icon" href="/"><link rel="canonical" href="https://www.lichengic.com/posts/music-capsule-guide"><link rel="preconnect" href="//events.vercount.one"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/External-link/css/fontawesome/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="/External-link/css/fancybox.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: {"appId":"XAPS1H9C4E","apiKey":"f23ce571987ecaf56e6fe0c2c9cfc9f3","indexName":"chengicli","hits":{"per_page":5},"languages":{"input_placeholder":"搜索文章","hits_empty":"找不到您查询的内容：${query}","hits_stats":"找到 ${hits} 条结果，用时 ${time} 毫秒"}},
+  localSearch: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":230},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: true,
+    post: true
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdnjs.cloudflare.com/ajax/libs/flickr-justified-gallery/2.1.2/fjGallery.min.js',
+      css: 'https://cdnjs.cloudflare.com/ajax/libs/flickr-justified-gallery/2.1.2/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isAnchor: false,
+  titlePrank: {"enable":false,"away":"别走呀...","back":"欢迎回来！","delay":2000}
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '不用音乐插件，也能做出本站同款左下角音乐胶囊',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2026-11-21 18:20:00'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', 'ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><link rel="stylesheet" href="/External-link/css/lxgw/lxgwwenkaigbscreen.css" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="/External-link/css/lxgw/lxgwwenkaigbscreen.css"></noscript><link rel="preconnect" href="https://sdk.51.la"><link rel="preconnect" href="https://sdk.51.la" crossorigin><link rel="stylesheet" href="/css/twikoo.css?v=20261117-anchor2"><link rel="stylesheet" href="/css/pdf-viewer.css?v=20261022b"><style id="themeColor"></style><style id="rightSide"></style><style id="transPercent"></style><style id="bgFilterParam"></style><span id="fps" aria-hidden="true"></span><style id="defineBg">:root{--default-bg:url(/Background-wallpaper/computer-Daytime-background.webp);--darkmode-bg:url(/Background-wallpaper/computer-Night-background.webp);--mobileday-bg:url(/Background-wallpaper/phone-Daytime-background.webp);--mobilenight-bg:url(/Background-wallpaper/phone-Night-background.webp);}</style><style id="menu_shadow"></style><style id="nav-display"></style><style id="aside-show"></style><style id="aside-pos"></style><link rel="stylesheet" href="/css/site-inject.css?v=20261121-unifywall"><link rel="stylesheet" href="/css/daily-say.css?v=20261102-hall"><link rel="stylesheet" href="/css/navigation.css?v=20261102-navtop"><link rel="stylesheet" href="/css/mobile-drawer.css?v=20261008"><link rel="stylesheet" href="/css/avatar-glow.css?v=20261004q"><script src="/js/inject/ping-route-boot.js"></script><script src="/js/inject/ping-route.js"></script><script src="/js/inject/beauty-boot.js?v=20261102-fcall"></script><script src="/js/inject/right-menu-state-boot.js"></script><script>window.fomalNightConfig=window.fomalNightConfig||{enabled:true,latLng:null,themeKey:'theme'}</script><script src="/js/inject/daynight-boot.js?v=20261014-nightboot2"></script><script src="/js/inject/typewriter.js?v=20261004b"></script><script>try{if(localStorage.getItem('chengic-lang')==='zh-Hant'){document.write('<style id="i18n-guard">html.i18n-pending body{visibility:hidden}</style>');document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},2500)}}catch(e){}</script><link rel="stylesheet" href="/css/typewriter.css?v=20261004"><link rel="stylesheet" href="/css/paperclip.css?v=20261005-mobile1"><link rel="stylesheet" href="/css/archive-page.css?v=20261118-tagfix"><svg aria-hidden="true" style="position:absolute; overflow:hidden; width:0; height:0"><symbol id="icon-sun" viewBox="0 0 1024 1024"><path d="M960 512l-128 128v192h-192l-128 128-128-128H192v-192l-128-128 128-128V192h192l128-128 128 128h192v192z" fill="#FFD878" p-id="8420"></path><path d="M736 512a224 224 0 1 0-448 0 224 224 0 1 0 448 0z" fill="#FFE4A9" p-id="8421"></path><path d="M512 109.248L626.752 224H800v173.248L914.752 512 800 626.752V800h-173.248L512 914.752 397.248 800H224v-173.248L109.248 512 224 397.248V224h173.248L512 109.248M512 64l-128 128H192v192l-128 128 128 128v192h192l128 128 128-128h192v-192l128-128-128-128V192h-192l-128-128z" fill="#4D5152" p-id="8422"></path><path d="M512 320c105.888 0 192 86.112 192 192s-86.112 192-192 192-192-86.112-192-192 86.112-192 192-192m0-32a224 224 0 1 0 0 448 224 224 0 0 0 0-448z" fill="#4D5152" p-id="8423"></path></symbol><symbol id="icon-moon" viewBox="0 0 1024 1024"><path d="M611.370667 167.082667a445.013333 445.013333 0 0 1-38.4 161.834666 477.824 477.824 0 0 1-244.736 244.394667 445.141333 445.141333 0 0 1-161.109334 38.058667 85.077333 85.077333 0 0 0-65.066666 135.722666A462.08 462.08 0 1 0 747.093333 102.058667a85.077333 85.077333 0 0 0-135.722666 65.024z" fill="#FFB531" p-id="11345"></path><path d="M329.728 274.133333l35.157333-35.157333a21.333333 21.333333 0 1 0-30.165333-30.165333l-35.157333 35.157333-35.114667-35.157333a21.333333 21.333333 0 0 0-30.165333 30.165333l35.114666 35.157333-35.114666 35.157334a21.333333 21.333333 0 1 0 30.165333 30.165333l35.114667-35.157333 35.157333 35.157333a21.333333 21.333333 0 1 0 30.165333-30.165333z" fill="#030835" p-id="11346"></path></symbol></svg><!-- hexo injector head_end start --><link rel="stylesheet" href="/External-link/css/animate.min.css" media="print" onload="this.media='screen'"><link rel="stylesheet" href="/External-link/css/font-awesome-animation.min.css" media="defer" onload="this.media='all'"><link rel="stylesheet" href="/External-link/css/tag_plugins.css" media="defer" onload="this.media='all'"><script src="/External-link/js/carousel-touch.js"></script><!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"><link rel="alternate" href="/atom.xml" title="chengicli" type="application/atom+xml">
+</head><body><div id="loading-box" onclick="document.getElementById(&quot;loading-box&quot;).classList.add(&quot;loaded&quot;)"><div class="loading-bg"><div class="loading-img"></div><div class="loading-image-dot"></div></div></div><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/assets/avatar.webp" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">9</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">17</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">4</div></a></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-home"></use></svg><span class="menu_word" style="font-size:17px"> 首页</span></a></div><div class="menus_item"><a class="site-page group faa-parent animated-hover hide" href="javascript:void(0);"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon--article"></use></svg><span class="menu_word" style="font-size:17px"> 文章</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child faa-parent animated-hover" href="/archives/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-guidang1">                   </use></svg><span class="menu_word" style="font-size:17px"> 文章总览</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/tags/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-shujutongji1">                   </use></svg><span class="menu_word" style="font-size:17px"> 文章统计</span></a></li><li><a class="site-page child faa-parent animated-hover" href="javascript:randomPost();"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-zuji1">                   </use></svg><span class="menu_word" style="font-size:17px"> 随便逛逛</span></a></li></ul></div><div class="menus_item"><a class="site-page group faa-parent animated-hover hide" href="javascript:void(0);"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-xiangzi"></use></svg><span class="menu_word" style="font-size:17px"> 八宝箱</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child faa-parent animated-hover" href="/thread/"><i class="fa-fw fas fa-screwdriver-wrench faa-tada"></i><span class="menu_word" style="font-size:17px"> 螺纹规格</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/macro/"><i class="fa-fw fas fa-code faa-tada"></i><span class="menu_word" style="font-size:17px"> 宏程序</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/warehouse/"><i class="fa-fw fas fa-warehouse faa-tada"></i><span class="menu_word" style="font-size:17px"> 刀具库</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/hours/"><i class="fa-fw fas fa-stopwatch faa-tada"></i><span class="menu_word" style="font-size:17px"> 产品工时</span></a></li></ul></div><div class="menus_item"><a class="site-page group faa-parent animated-hover hide" href="javascript:void(0);"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-wangye"></use></svg><span class="menu_word" style="font-size:17px"> 网站</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child faa-parent animated-hover" href="/nav/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-zhifengche">                   </use></svg><span class="menu_word" style="font-size:17px"> 网址导航</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/music/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-yinle">                   </use></svg><span class="menu_word" style="font-size:17px"> 音乐馆</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/about/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-paperplane">                   </use></svg><span class="menu_word" style="font-size:17px"> 关于</span></a></li></ul></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/message/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-liuyan"></use></svg><span class="menu_word" style="font-size:17px"> 留言板</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">chengicli</a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-home"></use></svg><span class="menu_word" style="font-size:17px"> 首页</span></a></div><div class="menus_item"><a class="site-page group faa-parent animated-hover hide" href="javascript:void(0);"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon--article"></use></svg><span class="menu_word" style="font-size:17px"> 文章</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child faa-parent animated-hover" href="/archives/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-guidang1">                   </use></svg><span class="menu_word" style="font-size:17px"> 文章总览</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/tags/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-shujutongji1">                   </use></svg><span class="menu_word" style="font-size:17px"> 文章统计</span></a></li><li><a class="site-page child faa-parent animated-hover" href="javascript:randomPost();"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-zuji1">                   </use></svg><span class="menu_word" style="font-size:17px"> 随便逛逛</span></a></li></ul></div><div class="menus_item"><a class="site-page group faa-parent animated-hover hide" href="javascript:void(0);"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-xiangzi"></use></svg><span class="menu_word" style="font-size:17px"> 八宝箱</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child faa-parent animated-hover" href="/thread/"><i class="fa-fw fas fa-screwdriver-wrench faa-tada"></i><span class="menu_word" style="font-size:17px"> 螺纹规格</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/macro/"><i class="fa-fw fas fa-code faa-tada"></i><span class="menu_word" style="font-size:17px"> 宏程序</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/warehouse/"><i class="fa-fw fas fa-warehouse faa-tada"></i><span class="menu_word" style="font-size:17px"> 刀具库</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/hours/"><i class="fa-fw fas fa-stopwatch faa-tada"></i><span class="menu_word" style="font-size:17px"> 产品工时</span></a></li></ul></div><div class="menus_item"><a class="site-page group faa-parent animated-hover hide" href="javascript:void(0);"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-wangye"></use></svg><span class="menu_word" style="font-size:17px"> 网站</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child faa-parent animated-hover" href="/nav/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-zhifengche">                   </use></svg><span class="menu_word" style="font-size:17px"> 网址导航</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/music/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-yinle">                   </use></svg><span class="menu_word" style="font-size:17px"> 音乐馆</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/about/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-paperplane">                   </use></svg><span class="menu_word" style="font-size:17px"> 关于</span></a></li></ul></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/message/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-liuyan"></use></svg><span class="menu_word" style="font-size:17px"> 留言板</span></a></div></div><center id="name-container"><a id="page-name" href="javascript:scrollToTop()">PAGE_NAME</a></center><div id="nav-right"><div id="search-button"><a class="search faa-parent animated-hover" title="检索站内任何你想要的信息"><svg class="faa-tada icon" style="height:24px;width:24px;fill:currentColor;position:relative;top:6px" aria-hidden="true"><use xlink:href="#icon-sousuo"></use></svg><span> 搜索</span></a></div><a class="meihua faa-parent animated-hover" onclick="toggleWinbox()" title="美化设置-自定义你的风格" id="meihua-button"><svg class="faa-tada icon" style="height:26px;width:26px;fill:currentColor;position:relative;top:8px" aria-hidden="true"><use xlink:href="#icon-huahua"></use></svg></a><a class="sun_moon faa-parent animated-hover" onclick="switchNightMode()" title="浅色和深色模式转换" id="nightmode-button"><svg class="faa-tada" style="height:25px;width:25px;fill:currentColor;position:relative;top:7px" viewBox="0 0 1024 1024"><use id="modeicon" xlink:href="#icon-moon">       </use></svg></a><div id="toggle-menu"><a><i class="fas fa-bars fa-fw"></i></a></div></div></div></nav><div id="post-info"><h1 class="post-title">不用音乐插件，也能做出本站同款左下角音乐胶囊</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><svg class="meta_icon post-meta-icon" style="width:30px;height:30px;position:relative;top:10px"><use xlink:href="#icon-rili"></use></svg><span class="post-meta-label">发表于 </span><time class="post-meta-date-created" datetime="2026-11-21T10:20:00.000Z" title="发表于 2026-11-21 18:20:00">2026-11-21</time><span class="post-meta-separator">|</span><svg class="meta_icon post-meta-icon" style="width:18px;height:18px;position:relative;top:5px"><use xlink:href="#icon-gengxin1"></use></svg><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-11-21T10:20:00.000Z" title="更新于 2026-11-21 18:20:00">2026-11-21</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><svg class="meta_icon post-meta-icon" style="width:18px;height:18px;position:relative;top:5px"><use xlink:href="#icon-biaoqian"></use></svg><a class="post-meta-categories" href="/categories/Hexo%E6%95%99%E7%A8%8B/">Hexo教程</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><svg class="meta_icon post-meta-icon" style="width:25px;height:25px;position:relative;top:8px"><use xlink:href="#icon-charuword"></use></svg><span class="post-meta-label">字数总计:</span><span class="word-count">5888</span><span class="post-meta-separator">|</span><svg class="meta_icon post-meta-icon" style="width:20px;height:20px;position:relative;top:5px"><use xlink:href="#icon-shizhong"></use></svg><span class="post-meta-label">阅读时长:</span><span>25分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="不用音乐插件，也能做出本站同款左下角音乐胶囊"><svg class="meta_icon post-meta-icon" style="width:25px;height:25px;position:relative;top:5px"><use xlink:href="#icon-eye"></use></svg><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv">—</span></span></div></div></div><section class="main-hero-waves-area waves-area"><svg class="waves-svg" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto"><defs><path id="gentle-wave" d="M -160 44 c 30 0 58 -18 88 -18 s 58 18 88 18 s 58 -18 88 -18 s 58 18 88 18 v 44 h -352 Z"></path></defs><g class="parallax"><use href="#gentle-wave" x="48" y="0"></use><use href="#gentle-wave" x="48" y="3"></use><use href="#gentle-wave" x="48" y="5"></use><use href="#gentle-wave" x="48" y="7"></use></g></svg></section></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><p>本站左下角那枚竖着的音乐胶囊，看起来像插件做的，实际上<strong>没有用 APlayer、MetingJS，也没有用任何“音乐插件”</strong>。它就是一个原生 <code>&lt;audio&gt;</code> 标签、一份歌曲数组、一个固定在左下角的 <code>div</code>，再加一点 CSS。</p>
+<p>这篇教程按“我连音乐插件是什么都不知道”的起点写。你不需要装任何 npm 包，跟着做就能得到一个能播放、能显示歌词、能切歌、鼠标悬停会展开按钮的音乐胶囊。</p>
+<div class="note info flat"><p>核心思路只有一句话：<strong>全站只保留一个 <code>&lt;audio&gt;</code>，胶囊只是它的一个“遥控器 + 显示屏”。</strong></p>
+</div>
+<div class="note info flat"><p>文章第 2～4 节已经把三个文件的完整代码摆出来了，喜欢复制的话直接复制即可。下载链接放在文章最后。</p>
+</div>
+<span id="more"></span>
+<h2 id="阅读路线">阅读路线</h2>
+<table>
+<thead>
+<tr>
+<th>你想做什么</th>
+<th>看哪一节</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>我只想先把胶囊跑起来</td>
+<td>第 1～5 节</td>
+</tr>
+<tr>
+<td>我想知道为什么不用插件</td>
+<td>第 0、7 节</td>
+</tr>
+<tr>
+<td>我想接 QQ 音乐 / 网易云</td>
+<td>第 8 节</td>
+</tr>
+<tr>
+<td>我想翻页音乐不断</td>
+<td>第 9 节</td>
+</tr>
+<tr>
+<td>我手机上打不开 / 自动播放失败</td>
+<td>第 10 节</td>
+</tr>
+<tr>
+<td>我照做了但没反应</td>
+<td>第 11 节</td>
+</tr>
+<tr>
+<td>我只想直接下载文件</td>
+<td>第 13 节</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="第-0-步：先搞清楚“音乐插件”和“音乐胶囊”不是一回事">第 0 步：先搞清楚“音乐插件”和“音乐胶囊”不是一回事</h2>
+<p>很多教程会让你装：</p>
+<ul>
+<li>APlayer</li>
+<li>MetingJS</li>
+<li>hexo-tag-aplayer</li>
+<li>某个音乐解析插件</li>
+</ul>
+<p>它们能快速生成一个播放器，但有几个问题：</p>
+<ol>
+<li>样式是插件的，想改成“竖排胶囊”要覆盖一堆你不懂的选择器；</li>
+<li>插件通常自己创建一个 <code>&lt;audio&gt;</code>，你再加一个胶囊，就会出现两个播放器各放各的；</li>
+<li>pjax 换页后，插件实例可能被销毁；</li>
+<li>移动端、歌词、自动播放限制都得围着插件的规则转。</li>
+</ol>
+<p>本站的做法是把这些全拆开：</p>
+<table>
+<thead>
+<tr>
+<th>角色</th>
+<th>谁负责</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>真正发声</td>
+<td>一个原生 <code>&lt;audio&gt;</code></td>
+</tr>
+<tr>
+<td>歌曲队列 / 播放状态</td>
+<td>自己写的 <code>music-bus.js</code></td>
+</tr>
+<tr>
+<td>左下角胶囊 UI</td>
+<td>自己写的 <code>music-capsule.js</code></td>
+</tr>
+<tr>
+<td>外观</td>
+<td>自己写的 <code>music-capsule.css</code></td>
+</tr>
+<tr>
+<td>第三方音乐接口</td>
+<td>可选，服务端代理；新手阶段完全不需要</td>
+</tr>
+</tbody>
+</table>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/assets/guide/music/fig-01-music-bus.svg" alt="音乐胶囊结构：一个 audio 单例与多个界面" title="所有界面都只是播放核心的遥控器"></p>
+<p><em>中间的 <code>music-bus.js</code> 是唯一播放核心；左下角胶囊、侧栏面板和 <code>/music/</code> 页面都只是它的“遥控器 + 显示屏”。</em></p>
+<p>所以这篇教程不装插件。你只需要会复制三个文件、改一处配置。</p>
+<hr>
+<h2 id="第-1-步：准备几首能公开播放的音频">第 1 步：准备几首能公开播放的音频</h2>
+<p>最稳妥的方式，是准备几个你自己能控制的 <code>.mp3</code> 文件，例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">source/music/01.mp3</span><br><span class="line">source/music/02.mp3</span><br><span class="line">source/music/03.mp3</span><br></pre></td></tr></table></figure>
+<p>Hexo 会把 <code>source/</code> 下的内容原样发布，所以生成后地址就是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">/music/01.mp3</span><br><span class="line">/music/02.mp3</span><br><span class="line">/music/03.mp3</span><br></pre></td></tr></table></figure>
+<div class="note warning flat"><p>音频地址必须是 HTTPS，或者本地 <code>localhost</code>。如果你的站点是 HTTPS，而音频是 <code>http://...</code>，浏览器会拦截混合内容，表现就是“按钮点了没声音”。</p>
+</div>
+<p>如果你暂时没有自己的 mp3，也可以用公开可直链的测试音频，但不要依赖别人的热链做正式站，对方一改地址你就全挂了。</p>
+<hr>
+<h2 id="第-2-步：写播放核心-music-bus-js">第 2 步：写播放核心 <code>music-bus.js</code></h2>
+<p>新建：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">source/js/music-bus.js</span><br></pre></td></tr></table></figure>
+<p>把下面这段完整复制进去：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* music-bus.js —— 全站唯一播放核心 */</span></span><br><span class="line">(<span class="keyword">function</span> (<span class="params"><span class="variable language_">global</span></span>) &#123;</span><br><span class="line">  <span class="string">&#x27;use strict&#x27;</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">var</span> audio = <span class="literal">null</span>;</span><br><span class="line">  <span class="keyword">var</span> queue = [];</span><br><span class="line">  <span class="keyword">var</span> idx = -<span class="number">1</span>;</span><br><span class="line">  <span class="keyword">var</span> subs = [];</span><br><span class="line">  <span class="keyword">var</span> playing = <span class="literal">false</span>;</span><br><span class="line">  <span class="keyword">var</span> lines = [];</span><br><span class="line">  <span class="keyword">var</span> lineIndex = -<span class="number">1</span>;</span><br><span class="line">  <span class="keyword">var</span> errCount = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">function</span> <span class="title function_">emit</span>(<span class="params">type, data</span>) &#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">var</span> i = <span class="number">0</span>; i &lt; subs.<span class="property">length</span>; i++) &#123;</span><br><span class="line">      <span class="keyword">try</span> &#123; subs[i](type, data || &#123;&#125;); &#125; <span class="keyword">catch</span> (e) &#123; &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">function</span> <span class="title function_">on</span>(<span class="params">fn</span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">typeof</span> fn === <span class="string">&#x27;function&#x27;</span> &amp;&amp; subs.<span class="title function_">indexOf</span>(fn) &lt; <span class="number">0</span>) subs.<span class="title function_">push</span>(fn);</span><br><span class="line">    <span class="keyword">return</span> fn;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">function</span> <span class="title function_">parseLrc</span>(<span class="params">text</span>) &#123;</span><br><span class="line">    <span class="keyword">var</span> out = [];</span><br><span class="line">    <span class="title class_">String</span>(text || <span class="string">&#x27;&#x27;</span>).<span class="title function_">split</span>(<span class="regexp">/\r?\n/</span>).<span class="title function_">forEach</span>(<span class="keyword">function</span> (<span class="params">line</span>) &#123;</span><br><span class="line">      <span class="keyword">var</span> stamps = line.<span class="title function_">match</span>(<span class="regexp">/\[\d&#123;1,3&#125;:\d&#123;1,2&#125;(?:[.:]\d&#123;1,3&#125;)?\]/g</span>);</span><br><span class="line">      <span class="keyword">if</span> (!stamps) <span class="keyword">return</span>;</span><br><span class="line">      <span class="keyword">var</span> body = line.<span class="title function_">replace</span>(<span class="regexp">/\[[^\]]*\]/g</span>, <span class="string">&#x27;&#x27;</span>).<span class="title function_">trim</span>();</span><br><span class="line">      <span class="keyword">if</span> (!body) <span class="keyword">return</span>;</span><br><span class="line">      stamps.<span class="title function_">forEach</span>(<span class="keyword">function</span> (<span class="params">s</span>) &#123;</span><br><span class="line">        <span class="keyword">var</span> m = s.<span class="title function_">match</span>(<span class="regexp">/\[(\d&#123;1,3&#125;):(\d&#123;1,2&#125;)(?:[.:](\d&#123;1,3&#125;))?\]/</span>);</span><br><span class="line">        <span class="keyword">if</span> (!m) <span class="keyword">return</span>;</span><br><span class="line">        <span class="keyword">var</span> frac = m[<span class="number">3</span>] ? <span class="built_in">parseFloat</span>(<span class="string">&#x27;0.&#x27;</span> + m[<span class="number">3</span>]) : <span class="number">0</span>;</span><br><span class="line">        out.<span class="title function_">push</span>(&#123;</span><br><span class="line">          <span class="attr">t</span>: <span class="built_in">parseInt</span>(m[<span class="number">1</span>], <span class="number">10</span>) * <span class="number">60</span> + <span class="built_in">parseInt</span>(m[<span class="number">2</span>], <span class="number">10</span>) + frac,</span><br><span class="line">          <span class="attr">text</span>: body</span><br><span class="line">        &#125;);</span><br><span class="line">      &#125;);</span><br><span class="line">    &#125;);</span><br><span class="line">    <span class="keyword">return</span> out.<span class="title function_">sort</span>(<span class="keyword">function</span> (<span class="params">a, b</span>) &#123; <span class="keyword">return</span> a.<span class="property">t</span> - b.<span class="property">t</span>; &#125;);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">function</span> <span class="title function_">snapshot</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> &#123;</span><br><span class="line">      <span class="attr">index</span>: idx,</span><br><span class="line">      <span class="attr">track</span>: idx &gt;= <span class="number">0</span> ? queue[idx] : <span class="literal">null</span>,</span><br><span class="line">      <span class="attr">playing</span>: playing,</span><br><span class="line">      <span class="attr">cur</span>: audio ? (audio.<span class="property">currentTime</span> || <span class="number">0</span>) : <span class="number">0</span>,</span><br><span class="line">      <span class="attr">dur</span>: audio &amp;&amp; <span class="built_in">isFinite</span>(audio.<span class="property">duration</span>) ? audio.<span class="property">duration</span> : <span class="number">0</span>,</span><br><span class="line">      <span class="attr">lines</span>: lines,</span><br><span class="line">      <span class="attr">lineIndex</span>: lineIndex</span><br><span class="line">    &#125;;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">function</span> <span class="title function_">attach</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (audio) <span class="keyword">return</span> audio;</span><br><span class="line"></span><br><span class="line">    audio = <span class="variable language_">document</span>.<span class="title function_">createElement</span>(<span class="string">&#x27;audio&#x27;</span>);</span><br><span class="line">    audio.<span class="property">preload</span> = <span class="string">&#x27;metadata&#x27;</span>;</span><br><span class="line">    audio.<span class="property">volume</span> = <span class="number">0.8</span>;</span><br><span class="line">    audio.<span class="property">style</span>.<span class="property">display</span> = <span class="string">&#x27;none&#x27;</span>;</span><br><span class="line">    <span class="variable language_">document</span>.<span class="property">body</span>.<span class="title function_">appendChild</span>(audio);</span><br><span class="line"></span><br><span class="line">    audio.<span class="title function_">addEventListener</span>(<span class="string">&#x27;playing&#x27;</span>, <span class="keyword">function</span> (<span class="params"></span>) &#123;</span><br><span class="line">      playing = <span class="literal">true</span>;</span><br><span class="line">      errCount = <span class="number">0</span>;</span><br><span class="line">      <span class="title function_">emit</span>(<span class="string">&#x27;state&#x27;</span>, <span class="title function_">snapshot</span>());</span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    audio.<span class="title function_">addEventListener</span>(<span class="string">&#x27;pause&#x27;</span>, <span class="keyword">function</span> (<span class="params"></span>) &#123;</span><br><span class="line">      playing = <span class="literal">false</span>;</span><br><span class="line">      <span class="title function_">emit</span>(<span class="string">&#x27;state&#x27;</span>, <span class="title function_">snapshot</span>());</span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    audio.<span class="title function_">addEventListener</span>(<span class="string">&#x27;timeupdate&#x27;</span>, onTime);</span><br><span class="line">    audio.<span class="title function_">addEventListener</span>(<span class="string">&#x27;loadedmetadata&#x27;</span>, onTime);</span><br><span class="line"></span><br><span class="line">    audio.<span class="title function_">addEventListener</span>(<span class="string">&#x27;ended&#x27;</span>, <span class="keyword">function</span> (<span class="params"></span>) &#123;</span><br><span class="line">      <span class="title function_">playIndex</span>(idx + <span class="number">1</span>);</span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    audio.<span class="title function_">addEventListener</span>(<span class="string">&#x27;error&#x27;</span>, <span class="keyword">function</span> (<span class="params"></span>) &#123;</span><br><span class="line">      <span class="title function_">emit</span>(<span class="string">&#x27;error&#x27;</span>, &#123; <span class="attr">track</span>: queue[idx] || <span class="literal">null</span> &#125;);</span><br><span class="line">      errCount++;</span><br><span class="line">      <span class="keyword">if</span> (errCount &gt;= <span class="number">3</span>) &#123;</span><br><span class="line">        <span class="title function_">emit</span>(<span class="string">&#x27;blocked&#x27;</span>, &#123; <span class="attr">message</span>: <span class="string">&#x27;连续 3 首都播不了，先检查音频地址&#x27;</span> &#125;);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="title function_">playIndex</span>(idx + <span class="number">1</span>, <span class="literal">true</span>);</span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> audio;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">function</span> <span class="title function_">onTime</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (!audio) <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> t = audio.<span class="property">currentTime</span> || <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">var</span> found = -<span class="number">1</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">var</span> i = <span class="number">0</span>; i &lt; lines.<span class="property">length</span>; i++) &#123;</span><br><span class="line">      <span class="keyword">if</span> (lines[i].<span class="property">t</span> &lt;= t + <span class="number">0.2</span>) found = i; <span class="keyword">else</span> <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (found !== lineIndex) &#123;</span><br><span class="line">      lineIndex = found;</span><br><span class="line">      <span class="title function_">emit</span>(<span class="string">&#x27;line&#x27;</span>, &#123;</span><br><span class="line">        <span class="attr">index</span>: found,</span><br><span class="line">        <span class="attr">text</span>: found &gt;= <span class="number">0</span> ? lines[found].<span class="property">text</span> : <span class="string">&#x27;&#x27;</span></span><br><span class="line">      &#125;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="title function_">emit</span>(<span class="string">&#x27;time&#x27;</span>, <span class="title function_">snapshot</span>());</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">function</span> <span class="title function_">setQueue</span>(<span class="params">list</span>) &#123;</span><br><span class="line">    queue = <span class="title class_">Array</span>.<span class="title function_">isArray</span>(list) ? list : [];</span><br><span class="line">    idx = -<span class="number">1</span>;</span><br><span class="line">    lines = [];</span><br><span class="line">    lineIndex = -<span class="number">1</span>;</span><br><span class="line">    <span class="title function_">emit</span>(<span class="string">&#x27;queue&#x27;</span>, &#123; <span class="attr">list</span>: queue &#125;);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">function</span> <span class="title function_">playIndex</span>(<span class="params">i, fromError</span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (!queue.<span class="property">length</span>) <span class="keyword">return</span>;</span><br><span class="line">    <span class="keyword">if</span> (!fromError) errCount = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    idx = ((i % queue.<span class="property">length</span>) + queue.<span class="property">length</span>) % queue.<span class="property">length</span>;</span><br><span class="line">    <span class="keyword">var</span> item = queue[idx];</span><br><span class="line">    <span class="keyword">var</span> a = <span class="title function_">attach</span>();</span><br><span class="line"></span><br><span class="line">    lines = <span class="title function_">parseLrc</span>(item.<span class="property">lrc</span> || <span class="string">&#x27;&#x27;</span>);</span><br><span class="line">    lineIndex = -<span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    a.<span class="property">src</span> = item.<span class="property">url</span>;</span><br><span class="line">    a.<span class="title function_">load</span>();</span><br><span class="line">    <span class="title function_">emit</span>(<span class="string">&#x27;track&#x27;</span>, <span class="title function_">snapshot</span>());</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> p = a.<span class="title function_">play</span>();</span><br><span class="line">    <span class="keyword">if</span> (p &amp;&amp; p.<span class="property">catch</span>) &#123;</span><br><span class="line">      p.<span class="title function_">catch</span>(<span class="keyword">function</span> (<span class="params"></span>) &#123;</span><br><span class="line">        <span class="title function_">emit</span>(<span class="string">&#x27;blocked&#x27;</span>, &#123; <span class="attr">message</span>: <span class="string">&#x27;浏览器拦了自动播放，请点一下播放键&#x27;</span> &#125;);</span><br><span class="line">      &#125;);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">function</span> <span class="title function_">toggle</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (idx &lt; <span class="number">0</span>) &#123;</span><br><span class="line">      <span class="title function_">playIndex</span>(<span class="number">0</span>);</span><br><span class="line">      <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> a = <span class="title function_">attach</span>();</span><br><span class="line">    <span class="keyword">if</span> (a.<span class="property">paused</span>) &#123;</span><br><span class="line">      <span class="keyword">var</span> p = a.<span class="title function_">play</span>();</span><br><span class="line">      <span class="keyword">if</span> (p &amp;&amp; p.<span class="property">catch</span>) &#123;</span><br><span class="line">        p.<span class="title function_">catch</span>(<span class="keyword">function</span> (<span class="params"></span>) &#123;</span><br><span class="line">          <span class="title function_">emit</span>(<span class="string">&#x27;blocked&#x27;</span>, &#123; <span class="attr">message</span>: <span class="string">&#x27;浏览器拦了自动播放，请再点一次&#x27;</span> &#125;);</span><br><span class="line">        &#125;);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      a.<span class="title function_">pause</span>();</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">function</span> <span class="title function_">next</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="title function_">playIndex</span>(idx + <span class="number">1</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">function</span> <span class="title function_">prev</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (audio &amp;&amp; audio.<span class="property">currentTime</span> &gt; <span class="number">3</span>) &#123;</span><br><span class="line">      audio.<span class="property">currentTime</span> = <span class="number">0</span>;</span><br><span class="line">      <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="title function_">playIndex</span>(idx - <span class="number">1</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="variable language_">global</span>.<span class="property">MiniPlayer</span> = &#123;</span><br><span class="line">    <span class="attr">on</span>: on,</span><br><span class="line">    <span class="attr">setQueue</span>: setQueue,</span><br><span class="line">    <span class="attr">playIndex</span>: playIndex,</span><br><span class="line">    <span class="attr">toggle</span>: toggle,</span><br><span class="line">    <span class="attr">next</span>: next,</span><br><span class="line">    <span class="attr">prev</span>: prev,</span><br><span class="line">    <span class="attr">state</span>: snapshot,</span><br><span class="line">    <span class="attr">parseLrc</span>: parseLrc</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;)(<span class="variable language_">window</span>);</span><br></pre></td></tr></table></figure>
+<p>这段代码做了几件事：</p>
+<ol>
+<li>只创建一个 <code>&lt;audio&gt;</code>；</li>
+<li>提供一个 <code>queue</code> 数组；</li>
+<li>对外暴露 <code>toggle / next / prev / playIndex</code>；</li>
+<li>通过 <code>on()</code> 把播放状态广播给胶囊 UI；</li>
+<li>能解析最简单的 LRC 歌词。</li>
+</ol>
+<div class="note info flat"><p>如果你只想要“歌名歌词”，不想做歌词，也可以把 <code>lrc</code> 字段留空。胶囊会退化成显示歌名。</p>
+</div>
+<hr>
+<h2 id="第-3-步：写胶囊-UI-music-capsule-js">第 3 步：写胶囊 UI <code>music-capsule.js</code></h2>
+<p>新建：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">source/js/music-capsule.js</span><br></pre></td></tr></table></figure>
+<p>复制下面这段：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* music-capsule.js —— 左下角竖排音乐胶囊 */</span></span><br><span class="line">(<span class="keyword">function</span> (<span class="params"></span>) &#123;</span><br><span class="line">  <span class="string">&#x27;use strict&#x27;</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/* ① 你的歌单</span></span><br><span class="line"><span class="comment">     url 必填；name / artist / cover / lrc 可选。</span></span><br><span class="line"><span class="comment">     lrc 可以是 LRC 文本；这里为了简单，演示一行一行写。 */</span></span><br><span class="line">  <span class="keyword">var</span> <span class="variable constant_">PLAYLIST</span> = [</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="attr">name</span>: <span class="string">&#x27;示例歌曲一&#x27;</span>,</span><br><span class="line">      <span class="attr">artist</span>: <span class="string">&#x27;示例歌手&#x27;</span>,</span><br><span class="line">      <span class="attr">url</span>: <span class="string">&#x27;/music/01.mp3&#x27;</span>,</span><br><span class="line">      <span class="attr">lrc</span>: <span class="string">&#x27;[0:00] 正在播放\n[0:05] 这里是第一句歌词\n[0:10] 这里是第二句歌词&#x27;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="attr">name</span>: <span class="string">&#x27;示例歌曲二&#x27;</span>,</span><br><span class="line">      <span class="attr">artist</span>: <span class="string">&#x27;示例歌手&#x27;</span>,</span><br><span class="line">      <span class="attr">url</span>: <span class="string">&#x27;/music/02.mp3&#x27;</span>,</span><br><span class="line">      <span class="attr">lrc</span>: <span class="string">&#x27;[0:00] 第二首歌\n[0:06] 歌词照样能显示&#x27;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="attr">name</span>: <span class="string">&#x27;示例歌曲三&#x27;</span>,</span><br><span class="line">      <span class="attr">artist</span>: <span class="string">&#x27;示例歌手&#x27;</span>,</span><br><span class="line">      <span class="attr">url</span>: <span class="string">&#x27;/music/03.mp3&#x27;</span></span><br><span class="line">    &#125;</span><br><span class="line">  ];</span><br><span class="line"></span><br><span class="line">  <span class="keyword">var</span> <span class="variable constant_">ICON</span> = &#123;</span><br><span class="line">    <span class="attr">music</span>: <span class="string">&#x27;&lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;&lt;path d=&quot;M12 3v9.28a4.39 4.39 0 1 0 2 3.7V6h4V3h-6z&quot;/&gt;&lt;/svg&gt;&#x27;</span>,</span><br><span class="line">    <span class="attr">play</span>: <span class="string">&#x27;&lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;&lt;path d=&quot;M8 5v14l11-7z&quot;/&gt;&lt;/svg&gt;&#x27;</span>,</span><br><span class="line">    <span class="attr">pause</span>: <span class="string">&#x27;&lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;&lt;path d=&quot;M7 5h4v14H7zm6 0h4v14h-4z&quot;/&gt;&lt;/svg&gt;&#x27;</span>,</span><br><span class="line">    <span class="attr">prev</span>: <span class="string">&#x27;&lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;&lt;path d=&quot;M6 6h2v12H6zm3.5 6 8.5 6V6z&quot;/&gt;&lt;/svg&gt;&#x27;</span>,</span><br><span class="line">    <span class="attr">next</span>: <span class="string">&#x27;&lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;&lt;path d=&quot;M16 6h2v12h-2zM6 6l8.5 6L6 18z&quot;/&gt;&lt;/svg&gt;&#x27;</span></span><br><span class="line">  &#125;;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">var</span> el = <span class="literal">null</span>;</span><br><span class="line">  <span class="keyword">var</span> cur = <span class="literal">null</span>;</span><br><span class="line">  <span class="keyword">var</span> playBtn = <span class="literal">null</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">function</span> <span class="title function_">ensure</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (el &amp;&amp; el.<span class="property">isConnected</span>) <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">    el = <span class="variable language_">document</span>.<span class="title function_">createElement</span>(<span class="string">&#x27;div&#x27;</span>);</span><br><span class="line">    el.<span class="property">id</span> = <span class="string">&#x27;mini-music&#x27;</span>;</span><br><span class="line">    el.<span class="title function_">setAttribute</span>(<span class="string">&#x27;role&#x27;</span>, <span class="string">&#x27;group&#x27;</span>);</span><br><span class="line">    el.<span class="title function_">setAttribute</span>(<span class="string">&#x27;aria-label&#x27;</span>, <span class="string">&#x27;音乐播放器&#x27;</span>);</span><br><span class="line">    el.<span class="property">innerHTML</span> =</span><br><span class="line">      <span class="string">&#x27;&lt;div class=&quot;mm-main&quot;&gt;&#x27;</span> +</span><br><span class="line">        <span class="string">&#x27;&lt;div class=&quot;mm-top&quot;&gt;&#x27;</span> + <span class="variable constant_">ICON</span>.<span class="property">music</span> + <span class="string">&#x27;&lt;/div&gt;&#x27;</span> +</span><br><span class="line">        <span class="string">&#x27;&lt;div class=&quot;mm-text&quot;&gt;&lt;span class=&quot;mm-cur&quot;&gt;点播放键开始&lt;/span&gt;&lt;/div&gt;&#x27;</span> +</span><br><span class="line">      <span class="string">&#x27;&lt;/div&gt;&#x27;</span> +</span><br><span class="line">      <span class="string">&#x27;&lt;div class=&quot;mm-keys&quot;&gt;&#x27;</span> +</span><br><span class="line">        <span class="string">&#x27;&lt;button type=&quot;button&quot; class=&quot;mm-side&quot; data-act=&quot;prev&quot; title=&quot;上一首&quot;&gt;&#x27;</span> + <span class="variable constant_">ICON</span>.<span class="property">prev</span> + <span class="string">&#x27;&lt;/button&gt;&#x27;</span> +</span><br><span class="line">        <span class="string">&#x27;&lt;button type=&quot;button&quot; class=&quot;mm-play&quot; data-act=&quot;play&quot; title=&quot;播放 / 暂停&quot;&gt;&#x27;</span> + <span class="variable constant_">ICON</span>.<span class="property">play</span> + <span class="string">&#x27;&lt;/button&gt;&#x27;</span> +</span><br><span class="line">        <span class="string">&#x27;&lt;button type=&quot;button&quot; class=&quot;mm-side&quot; data-act=&quot;next&quot; title=&quot;下一首&quot;&gt;&#x27;</span> + <span class="variable constant_">ICON</span>.<span class="property">next</span> + <span class="string">&#x27;&lt;/button&gt;&#x27;</span> +</span><br><span class="line">      <span class="string">&#x27;&lt;/div&gt;&#x27;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="variable language_">document</span>.<span class="property">body</span>.<span class="title function_">appendChild</span>(el);</span><br><span class="line"></span><br><span class="line">    cur = el.<span class="title function_">querySelector</span>(<span class="string">&#x27;.mm-cur&#x27;</span>);</span><br><span class="line">    playBtn = el.<span class="title function_">querySelector</span>(<span class="string">&#x27;.mm-play&#x27;</span>);</span><br><span class="line"></span><br><span class="line">    el.<span class="title function_">addEventListener</span>(<span class="string">&#x27;click&#x27;</span>, <span class="keyword">function</span> (<span class="params">e</span>) &#123;</span><br><span class="line">      <span class="keyword">var</span> btn = e.<span class="property">target</span>.<span class="property">closest</span> ? e.<span class="property">target</span>.<span class="title function_">closest</span>(<span class="string">&#x27;[data-act]&#x27;</span>) : <span class="literal">null</span>;</span><br><span class="line">      <span class="keyword">if</span> (!btn) <span class="keyword">return</span>;</span><br><span class="line">      <span class="keyword">var</span> act = btn.<span class="title function_">getAttribute</span>(<span class="string">&#x27;data-act&#x27;</span>);</span><br><span class="line">      <span class="keyword">if</span> (act === <span class="string">&#x27;play&#x27;</span>) <span class="variable language_">window</span>.<span class="property">MiniPlayer</span>.<span class="title function_">toggle</span>();</span><br><span class="line">      <span class="keyword">else</span> <span class="keyword">if</span> (act === <span class="string">&#x27;next&#x27;</span>) <span class="variable language_">window</span>.<span class="property">MiniPlayer</span>.<span class="title function_">next</span>();</span><br><span class="line">      <span class="keyword">else</span> <span class="keyword">if</span> (act === <span class="string">&#x27;prev&#x27;</span>) <span class="variable language_">window</span>.<span class="property">MiniPlayer</span>.<span class="title function_">prev</span>();</span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> s = <span class="variable language_">window</span>.<span class="property">MiniPlayer</span>.<span class="title function_">state</span>();</span><br><span class="line">    <span class="keyword">if</span> (s.<span class="property">track</span>) <span class="title function_">applyTrack</span>(s);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">function</span> <span class="title function_">setText</span>(<span class="params">text</span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (cur) cur.<span class="property">textContent</span> = text || <span class="string">&#x27;音乐播放中&#x27;</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">function</span> <span class="title function_">applyTrack</span>(<span class="params">s</span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (!el || !s.<span class="property">track</span>) <span class="keyword">return</span>;</span><br><span class="line">    el.<span class="property">classList</span>.<span class="title function_">add</span>(<span class="string">&#x27;is-on&#x27;</span>);</span><br><span class="line">    <span class="title function_">setText</span>(s.<span class="property">track</span>.<span class="property">name</span> + (s.<span class="property">track</span>.<span class="property">artist</span> ? <span class="string">&#x27; - &#x27;</span> + s.<span class="property">track</span>.<span class="property">artist</span> : <span class="string">&#x27;&#x27;</span>));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">function</span> <span class="title function_">applyState</span>(<span class="params">s</span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (!el) <span class="keyword">return</span>;</span><br><span class="line">    el.<span class="property">classList</span>.<span class="title function_">toggle</span>(<span class="string">&#x27;is-playing&#x27;</span>, !!s.<span class="property">playing</span>);</span><br><span class="line">    el.<span class="property">classList</span>.<span class="title function_">toggle</span>(<span class="string">&#x27;is-paused&#x27;</span>, !s.<span class="property">playing</span>);</span><br><span class="line">    <span class="keyword">if</span> (playBtn) playBtn.<span class="property">innerHTML</span> = s.<span class="property">playing</span> ? <span class="variable constant_">ICON</span>.<span class="property">pause</span> : <span class="variable constant_">ICON</span>.<span class="property">play</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">function</span> <span class="title function_">init</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (!<span class="variable language_">window</span>.<span class="property">MiniPlayer</span>) <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">    <span class="variable language_">window</span>.<span class="property">MiniPlayer</span>.<span class="title function_">setQueue</span>(<span class="variable constant_">PLAYLIST</span>);</span><br><span class="line"></span><br><span class="line">    <span class="variable language_">window</span>.<span class="property">MiniPlayer</span>.<span class="title function_">on</span>(<span class="keyword">function</span> (<span class="params">type, data</span>) &#123;</span><br><span class="line">      <span class="keyword">if</span> (type === <span class="string">&#x27;track&#x27;</span>) <span class="title function_">applyTrack</span>(data);</span><br><span class="line">      <span class="keyword">else</span> <span class="keyword">if</span> (type === <span class="string">&#x27;state&#x27;</span>) <span class="title function_">applyState</span>(data);</span><br><span class="line">      <span class="keyword">else</span> <span class="keyword">if</span> (type === <span class="string">&#x27;line&#x27;</span> &amp;&amp; data.<span class="property">text</span>) <span class="title function_">setText</span>(data.<span class="property">text</span>);</span><br><span class="line">      <span class="keyword">else</span> <span class="keyword">if</span> (type === <span class="string">&#x27;blocked&#x27;</span>) <span class="title function_">setText</span>(data.<span class="property">message</span> || <span class="string">&#x27;请点一下播放键&#x27;</span>);</span><br><span class="line">      <span class="keyword">else</span> <span class="keyword">if</span> (type === <span class="string">&#x27;error&#x27;</span>) <span class="title function_">setText</span>(<span class="string">&#x27;这首歌播不了，已跳下一首&#x27;</span>);</span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    <span class="title function_">ensure</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* pjax 换页后若容器被替换，补建一次；已存在则什么都不做 */</span></span><br><span class="line">    <span class="variable language_">document</span>.<span class="title function_">addEventListener</span>(<span class="string">&#x27;pjax:complete&#x27;</span>, ensure);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (<span class="variable language_">document</span>.<span class="property">readyState</span> === <span class="string">&#x27;loading&#x27;</span>) &#123;</span><br><span class="line">    <span class="variable language_">document</span>.<span class="title function_">addEventListener</span>(<span class="string">&#x27;DOMContentLoaded&#x27;</span>, init);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="title function_">init</span>();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;)();</span><br></pre></td></tr></table></figure>
+<p>这里有几个新手容易疑惑的点：</p>
+<ul>
+<li><code>e.target.closest()</code> 用来判断你点的是不是按钮，不用给每个按钮单独绑事件；</li>
+<li><code>is-on</code> 控制胶囊显示，没歌曲时不占地方；</li>
+<li><code>line</code> 事件来了就显示歌词，没歌词就一直显示歌名；</li>
+<li><code>pjax:complete</code> 再跑一次 <code>ensure()</code>，是为了翻页后补建被换掉的 DOM。</li>
+</ul>
+<hr>
+<h2 id="第-4-步：写胶囊样式-music-capsule-css">第 4 步：写胶囊样式 <code>music-capsule.css</code></h2>
+<p>新建：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">source/css/music-capsule.css</span><br></pre></td></tr></table></figure>
+<p>复制下面这段：</p>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* 左下角竖排音乐胶囊 */</span></span><br><span class="line"><span class="selector-pseudo">:root</span> &#123;</span><br><span class="line">  <span class="attr">--mm-glass</span>: <span class="built_in">rgba</span>(<span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, .<span class="number">94</span>);</span><br><span class="line">  <span class="attr">--mm-ink</span>: <span class="number">#1f2937</span>;</span><br><span class="line">  <span class="attr">--mm-dim</span>: <span class="built_in">rgba</span>(<span class="number">31</span>, <span class="number">41</span>, <span class="number">55</span>, .<span class="number">62</span>);</span><br><span class="line">  <span class="attr">--mm-bd</span>: <span class="built_in">rgba</span>(<span class="number">169</span>, <span class="number">169</span>, <span class="number">169</span>, .<span class="number">55</span>);</span><br><span class="line">  <span class="attr">--mm-accent</span>: <span class="built_in">var</span>(--theme-color, <span class="number">#ff1493</span>);</span><br><span class="line">  <span class="attr">--mm-on</span>: <span class="number">#fff</span>;</span><br><span class="line">  <span class="attr">--mm-chip</span>: <span class="built_in">rgba</span>(<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, .<span class="number">07</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-attr">[data-theme=<span class="string">&quot;dark&quot;</span>]</span> &#123;</span><br><span class="line">  <span class="attr">--mm-glass</span>: <span class="built_in">rgba</span>(<span class="number">18</span>, <span class="number">22</span>, <span class="number">28</span>, .<span class="number">92</span>);</span><br><span class="line">  <span class="attr">--mm-ink</span>: <span class="built_in">rgba</span>(<span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, .<span class="number">9</span>);</span><br><span class="line">  <span class="attr">--mm-dim</span>: <span class="built_in">rgba</span>(<span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, .<span class="number">55</span>);</span><br><span class="line">  <span class="attr">--mm-bd</span>: <span class="built_in">rgba</span>(<span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, .<span class="number">16</span>);</span><br><span class="line">  <span class="attr">--mm-chip</span>: <span class="built_in">rgba</span>(<span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, .<span class="number">1</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-id">#mini-music</span> &#123;</span><br><span class="line">  <span class="attr">--mm-col</span>: <span class="number">52px</span>;</span><br><span class="line">  <span class="attr">--mm-keys</span>: <span class="number">46px</span>;</span><br><span class="line"></span><br><span class="line">  <span class="attribute">position</span>: fixed;</span><br><span class="line">  <span class="attribute">left</span>: <span class="built_in">calc</span>(<span class="number">10px</span> + <span class="built_in">env</span>(safe-area-inset-left, <span class="number">0px</span>));</span><br><span class="line">  <span class="attribute">bottom</span>: <span class="built_in">calc</span>(<span class="number">72px</span> + <span class="built_in">env</span>(safe-area-inset-bottom, <span class="number">0px</span>));</span><br><span class="line">  <span class="attribute">z-index</span>: <span class="number">1001</span>;</span><br><span class="line">  <span class="attribute">box-sizing</span>: border-box;</span><br><span class="line">  <span class="attribute">display</span>: flex;</span><br><span class="line">  <span class="attribute">flex-direction</span>: row;</span><br><span class="line">  <span class="attribute">align-items</span>: stretch;</span><br><span class="line">  <span class="attribute">width</span>: <span class="built_in">var</span>(--mm-col);</span><br><span class="line">  <span class="attribute">max-width</span>: <span class="built_in">var</span>(--mm-col);</span><br><span class="line">  <span class="attribute">min-height</span>: <span class="number">170px</span>;</span><br><span class="line">  <span class="attribute">max-height</span>: <span class="built_in">min</span>(<span class="number">72vh</span>, <span class="number">460px</span>);</span><br><span class="line">  <span class="attribute">padding</span>: <span class="number">10px</span> <span class="number">0</span> <span class="number">9px</span>;</span><br><span class="line">  <span class="attribute">overflow</span>: hidden;</span><br><span class="line">  <span class="attribute">border</span>: <span class="number">1px</span> solid <span class="built_in">var</span>(--mm-bd);</span><br><span class="line">  <span class="attribute">border-radius</span>: <span class="number">999px</span>;</span><br><span class="line">  <span class="attribute">background</span>: <span class="built_in">var</span>(--mm-glass);</span><br><span class="line">  <span class="attribute">box-shadow</span>: <span class="number">0</span> <span class="number">2px</span> <span class="number">10px</span> <span class="built_in">rgba</span>(<span class="number">7</span>, <span class="number">17</span>, <span class="number">27</span>, .<span class="number">1</span>);</span><br><span class="line">  <span class="attribute">color</span>: <span class="built_in">var</span>(--mm-ink);</span><br><span class="line">  <span class="attribute">font-size</span>: <span class="number">12.5px</span>;</span><br><span class="line">  <span class="attribute">line-height</span>: <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">  <span class="attribute">visibility</span>: hidden;</span><br><span class="line">  <span class="attribute">opacity</span>: <span class="number">0</span>;</span><br><span class="line">  <span class="attribute">transform</span>: <span class="built_in">translateY</span>(<span class="number">6px</span>) <span class="built_in">scale</span>(.<span class="number">96</span>);</span><br><span class="line">  <span class="attribute">transform-origin</span>: <span class="number">0</span> <span class="number">100%</span>;</span><br><span class="line">  <span class="attribute">pointer-events</span>: none;</span><br><span class="line">  <span class="attribute">transition</span>: opacity .<span class="number">24s</span> ease, transform .<span class="number">24s</span> ease, visibility .<span class="number">24s</span>,</span><br><span class="line">              width .<span class="number">24s</span> ease, max-width .<span class="number">24s</span> ease;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-id">#mini-music</span><span class="selector-class">.is-on</span> &#123;</span><br><span class="line">  <span class="attribute">visibility</span>: visible;</span><br><span class="line">  <span class="attribute">opacity</span>: <span class="number">1</span>;</span><br><span class="line">  <span class="attribute">transform</span>: none;</span><br><span class="line">  <span class="attribute">pointer-events</span>: auto;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 鼠标悬停 / 键盘聚焦：从 52px 加宽到 98px，露出右侧按钮 */</span></span><br><span class="line"><span class="selector-id">#mini-music</span><span class="selector-pseudo">:hover</span>,</span><br><span class="line"><span class="selector-id">#mini-music</span><span class="selector-pseudo">:focus</span>-within &#123;</span><br><span class="line">  <span class="attribute">width</span>: <span class="built_in">calc</span>(<span class="built_in">var</span>(--mm-col) + <span class="built_in">var</span>(--mm-keys));</span><br><span class="line">  <span class="attribute">max-width</span>: <span class="built_in">calc</span>(<span class="built_in">var</span>(--mm-col) + <span class="built_in">var</span>(--mm-keys));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-id">#mini-music</span> <span class="selector-class">.mm-main</span> &#123;</span><br><span class="line">  <span class="attribute">flex</span>: <span class="number">0</span> <span class="number">0</span> <span class="built_in">var</span>(--mm-col);</span><br><span class="line">  <span class="attribute">width</span>: <span class="built_in">var</span>(--mm-col);</span><br><span class="line">  <span class="attribute">display</span>: flex;</span><br><span class="line">  <span class="attribute">flex-direction</span>: column;</span><br><span class="line">  <span class="attribute">align-items</span>: center;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-id">#mini-music</span> <span class="selector-class">.mm-top</span> &#123;</span><br><span class="line">  <span class="attribute">flex</span>: <span class="number">0</span> <span class="number">0</span> <span class="number">22px</span>;</span><br><span class="line">  <span class="attribute">width</span>: <span class="number">100%</span>;</span><br><span class="line">  <span class="attribute">display</span>: grid;</span><br><span class="line">  place-items: center;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-id">#mini-music</span> <span class="selector-class">.mm-top</span> svg &#123;</span><br><span class="line">  <span class="attribute">width</span>: <span class="number">16px</span>;</span><br><span class="line">  <span class="attribute">height</span>: <span class="number">16px</span>;</span><br><span class="line">  fill: <span class="built_in">var</span>(--mm-accent);</span><br><span class="line">  <span class="attribute">opacity</span>: .<span class="number">92</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-id">#mini-music</span> <span class="selector-class">.mm-text</span> &#123;</span><br><span class="line">  <span class="attribute">flex</span>: <span class="number">1</span> <span class="number">1</span> auto;</span><br><span class="line">  <span class="attribute">min-height</span>: <span class="number">0</span>;</span><br><span class="line">  <span class="attribute">width</span>: <span class="number">100%</span>;</span><br><span class="line">  <span class="attribute">display</span>: flex;</span><br><span class="line">  <span class="attribute">align-items</span>: center;</span><br><span class="line">  <span class="attribute">justify-content</span>: center;</span><br><span class="line">  <span class="attribute">overflow</span>: hidden;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/* 竖排：中文书脊方向；英文侧躺 90 度 */</span></span><br><span class="line">  <span class="attribute">writing-mode</span>: vertical-rl;</span><br><span class="line">  <span class="attribute">text-orientation</span>: mixed;</span><br><span class="line">  <span class="attribute">white-space</span>: nowrap;</span><br><span class="line">  <span class="attribute">text-align</span>: center;</span><br><span class="line">  <span class="attribute">line-height</span>: <span class="number">1.35</span>;</span><br><span class="line">  <span class="attribute">letter-spacing</span>: .<span class="number">3px</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-id">#mini-music</span> <span class="selector-class">.mm-keys</span> &#123;</span><br><span class="line">  <span class="attribute">flex</span>: <span class="number">0</span> <span class="number">0</span> <span class="built_in">var</span>(--mm-keys);</span><br><span class="line">  <span class="attribute">width</span>: <span class="built_in">var</span>(--mm-keys);</span><br><span class="line">  <span class="attribute">display</span>: flex;</span><br><span class="line">  <span class="attribute">flex-direction</span>: column;</span><br><span class="line">  <span class="attribute">align-items</span>: center;</span><br><span class="line">  <span class="attribute">justify-content</span>: space-around;</span><br><span class="line">  <span class="attribute">gap</span>: <span class="number">6px</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-id">#mini-music</span> <span class="selector-tag">button</span> &#123;</span><br><span class="line">  <span class="attribute">padding</span>: <span class="number">0</span>;</span><br><span class="line">  <span class="attribute">border</span>: <span class="number">0</span>;</span><br><span class="line">  <span class="attribute">border-radius</span>: <span class="number">50%</span>;</span><br><span class="line">  <span class="attribute">display</span>: grid;</span><br><span class="line">  place-items: center;</span><br><span class="line">  <span class="attribute">cursor</span>: pointer;</span><br><span class="line">  -webkit-tap-highlight-<span class="attribute">color</span>: transparent;</span><br><span class="line">  <span class="attribute">transition</span>: opacity .<span class="number">18s</span> ease, background .<span class="number">18s</span> ease, transform .<span class="number">18s</span> ease;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-id">#mini-music</span> <span class="selector-tag">button</span> svg &#123;</span><br><span class="line">  <span class="attribute">display</span>: block;</span><br><span class="line">  <span class="attribute">width</span>: <span class="number">18px</span>;</span><br><span class="line">  <span class="attribute">height</span>: <span class="number">18px</span>;</span><br><span class="line">  fill: currentColor;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-id">#mini-music</span> <span class="selector-class">.mm-side</span> &#123;</span><br><span class="line">  <span class="attribute">width</span>: <span class="number">30px</span>;</span><br><span class="line">  <span class="attribute">height</span>: <span class="number">30px</span>;</span><br><span class="line">  <span class="attribute">background</span>: transparent;</span><br><span class="line">  <span class="attribute">color</span>: <span class="built_in">var</span>(--mm-ink);</span><br><span class="line">  <span class="attribute">opacity</span>: <span class="number">0</span>;</span><br><span class="line">  <span class="attribute">pointer-events</span>: none;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-id">#mini-music</span> <span class="selector-class">.mm-play</span> &#123;</span><br><span class="line">  <span class="attribute">width</span>: <span class="number">34px</span>;</span><br><span class="line">  <span class="attribute">height</span>: <span class="number">34px</span>;</span><br><span class="line">  <span class="attribute">background</span>: <span class="built_in">var</span>(--mm-accent);</span><br><span class="line">  <span class="attribute">color</span>: <span class="built_in">var</span>(--mm-on);</span><br><span class="line">  <span class="attribute">opacity</span>: <span class="number">0</span>;</span><br><span class="line">  <span class="attribute">pointer-events</span>: none;</span><br><span class="line">  <span class="attribute">transform</span>: <span class="built_in">scale</span>(.<span class="number">86</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-id">#mini-music</span><span class="selector-pseudo">:hover</span> <span class="selector-class">.mm-side</span>,</span><br><span class="line"><span class="selector-id">#mini-music</span><span class="selector-pseudo">:focus</span>-within <span class="selector-class">.mm-side</span>,</span><br><span class="line"><span class="selector-id">#mini-music</span><span class="selector-pseudo">:hover</span> <span class="selector-class">.mm-play</span>,</span><br><span class="line"><span class="selector-id">#mini-music</span><span class="selector-pseudo">:focus</span>-within <span class="selector-class">.mm-play</span> &#123;</span><br><span class="line">  <span class="attribute">opacity</span>: <span class="number">1</span>;</span><br><span class="line">  <span class="attribute">pointer-events</span>: auto;</span><br><span class="line">  <span class="attribute">transform</span>: <span class="built_in">scale</span>(<span class="number">1</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-id">#mini-music</span> <span class="selector-class">.mm-side</span><span class="selector-pseudo">:hover</span> &#123;</span><br><span class="line">  <span class="attribute">background</span>: <span class="built_in">var</span>(--mm-chip);</span><br><span class="line">  <span class="attribute">transform</span>: <span class="built_in">scale</span>(<span class="number">1.06</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-id">#mini-music</span> <span class="selector-class">.mm-play</span><span class="selector-pseudo">:hover</span> &#123;</span><br><span class="line">  <span class="attribute">transform</span>: <span class="built_in">scale</span>(<span class="number">1.08</span>);</span><br><span class="line">  <span class="attribute">filter</span>: <span class="built_in">brightness</span>(<span class="number">1.08</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-id">#mini-music</span> <span class="selector-class">.mm-side</span><span class="selector-pseudo">:focus</span>-visible,</span><br><span class="line"><span class="selector-id">#mini-music</span> <span class="selector-class">.mm-play</span><span class="selector-pseudo">:focus</span>-visible &#123;</span><br><span class="line">  <span class="attribute">outline</span>: <span class="number">2px</span> solid <span class="built_in">var</span>(--mm-accent);</span><br><span class="line">  <span class="attribute">outline-offset</span>: <span class="number">2px</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-id">#mini-music</span><span class="selector-class">.is-paused</span> <span class="selector-class">.mm-text</span> &#123;</span><br><span class="line">  <span class="attribute">color</span>: <span class="built_in">var</span>(--mm-dim);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@media</span> (<span class="attribute">max-width</span>: <span class="number">600px</span>) &#123;</span><br><span class="line">  <span class="selector-id">#mini-music</span> &#123;</span><br><span class="line">    <span class="attr">--mm-col</span>: <span class="number">48px</span>;</span><br><span class="line">    <span class="attr">--mm-keys</span>: <span class="number">42px</span>;</span><br><span class="line">    <span class="attribute">bottom</span>: <span class="built_in">calc</span>(<span class="number">68px</span> + <span class="built_in">env</span>(safe-area-inset-bottom, <span class="number">0px</span>));</span><br><span class="line">    <span class="attribute">width</span>: <span class="number">48px</span>;</span><br><span class="line">    <span class="attribute">max-width</span>: <span class="number">48px</span>;</span><br><span class="line">    <span class="attribute">padding</span>: <span class="number">7px</span> <span class="number">0</span>;</span><br><span class="line">    <span class="attribute">font-size</span>: <span class="number">12px</span>;</span><br><span class="line">    <span class="attribute">min-height</span>: <span class="number">158px</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 触屏设备没有真正的 hover：按钮常显，胶囊直接展开，否则手机上点不到播放键 */</span></span><br><span class="line"><span class="keyword">@media</span> (<span class="attribute">hover</span>: none) &#123;</span><br><span class="line">  <span class="selector-id">#mini-music</span> &#123;</span><br><span class="line">    <span class="attribute">width</span>: <span class="built_in">calc</span>(<span class="built_in">var</span>(--mm-col) + <span class="built_in">var</span>(--mm-keys));</span><br><span class="line">    <span class="attribute">max-width</span>: <span class="built_in">calc</span>(<span class="built_in">var</span>(--mm-col) + <span class="built_in">var</span>(--mm-keys));</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="selector-id">#mini-music</span> <span class="selector-class">.mm-side</span>,</span><br><span class="line">  <span class="selector-id">#mini-music</span> <span class="selector-class">.mm-play</span> &#123;</span><br><span class="line">    <span class="attribute">opacity</span>: <span class="number">1</span>;</span><br><span class="line">    <span class="attribute">pointer-events</span>: auto;</span><br><span class="line">    <span class="attribute">transform</span>: none;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@media</span> (<span class="attribute">prefers-reduced-motion</span>: reduce) &#123;</span><br><span class="line">  <span class="selector-id">#mini-music</span>,</span><br><span class="line">  <span class="selector-id">#mini-music</span> <span class="selector-tag">button</span> &#123;</span><br><span class="line">    <span class="attribute">transition</span>: none;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这段 CSS 决定了胶囊的“气质”：</p>
+<ul>
+<li><code>writing-mode: vertical-rl</code>：歌词竖着排；</li>
+<li><code>white-space: nowrap</code>：一句歌词只占一列，不会变成古籍那种多列排版；</li>
+<li><code>border-radius: 999px</code>：胶囊形；</li>
+<li><code>:hover</code> 才加宽：平时只占 52px，不挡正文；</li>
+<li><code>env(safe-area-inset-*)</code>：iPhone 底部小黑条不会压住它。</li>
+</ul>
+<div class="note info flat"><p>本站的完整版还有侧栏悬停面板、歌曲列表浮层、三处 UI 共用一个播放核心。教程版只保留左下角胶囊，代码少很多，但原理一样。</p>
+</div>
+<hr>
+<h2 id="第-5-步：把三个文件接进-Hexo">第 5 步：把三个文件接进 Hexo</h2>
+<p>先确认你的项目最终长成这样（用 ZIP 的话，解压后把三个文件分别丢进对应目录）：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">你的博客根目录/</span><br><span class="line">├─ source/</span><br><span class="line">│  ├─ css/</span><br><span class="line">│  │  └─ music-capsule.css</span><br><span class="line">│  ├─ js/</span><br><span class="line">│  │  ├─ music-bus.js</span><br><span class="line">│  │  └─ music-capsule.js</span><br><span class="line">│  └─ music/</span><br><span class="line">│     ├─ 01.mp3</span><br><span class="line">│     ├─ 02.mp3</span><br><span class="line">│     └─ 03.mp3</span><br><span class="line">└─ _config.chengic.yml   ← 本教程以 chengic 主题为例</span><br></pre></td></tr></table></figure>
+<p>打开主题配置文件，找到 <code>inject.head</code> 和 <code>inject.bottom</code>。</p>
+<div class="note info flat"><p>配置文件名字不一定一样：本站叫 <code>_config.chengic.yml</code>；Butterfly 常叫 <code>_config.butterfly.yml</code>；有些主题叫 <code>themes/你的主题/_config.yml</code>。只要找到“注入 head / 注入 footer”的字段即可。</p>
+</div>
+<p>在 <code>inject.head</code> 里加：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="string">&lt;link</span> <span class="string">rel=&quot;stylesheet&quot;</span> <span class="string">href=&quot;/css/music-capsule.css?v=20261121a&quot;&gt;</span></span><br></pre></td></tr></table></figure>
+<p>在 <code>inject.bottom</code> 里加，注意<strong>顺序不能反</strong>：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="string">&lt;script</span> <span class="string">defer</span> <span class="string">src=&quot;/js/music-bus.js?v=20261121a&quot;&gt;&lt;/script&gt;</span></span><br><span class="line"><span class="bullet">-</span> <span class="string">&lt;script</span> <span class="string">defer</span> <span class="string">src=&quot;/js/music-capsule.js?v=20261121a&quot;&gt;&lt;/script&gt;</span></span><br></pre></td></tr></table></figure>
+<p>为什么顺序重要？因为 <code>music-capsule.js</code> 一上来就要用 <code>window.MiniPlayer</code>。<code>defer</code> 脚本按书写顺序执行，播放核心必须在前面。</p>
+<div class="note warning flat"><p>这段是给“全新 Hexo 博客”加的。本站自己的 <code>_config.chengic.yml</code> 里<strong>不会出现这三行</strong>，因为本站跑的是完整版：<code>music-bus.js?v=20261102-resume5</code> + <code>music-page.js</code> + <code>daily-say.js</code>，对应全局对象是 <code>window.fomalPlayer</code>。教程里的 ZIP 是精简演示包，用 <code>window.MiniPlayer</code>。不要把演示包再注入本站，否则会出现两个 <code>&lt;audio&gt;</code> 同时抢播放。</p>
+</div>
+<p>然后：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">hexo clean</span><br><span class="line">hexo server</span><br></pre></td></tr></table></figure>
+<p>打开：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://localhost:4000/</span><br></pre></td></tr></table></figure>
+<p>或者你配置的端口。左下角应该出现一枚竖着的胶囊，鼠标移上去展开三个按钮，点中间的播放键开始放歌。</p>
+<hr>
+<h2 id="第-6-步：第一次不响？这是浏览器的正常限制">第 6 步：第一次不响？这是浏览器的正常限制</h2>
+<p>现代浏览器不允许网页<strong>自动播放带声音的媒体</strong>。所以：</p>
+<ul>
+<li>页面刚打开就自己响：不行；</li>
+<li>访客点了一下播放键：可以。</li>
+</ul>
+<p>本站代码里也专门处理了这个情况：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> p = a.<span class="title function_">play</span>();</span><br><span class="line"><span class="keyword">if</span> (p &amp;&amp; p.<span class="property">catch</span>) &#123;</span><br><span class="line">  p.<span class="title function_">catch</span>(<span class="keyword">function</span> (<span class="params"></span>) &#123;</span><br><span class="line">    <span class="title function_">emit</span>(<span class="string">&#x27;blocked&#x27;</span>, &#123; <span class="attr">message</span>: <span class="string">&#x27;浏览器拦了自动播放，请点一下播放键&#x27;</span> &#125;);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果你在控制台看到 <code>play() failed because the user didn't interact with the document first</code>，不是代码错了，是浏览器在保护用户。</p>
+<div class="note warning flat"><p>不要用“静音自动播放再取消静音”去绕过限制，很多浏览器已经堵了这条路。老老实实让用户点一次播放键。</p>
+</div>
+<hr>
+<h2 id="第-7-步：为什么这套方案不需要音乐插件">第 7 步：为什么这套方案不需要音乐插件</h2>
+<p>插件做的事情，其实就是帮你生成：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">audio</span> <span class="attr">src</span>=<span class="string">&quot;...&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">audio</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">button</span>&gt;</span>播放<span class="tag">&lt;/<span class="name">button</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">button</span>&gt;</span>下一首<span class="tag">&lt;/<span class="name">button</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>这些东西原生 HTML 都有。我们只是把它们组织得更有条理：</p>
+<table>
+<thead>
+<tr>
+<th>插件方案</th>
+<th>本教程方案</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>插件创建 <code>&lt;audio&gt;</code></td>
+<td>自己 <code>document.createElement('audio')</code></td>
+</tr>
+<tr>
+<td>插件管理队列</td>
+<td>自己一个 <code>queue</code> 数组</td>
+</tr>
+<tr>
+<td>插件绑定按钮</td>
+<td>自己 <code>addEventListener('click')</code></td>
+</tr>
+<tr>
+<td>插件给样式</td>
+<td>自己写 CSS</td>
+</tr>
+<tr>
+<td>插件处理 pjax</td>
+<td>自己监听 <code>pjax:complete</code></td>
+</tr>
+</tbody>
+</table>
+<p>所以你并没有“少用什么能力”，只是把能力拆开自己拿回来了。</p>
+<hr>
+<h2 id="第-8-步：进阶——接-QQ-音乐-网易云（可选，新手先跳过）">第 8 步：进阶——接 QQ 音乐 / 网易云（可选，新手先跳过）</h2>
+<p>本站正式版接的是 QQ 音乐公开歌单，但不是浏览器直连音乐平台。原因是：</p>
+<ol>
+<li>音乐平台接口有 CORS 限制；</li>
+<li>播放地址经常带有时效签名；</li>
+<li>Cookie、referer 这些不能放前端。</li>
+</ol>
+<p>本站的结构是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">浏览器胶囊 / 音乐页</span><br><span class="line">        ↓</span><br><span class="line">同源服务端代理 /api/music</span><br><span class="line">        ↓</span><br><span class="line">QQ 音乐公开接口</span><br></pre></td></tr></table></figure>
+<p>服务端只提供几个动作：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">qq_pl     取歌单</span><br><span class="line">qq_url    取播放地址</span><br><span class="line">qq_lyric  取歌词</span><br><span class="line">qq_search 搜索</span><br></pre></td></tr></table></figure>
+<p>如果你想接自己的音乐源，推荐顺序：</p>
+<ol>
+<li>先用本地 mp3 把胶囊跑通；</li>
+<li>再写一个同源 <code>/api/music</code> 代理；</li>
+<li>让代理只返回 <code>name/artist/cover/url/lrc</code> 这几个字段；</li>
+<li>前端歌单数组换成接口返回的数据。</li>
+</ol>
+<p>播放核心不用改，因为它只认统一后的歌曲对象：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">name</span>: <span class="string">&#x27;歌名&#x27;</span>,</span><br><span class="line">  <span class="attr">artist</span>: <span class="string">&#x27;歌手&#x27;</span>,</span><br><span class="line">  <span class="attr">url</span>: <span class="string">&#x27;https://你的同源代理/xxx&#x27;</span>,</span><br><span class="line">  <span class="attr">cover</span>: <span class="string">&#x27;https://...&#x27;</span>,</span><br><span class="line">  <span class="attr">lrc</span>: <span class="string">&#x27;[0:00] ...&#x27;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="第-9-步：翻页音乐不断——pjax-与整页刷新">第 9 步：翻页音乐不断——pjax 与整页刷新</h2>
+<h3 id="9-1-pjax-跳页">9.1 pjax 跳页</h3>
+<p>pjax 只替换页面的一部分，不会销毁整个 <code>&lt;audio&gt;</code>。所以本站的胶囊能在站内跳页时继续播放。</p>
+<p>你要保证两件事：</p>
+<ol>
+<li>播放核心脚本不要放在会被 pjax 替换的正文容器里；</li>
+<li>胶囊脚本监听 <code>pjax:complete</code> 补建 DOM。</li>
+</ol>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable language_">document</span>.<span class="title function_">addEventListener</span>(<span class="string">&#x27;pjax:complete&#x27;</span>, ensure);</span><br></pre></td></tr></table></figure>
+<p>如果你的站有“随便逛逛”“相关推荐”这类站内跳转函数<br>
+别写：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">location.<span class="property">href</span> = url;</span><br></pre></td></tr></table></figure>
+<p>要写：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable language_">window</span>.<span class="property">pjax</span>.<span class="title function_">loadUrl</span>(url);</span><br></pre></td></tr></table></figure>
+<p>否则会整页刷新，单例 <code>&lt;audio&gt;</code> 被销毁。</p>
+<h3 id="9-2-整页刷新续播">9.2 整页刷新续播</h3>
+<p>F5、右键“在新标签页打开”、地址栏回车这些操作，pjax 拦不住。本站的做法是：</p>
+<ul>
+<li>页面离开前，把“队列 + 第几首 + 第几秒 + 用户是否想播放”写进 <code>sessionStorage</code>；</li>
+<li>新页面加载后再读回来，跳到同一秒继续播。</li>
+</ul>
+<p>核心字段大致是：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">at</span>: <span class="title class_">Date</span>.<span class="title function_">now</span>(),   <span class="comment">// 快照时间</span></span><br><span class="line">  <span class="attr">i</span>: <span class="number">3</span>,             <span class="comment">// 第几首</span></span><br><span class="line">  <span class="attr">t</span>: <span class="number">82.5</span>,          <span class="comment">// 第几秒</span></span><br><span class="line">  <span class="attr">p</span>: <span class="literal">true</span>,          <span class="comment">// 用户想不想让它播</span></span><br><span class="line">  <span class="attr">q</span>: [<span class="comment">/* 瘦身后的队列 */</span>]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>有两个特别容易踩的坑：</p>
+<ol>
+<li><strong>别存 <code>audio.paused</code></strong><br>
+页面卸载时浏览器会自己 pause，存实时状态会得到 <code>true</code>，新页面就不续播了。要存“用户意图”。</li>
+<li><strong>快照要瘦身</strong><br>
+<code>sessionStorage</code> 一般只有 5MB，歌词文本别整首塞进去，队列也要限量。</li>
+</ol>
+<p>教程版先不做这一步。等你把基础胶囊跑通，再回来加。</p>
+<hr>
+<h2 id="第-10-步：手机端与常见限制">第 10 步：手机端与常见限制</h2>
+<h3 id="10-1-手机端没有-hover">10.1 手机端没有 hover</h3>
+<p>桌面端靠 <code>:hover</code> 展开按钮，手机端没有真正的悬停。本站最后保留了“常驻胶囊”，没有改成“点一下才展开”，因为多点一次才能切歌更麻烦。</p>
+<p>教程版 CSS 里手机端只是把胶囊缩到 48px，没有隐藏按钮区域。如果你愿意，也可以点播放键时临时加一个 <code>.is-open</code> 类展开。</p>
+<h3 id="10-2-音频和封面都要-HTTPS">10.2 音频和封面都要 HTTPS</h3>
+<p>站点是 HTTPS 时，下面这些都会失败：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">http://example.com/a.mp3</span><br><span class="line">http://example.com/cover.jpg</span><br></pre></td></tr></table></figure>
+<p>浏览器会报混合内容错误。全部换成 HTTPS。</p>
+<h3 id="10-3-跨域不是“音频播放”的主要障碍">10.3 跨域不是“音频播放”的主要障碍</h3>
+<p>普通 <code>&lt;audio src=&quot;https://...&quot;&gt;</code> 直接播放通常不需要 CORS；但如果你要：</p>
+<ul>
+<li>读歌词；</li>
+<li>读封面画布；</li>
+<li>做频谱；</li>
+<li>fetch JSON 歌单；</li>
+</ul>
+<p>那就需要对方给 CORS 头，或者走同源代理。本站的频谱方案最后没用，就是因为 CDN 不给 <code>Access-Control-Allow-Origin</code>。</p>
+<h3 id="10-4-overscroll-behavior-contain-别乱加">10.4 <code>overscroll-behavior: contain</code> 别乱加</h3>
+<p>在歌词列表上加这个属性，会阻止滚动传给父级，看起来像“页面卡住”。本站踩过这个坑，后来删掉了。</p>
+<hr>
+<h2 id="第-11-步：照做了没反应？按这个表查">第 11 步：照做了没反应？按这个表查</h2>
+<table>
+<thead>
+<tr>
+<th>现象</th>
+<th>最可能原因</th>
+<th>怎么查</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>左下角什么都没有</td>
+<td>CSS 没注入 / 歌单没设置 / JS 报错</td>
+<td>F12 看有没有 <code>#mini-music</code></td>
+</tr>
+<tr>
+<td>有胶囊但点播放没声音</td>
+<td>音频地址错 / 混合内容 / 自动播放被拦</td>
+<td>控制台 Network 看 mp3 请求</td>
+</tr>
+<tr>
+<td>控制台报 <code>MiniPlayer is not defined</code></td>
+<td>两个脚本顺序反了</td>
+<td>bus 必须在 capsule 前面</td>
+</tr>
+<tr>
+<td>控制台报 <code>play() failed</code></td>
+<td>没有用户手势</td>
+<td>让用户点播放键，别自动播</td>
+</tr>
+<tr>
+<td>歌词不显示</td>
+<td>LRC 格式错 / 时间轴没到</td>
+<td>先把 <code>lrc</code> 写成 <code>[0:00] 测试</code></td>
+</tr>
+<tr>
+<td>切歌后还显示上一首歌词</td>
+<td>没有在 <code>playIndex</code> 里清空 <code>lines</code></td>
+<td>检查 <code>lines = parseLrc(...)</code></td>
+</tr>
+<tr>
+<td>pjax 翻页后胶囊消失</td>
+<td>容器被替换，没有补建</td>
+<td>检查 <code>pjax:complete</code> 监听</td>
+</tr>
+<tr>
+<td>翻页音乐停了</td>
+<td>用了 <code>location.href</code> 整页跳</td>
+<td>改成 <code>window.pjax.loadUrl(url)</code></td>
+</tr>
+<tr>
+<td>改了没生效</td>
+<td><code>?v=</code> 没升版本</td>
+<td>换一个版本号并重启 server</td>
+</tr>
+<tr>
+<td>手机端挡正文</td>
+<td>胶囊太宽 / 高度写死</td>
+<td>检查 <code>@media (max-width:600px)</code></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="第-12-步：上线前检查清单">第 12 步：上线前检查清单</h2>
+<ul>
+<li>[ ] 三个文件都在 <code>source/</code> 对应目录；</li>
+<li>[ ] CSS 在 <code>inject.head</code>；</li>
+<li>[ ] JS 在 <code>inject.bottom</code>；</li>
+<li>[ ] <code>music-bus.js</code> 排在 <code>music-capsule.js</code> 前面；</li>
+<li>[ ] 音频地址是 HTTPS；</li>
+<li>[ ] 歌单里至少有一首能直链的 mp3；</li>
+<li>[ ] 第一次播放由点击触发；</li>
+<li>[ ] 桌面端悬停能展开按钮；</li>
+<li>[ ] 手机端胶囊不挡正文；</li>
+<li>[ ] 深色模式下文字看得清；</li>
+<li>[ ] pjax 翻页后胶囊还在；</li>
+<li>[ ] 改过文件后 <code>?v=</code> 版本号已更新；</li>
+<li>[ ] <code>hexo clean &amp;&amp; hexo generate</code> 通过；</li>
+<li>[ ] 没有把任何 Cookie、token、私有 API、服务器路径写进公开页面。</li>
+</ul>
+<hr>
+<h2 id="第-13-步：下载完整文件包">第 13 步：下载完整文件包</h2>
+<p>不想手动复制也没关系，三个文件已经打包好了：</p>
+<ul>
+<li><a href="/downloads/music-capsule-kit.zip">下载完整文件包（ZIP，含 JS + CSS）</a></li>
+<li>单独下载：<a href="/downloads/music-capsule-kit/music-bus.js">music-bus.js</a></li>
+<li>单独下载：<a href="/downloads/music-capsule-kit/music-capsule.js">music-capsule.js</a></li>
+<li>单独下载：<a href="/downloads/music-capsule-kit/music-capsule.css">music-capsule.css</a></li>
+</ul>
+<p>下载后按第 5 节的目录结构放置：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">source/js/music-bus.js</span><br><span class="line">source/js/music-capsule.js</span><br><span class="line">source/css/music-capsule.css</span><br></pre></td></tr></table></figure>
+<p>文件包里不包含音频，请按第 1 节准备自己的 mp3，并在 <code>music-capsule.js</code> 的 <code>PLAYLIST</code> 里改成你的歌曲路径。</p>
+<hr>
+<h2 id="最后说一句">最后说一句</h2>
+<p>音乐胶囊最难的地方不是“让声音响起来”，而是<strong>让全站只有一套状态</strong>：一首歌、一个进度、一个播放意图，所有界面都只是它的镜子。</p>
+<p>你先把教程版的 52px 胶囊跑起来，再慢慢加面板、歌单、歌词、续播。不要一开始就把 QQ 音乐接口、pjax、BroadcastChannel 全堆上——那是本站踩了二十多次坑之后的形状，不是第一步该长的样子。</p>
+</article><div class="post-copyright"><div class="post-copyright__title"><span class="post-copyright-info"><h>不用音乐插件，也能做出本站同款左下角音乐胶囊</h></span></div><div class="post-copyright__type"><span class="post-copyright-info"><a href="/posts/music-capsule-guide.html">/posts/music-capsule-guide.html</a></span></div><div class="post-copyright-m"><div class="post-copyright-m-info"><div class="post-copyright-a"><h>作者</h><div class="post-copyright-cc-info"><h>chengicli</h></div></div><div class="post-copyright-c"><h>发布于</h><div class="post-copyright-cc-info"><h>2026-11-21</h></div></div><div class="post-copyright-u"><h>更新于</h><div class="post-copyright-cc-info"><h>2026-11-21</h></div></div><div class="post-copyright-c"><h>许可协议</h><div class="post-copyright-cc-info"><a class="icon" rel="noopener" target="_blank" title="Creative Commons" href="https://creativecommons.org/"><i class="fab fa-creative-commons"></i></a><a rel="noopener" target="_blank" title="CC BY-NC-SA 4.0" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a></div></div></div></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Hexo/"><div class="tags-punctuation"><svg class="faa-tada icon" style="height:1.1em;width:1.1em;fill:currentColor;position:relative;top:2px;margin-right:3px" aria-hidden="true"><use xlink:href="#icon-sekuaibiaoqian"></use></svg></div>Hexo</a><a class="post-meta__tags" href="/tags/%E6%96%B0%E6%89%8B%E5%85%A5%E9%97%A8/"><div class="tags-punctuation"><svg class="faa-tada icon" style="height:1.1em;width:1.1em;fill:currentColor;position:relative;top:2px;margin-right:3px" aria-hidden="true"><use xlink:href="#icon-sekuaibiaoqian"></use></svg></div>新手入门</a><a class="post-meta__tags" href="/tags/%E9%9F%B3%E4%B9%90%E8%83%B6%E5%9B%8A/"><div class="tags-punctuation"><svg class="faa-tada icon" style="height:1.1em;width:1.1em;fill:currentColor;position:relative;top:2px;margin-right:3px" aria-hidden="true"><use xlink:href="#icon-sekuaibiaoqian"></use></svg></div>音乐胶囊</a><a class="post-meta__tags" href="/tags/%E5%8E%9F%E7%94%9FJavaScript/"><div class="tags-punctuation"><svg class="faa-tada icon" style="height:1.1em;width:1.1em;fill:currentColor;position:relative;top:2px;margin-right:3px" aria-hidden="true"><use xlink:href="#icon-sekuaibiaoqian"></use></svg></div>原生JavaScript</a></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/posts/g52-g16-guide.html"><img class="prev-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/assets/covers/g52-g16-guide.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">G52 与 G16 完全指南：局部坐标系与极坐标编程</div></div></a></div><div class="next-post pull-right"><a href="/posts/hexo-encrypt-guide.html"><img class="next-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/assets/covers/hexo-encrypt-guide.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">给Hexo博客文章/页面加密</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/posts/hexo-encrypt-guide.html" title="给Hexo博客文章&#x2F;页面加密"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/assets/covers/hexo-encrypt-guide.png" alt="cover"><div class="content is-center"><div class="date"><i class="fas fa-history fa-fw"></i> 2026-11-21</div><div class="title">给Hexo博客文章&#x2F;页面加密</div></div></a></div><div><a href="/posts/canon-r50.html" title="佳能 R50 + 小痰盂：从开机设置到实拍的完整使用教程"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/assets/covers/canon-r50.png" alt="cover"><div class="content is-center"><div class="date"><i class="fas fa-history fa-fw"></i> 2026-10-30</div><div class="title">佳能 R50 + 小痰盂：从开机设置到实拍的完整使用教程</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><svg class="meta_icon" style="width:22px;height:22px;position:relative;top:5px"><use xlink:href="#icon-mulu1"></use></svg><span style="font-weight:bold">目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%98%85%E8%AF%BB%E8%B7%AF%E7%BA%BF"><span class="toc-text">阅读路线</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-0-%E6%AD%A5%EF%BC%9A%E5%85%88%E6%90%9E%E6%B8%85%E6%A5%9A%E2%80%9C%E9%9F%B3%E4%B9%90%E6%8F%92%E4%BB%B6%E2%80%9D%E5%92%8C%E2%80%9C%E9%9F%B3%E4%B9%90%E8%83%B6%E5%9B%8A%E2%80%9D%E4%B8%8D%E6%98%AF%E4%B8%80%E5%9B%9E%E4%BA%8B"><span class="toc-text">第 0 步：先搞清楚“音乐插件”和“音乐胶囊”不是一回事</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-1-%E6%AD%A5%EF%BC%9A%E5%87%86%E5%A4%87%E5%87%A0%E9%A6%96%E8%83%BD%E5%85%AC%E5%BC%80%E6%92%AD%E6%94%BE%E7%9A%84%E9%9F%B3%E9%A2%91"><span class="toc-text">第 1 步：准备几首能公开播放的音频</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-2-%E6%AD%A5%EF%BC%9A%E5%86%99%E6%92%AD%E6%94%BE%E6%A0%B8%E5%BF%83-music-bus-js"><span class="toc-text">第 2 步：写播放核心 music-bus.js</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-3-%E6%AD%A5%EF%BC%9A%E5%86%99%E8%83%B6%E5%9B%8A-UI-music-capsule-js"><span class="toc-text">第 3 步：写胶囊 UI music-capsule.js</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-4-%E6%AD%A5%EF%BC%9A%E5%86%99%E8%83%B6%E5%9B%8A%E6%A0%B7%E5%BC%8F-music-capsule-css"><span class="toc-text">第 4 步：写胶囊样式 music-capsule.css</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-5-%E6%AD%A5%EF%BC%9A%E6%8A%8A%E4%B8%89%E4%B8%AA%E6%96%87%E4%BB%B6%E6%8E%A5%E8%BF%9B-Hexo"><span class="toc-text">第 5 步：把三个文件接进 Hexo</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-6-%E6%AD%A5%EF%BC%9A%E7%AC%AC%E4%B8%80%E6%AC%A1%E4%B8%8D%E5%93%8D%EF%BC%9F%E8%BF%99%E6%98%AF%E6%B5%8F%E8%A7%88%E5%99%A8%E7%9A%84%E6%AD%A3%E5%B8%B8%E9%99%90%E5%88%B6"><span class="toc-text">第 6 步：第一次不响？这是浏览器的正常限制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-7-%E6%AD%A5%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E5%A5%97%E6%96%B9%E6%A1%88%E4%B8%8D%E9%9C%80%E8%A6%81%E9%9F%B3%E4%B9%90%E6%8F%92%E4%BB%B6"><span class="toc-text">第 7 步：为什么这套方案不需要音乐插件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-8-%E6%AD%A5%EF%BC%9A%E8%BF%9B%E9%98%B6%E2%80%94%E2%80%94%E6%8E%A5-QQ-%E9%9F%B3%E4%B9%90-%E7%BD%91%E6%98%93%E4%BA%91%EF%BC%88%E5%8F%AF%E9%80%89%EF%BC%8C%E6%96%B0%E6%89%8B%E5%85%88%E8%B7%B3%E8%BF%87%EF%BC%89"><span class="toc-text">第 8 步：进阶——接 QQ 音乐 &#x2F; 网易云（可选，新手先跳过）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-9-%E6%AD%A5%EF%BC%9A%E7%BF%BB%E9%A1%B5%E9%9F%B3%E4%B9%90%E4%B8%8D%E6%96%AD%E2%80%94%E2%80%94pjax-%E4%B8%8E%E6%95%B4%E9%A1%B5%E5%88%B7%E6%96%B0"><span class="toc-text">第 9 步：翻页音乐不断——pjax 与整页刷新</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#9-1-pjax-%E8%B7%B3%E9%A1%B5"><span class="toc-text">9.1 pjax 跳页</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9-2-%E6%95%B4%E9%A1%B5%E5%88%B7%E6%96%B0%E7%BB%AD%E6%92%AD"><span class="toc-text">9.2 整页刷新续播</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-10-%E6%AD%A5%EF%BC%9A%E6%89%8B%E6%9C%BA%E7%AB%AF%E4%B8%8E%E5%B8%B8%E8%A7%81%E9%99%90%E5%88%B6"><span class="toc-text">第 10 步：手机端与常见限制</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#10-1-%E6%89%8B%E6%9C%BA%E7%AB%AF%E6%B2%A1%E6%9C%89-hover"><span class="toc-text">10.1 手机端没有 hover</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#10-2-%E9%9F%B3%E9%A2%91%E5%92%8C%E5%B0%81%E9%9D%A2%E9%83%BD%E8%A6%81-HTTPS"><span class="toc-text">10.2 音频和封面都要 HTTPS</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#10-3-%E8%B7%A8%E5%9F%9F%E4%B8%8D%E6%98%AF%E2%80%9C%E9%9F%B3%E9%A2%91%E6%92%AD%E6%94%BE%E2%80%9D%E7%9A%84%E4%B8%BB%E8%A6%81%E9%9A%9C%E7%A2%8D"><span class="toc-text">10.3 跨域不是“音频播放”的主要障碍</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#10-4-overscroll-behavior-contain-%E5%88%AB%E4%B9%B1%E5%8A%A0"><span class="toc-text">10.4 overscroll-behavior: contain 别乱加</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-11-%E6%AD%A5%EF%BC%9A%E7%85%A7%E5%81%9A%E4%BA%86%E6%B2%A1%E5%8F%8D%E5%BA%94%EF%BC%9F%E6%8C%89%E8%BF%99%E4%B8%AA%E8%A1%A8%E6%9F%A5"><span class="toc-text">第 11 步：照做了没反应？按这个表查</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-12-%E6%AD%A5%EF%BC%9A%E4%B8%8A%E7%BA%BF%E5%89%8D%E6%A3%80%E6%9F%A5%E6%B8%85%E5%8D%95"><span class="toc-text">第 12 步：上线前检查清单</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-13-%E6%AD%A5%EF%BC%9A%E4%B8%8B%E8%BD%BD%E5%AE%8C%E6%95%B4%E6%96%87%E4%BB%B6%E5%8C%85"><span class="toc-text">第 13 步：下载完整文件包</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%80%E5%90%8E%E8%AF%B4%E4%B8%80%E5%8F%A5"><span class="toc-text">最后说一句</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-color: transparent;"><div id="footer-wrap"><div class="ft-sign">chengicli</div><div class="ft-deco"></div><nav class="ft-links"><a href="/archives/">文章总览</a><a href="/categories/">文章分类</a><a href="/tags/">文章标签</a><a href="/gallery/">我的画廊</a><a href="/links/">我的朋友</a><a href="/music/">治愈音乐</a><a href="/nav/">网址导航</a><a href="/macro/">程序生成</a><a href="/thread/">螺纹规格</a><a href="/about/">关于作者</a></nav><div class="footer_custom_text"><span id="ftRun"></span><span class="ft-sep">｡･ﾟﾟ･🌸･ﾟﾟ･｡</span><span id="ftLove">已经和女朋友--啦</span><svg class="ft-love-heart" width="30" height="27" viewBox="0 0 30 27" aria-hidden="true"><defs><clipPath id="ft-love-clip"><path d="M15 26C15 26 2 17.5 2 9.5 2 5.5 5 3 8.5 3 11.2 3 13.4 4.4 15 6.5 16.6 4.4 18.8 3 21.5 3 25 3 28 5.5 28 9.5 28 17.5 15 26 15 26Z"></path></clipPath><linearGradient id="ft-love-grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff8fb3"></stop><stop offset="1" stop-color="#ff2e63"></stop></linearGradient></defs><g class="ft-love-clip"><rect class="ft-love-base" x="0" y="0" width="30" height="27"></rect><rect class="ft-love-bar b1" x="3.4" y="0" width="2.55" height="26"></rect><rect class="ft-love-bar b2" x="6.1" y="0" width="2.55" height="26"></rect><rect class="ft-love-bar b3" x="8.8" y="0" width="2.55" height="26"></rect><rect class="ft-love-bar b4" x="11.5" y="0" width="2.55" height="26"></rect><rect class="ft-love-bar b5" x="14.2" y="0" width="2.55" height="26"></rect><rect class="ft-love-bar b6" x="16.9" y="0" width="2.55" height="26"></rect><rect class="ft-love-bar b7" x="19.6" y="0" width="2.55" height="26"></rect><rect class="ft-love-bar b8" x="22.3" y="0" width="2.55" height="26"></rect><rect class="ft-love-bar b9" x="25" y="0" width="2.55" height="26"></rect></g></svg></div><div class="copyright"><span><b>&copy;2023-2026</b></span><span class="ft-by"><b>By chengicli</b></span><a class="ft-icp" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener"><span class="ft-icp-icon" aria-hidden="true"></span>豫ICP备2026057580号</a><span class="ft-dot">·</span><a class="ft-icp ft-police" href="https://beian.mps.gov.cn/#/query/webSearch?code=32040002010816" target="_blank" rel="noopener noreferrer"><span class="ft-police-icon" aria-hidden="true"></span>苏公网安备32040002010816号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><a class="icon-V hidden" onclick="switchNightMode()" title="浅色和深色模式转换"><svg width="25" height="25" viewBox="0 0 1024 1024"><use id="modeicon" xlink:href="#icon-moon"></use></svg></a><button class="share" type="button" title="右键模式" onclick="changeMouseMode()"><i class="fas fa-mouse"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog right_side"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button class="share" type="button" title="分享链接" onclick="share()"><i class="fas fa-share-nodes"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i><span id="percent">0<span>%</span></span></button><button id="go-down" type="button" title="直达底部" onclick="btf.scrollToDest(document.body.scrollHeight, 500)"><i class="fas fa-arrow-down"></i></button></div></div><div id="algolia-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="search-wrap"><div id="algolia-search-input"></div><hr/><div id="algolia-search-results"><div id="algolia-hits"></div><div id="algolia-pagination"></div><div id="algolia-info"><div class="algolia-stats"></div></div></div></div></div><div id="search-mask"></div></div><div class="js-pjax" id="rightMenu"><div class="rightMenu-group rightMenu-small"><a class="rightMenu-item" href="javascript:window.history.back();"><i class="fa fa-arrow-left"></i></a><a class="rightMenu-item" href="javascript:window.history.forward();"><i class="fa fa-arrow-right"></i></a><a class="rightMenu-item" href="javascript:window.location.reload();"><i class="fa fa-refresh"></i></a><a class="rightMenu-item" href="javascript:rmf.scrollToTop();"><i class="fa fa-arrow-up"></i></a></div><div class="rightMenu-group rightMenu-line hide" id="menu-text"><a class="rightMenu-item" href="javascript:rmf.copySelect();"><i class="fa fa-copy"></i><span>复制</span></a><a class="rightMenu-item" href="javascript:window.open(&quot;https://www.baidu.com/s?wd=&quot;+window.getSelection().toString());window.location.reload();"><i class="fa fa-search"></i><span>百度搜索</span></a></div><div class="rightMenu-group rightMenu-line hide" id="menu-too"><a class="rightMenu-item" href="javascript:window.open(window.getSelection().toString());window.location.reload();"><i class="fa fa-link"></i><span>转到链接</span></a></div><div class="rightMenu-group rightMenu-line hide" id="menu-paste"><a class="rightMenu-item" href="javascript:rmf.paste()"><i class="fa fa-copy"></i><span>粘贴</span></a></div><div class="rightMenu-group rightMenu-line hide" id="menu-post"><a class="rightMenu-item" href="#post-comment"><i class="fas fa-comment"></i><span>空降评论</span></a><a class="rightMenu-item" href="javascript:rmf.copyWordsLink()"><i class="fa fa-link"></i><span>复制本文地址</span></a></div><div class="rightMenu-group rightMenu-line hide" id="menu-to"><a class="rightMenu-item" href="javascript:rmf.openWithNewTab()"><i class="fa fa-window-restore"></i><span>新窗口打开</span></a><a class="rightMenu-item" id="menu-too" href="javascript:rmf.open()"><i class="fa fa-link"></i><span>转到链接</span></a><a class="rightMenu-item" href="javascript:rmf.copyLink()"><i class="fa fa-copy"></i><span>复制链接</span></a></div><div class="rightMenu-group rightMenu-line hide" id="menu-img"><a class="rightMenu-item" href="javascript:rmf.saveAs()"><i class="fa fa-download"></i><span>保存图片</span></a><a class="rightMenu-item" href="javascript:rmf.openWithNewTab()"><i class="fa fa-window-restore"></i><span>在新窗口打开</span></a><a class="rightMenu-item" href="javascript:rmf.copyLink()"><i class="fa fa-copy"></i><span>复制图片链接</span></a></div><div class="rightMenu-group rightMenu-line"><a class="rightMenu-item" href="javascript:randomPost()"><i class="fa fa-paper-plane"></i><span>随便逛逛</span></a><a class="rightMenu-item" href="javascript:switchNightMode();"><i class="fa fa-moon"></i><span>昼夜切换</span></a><a class="rightMenu-item" href="javascript:rmf.switchReadMode();"><i class="fa fa-book"></i><span>阅读模式</span></a><a class="rightMenu-item" href="/about/"><i class="fa fa-info-circle"></i><span>关于博客</span></a><a class="rightMenu-item" href="javascript:toggleWinbox();"><i class="fas fa-cog"></i><span>美化设置</span></a><a class="rightMenu-item" href="javascript:rmf.fullScreen();"><i class="fas fa-expand"></i><span>切换全屏</span></a><a class="rightMenu-item" href="javascript:window.print();"><i class="fa-solid fa-print"></i><span>打印页面</span></a></div></div><div><script src="/js/utils.js?v=20261005-scroll1"></script><script src="/js/main.js?v=20261117-scrollfn"></script><script src="/External-link/js/fancybox.umd.js"></script><script src="/External-link/js/instantpage.js" type="module"></script><script src="/External-link/js/lazyload.iife.min.js"></script><script>window.__SEARCH_LAZY__ = ["/External-link/js/algoliasearch-lite.umd.js","/External-link/js/instantsearch.production.min.js","/js/search/algolia.js"]</script><script async="async">var preloader = {
+  endLoading: () => {
+    document.body.style.overflow = 'auto';
+    document.getElementById('loading-box').classList.add("loaded")
+  },
+  initLoading: () => {
+    document.body.style.overflow = '';
+    document.getElementById('loading-box').classList.remove("loaded")
+
+  }
+}
+window.addEventListener('load',preloader.endLoading())
+setTimeout(function(){preloader.endLoading();}, 5000);
+document.getElementById('loading-box').addEventListener('click',()=> {preloader.endLoading()})</script><div class="js-pjax"><script>(() => {
+  const $mermaidWrap = document.querySelectorAll('#article-container .mermaid-wrap')
+  if ($mermaidWrap.length) {
+    window.runMermaid = () => {
+      window.loadMermaid = true
+      const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+      Array.from($mermaidWrap).forEach((item, index) => {
+        const mermaidSrc = item.firstElementChild
+        const mermaidThemeConfig = '%%{init:{ \'theme\':\'' + theme + '\'}}%%\n'
+        const mermaidID = 'mermaid-' + index
+        const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+        mermaid.mermaidAPI.render(mermaidID, mermaidDefinition, (svgCode) => {
+          mermaidSrc.insertAdjacentHTML('afterend', svgCode)
+        })
+      })
+    }
+
+    const loadMermaid = () => {
+      window.loadMermaid ? runMermaid() : getScript('https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.1.2/mermaid.min.js').then(runMermaid)
+    }
+
+    window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+  }
+})()</script><script>(()=>{
+  const init = () => {
+    twikoo.init(Object.assign({
+      el: '#twikoo-wrap',
+      envId: 'https://twikoo.lichengic.com',
+      region: '',
+      onCommentLoaded: function () {
+        btf.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
+      }
+    }, null))
+  }
+
+  const getCount = () => {
+    const countELement = document.getElementById('twikoo-count')
+    if(!countELement) return
+    twikoo.getCommentsCount({
+      envId: 'https://twikoo.lichengic.com',
+      region: '',
+      urls: [window.location.pathname],
+      includeReply: false
+    }).then(function (res) {
+      countELement.innerText = res[0].count
+    }).catch(function (err) {
+      console.error(err);
+    });
+  }
+
+  const runFn = () => {
+    init()
+    
+  }
+
+  const loadTwikoo = () => {
+    if (typeof twikoo === 'object') {
+      setTimeout(runFn,0)
+      return
+    } 
+    getScript('/External-link/js/twikoo.all.min.js').then(runFn)
+  }
+
+  if ('Twikoo' === 'Twikoo' || !true) {
+    if (true) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else loadTwikoo()
+  } else {
+    window.loadOtherComment = () => {
+      loadTwikoo()
+    }
+  }
+})()</script></div><script defer src="/js/pdf-viewer.js?v=20261026-mimefix"></script><script defer src="/js/unlock-secret.js?v=20261117-scroll1"></script><script defer src="/js/open-assets-blank.js?v=20261025"></script><script defer src="/js/love-days.js?v=20261109-icp-copyright"></script><script defer charset="UTF-8" id="LA_COLLECT" src="https://sdk.51.la/js-sdk-pro.min.js"></script><script defer src="https://sdk.51.la/perf/js-sdk-perf.min.js" crossorigin="anonymous"></script><script defer src="/js/51la.js"></script><script src="/js/jquery.min.js"></script><script>window.jQuery || document.write('<script src="/js/jquery.min.js"><\/script>')</script><script async src="/External-link/js/clipboard.min.js"></script><script async src="/External-link/js/pace.min.js"></script><script defer src="/js/winbox.bundle.min.js"></script><script async src="/External-link/js/iconfont/font_3586335.js"></script><script async src="/External-link/js/iconfont/font_3636804.js"></script><script async src="/External-link/js/iconfont/font_3612150.js"></script><script async src="/External-link/js/iconfont/font_5239918.js"></script><canvas id="universe"></canvas><canvas id="snow"></canvas><script defer src="/js/notify.js"></script><script defer src="/js/lunar.js"></script><script defer src="/js/data/holidays.js"></script><script defer src="/js/modules/console-art.js"></script><script defer src="/js/modules/shell.js?v=20261121-titlecfg2"></script><script defer src="/js/modules/snow.js?v=20261010-snow1"></script><script defer src="/js/modules/effects.js?v=20261010-snow1"></script><script defer src="/js/modules/reading.js?v=20261028-fpsbadge"></script><script defer src="/js/modules/nav.js?v=20261102-flickerfix"></script><script defer src="/js/inject/nav-scroll-rebind.js?v=20261102a"></script><script defer src="/js/music-bus.js?v=20261102-resume5"></script><script defer src="/js/music-page.js?v=20261031a"></script><script defer src="/js/daily-say.js?v=20261102-resume"></script><script defer src="/js/modules/cursor.js?v=20261028-dot"></script><script defer src="/js/modules/footer-time.js?v=20261109-third-line"></script><script defer src="/js/inject/archive-page.js?v=20261118-tagtotal"></script><script defer src="/js/modules/appearance-fonts.js?v=20261102-fc2"></script><script defer src="/js/modules/appearance-backgrounds.js?v=20261105-wallpaper3"></script><script defer src="/js/modules/fireflies.js?v=20261010-fireflies1"></script><script defer src="/js/modules/ripple.js?v=20261014-ripple1"></script><script defer src="/js/modules/settings.js?v=20261105-wallpaper1"></script><script defer src="/js/stats.js?v=20261102-neutral"></script><script defer src="/js/hours-search.js?v=20261122gap"></script><script defer src="/js/fomal.js"></script><script defer src="/js/wechat-qr.js?v=20261028-qr"></script><script defer src="/js/festival.js"></script><script defer src="/js/author-status.js"></script><script defer src="/js/pjax-guard.js?v=20261005"></script><script defer src="/js/pjax-relink.js?v=20261030-about2"></script><script defer src="/js/inject/search-lazy.js?v=20261011b"></script><script src="/js/inject/scroll-gap-fix.js?v=20261011"></script><script src="/js/inject/webinfo-card.js"></script><script defer src="/js/i18n-zh.js?v=20261112c"></script><script src="/js/inject/pc-local-link.js"></script><script defer src="/js/inject/about-route-probe.js?v=20261030"></script><script defer src="/js/inject/about-live.js?v=20261030"></script><script defer src="/js/twikoo-anchor.js?v=20261117-anchor2"></script><link rel="stylesheet" href="/External-link/css/APlayer.min.css" media="print" onload="this.media='all'"><script src="/External-link/js/APlayer.min.js"></script><script src="/External-link/js/Meting.min.js"></script><script src="/External-link/js/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show","#web_bg",".js-pjax","body > title","#app","#tag-echarts","#posts-echart","#categories-echarts"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener scroll 
+  ;['tocScrollFn', 'scrollCollect'].forEach(name => {
+    const handler = window[name]
+    if (!handler) return
+    window.removeEventListener('scroll', handler)
+    if (typeof handler.cancel === 'function') handler.cancel()
+    window[name] = null
+  })
+
+  typeof preloader === 'object' && preloader.initLoading()
+  document.getElementById('rightside').style.cssText = "opacity: ''; transform: ''"
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//events.vercount.one/js"></script></div><!-- hexo injector body_end start --><script id="swiper-lazyload-fix">
+(function () {
+  if (window.__swiperLazyFix) return;
+  window.__swiperLazyFix = true;
+
+  function sync () {
+    try {
+      var inst = window.lazyLoadInstance;
+      if (inst && typeof inst.update === 'function') inst.update();
+    } catch (e) {}
+  }
+
+  function burst () {
+    [0, 120, 300, 700, 1500, 2600].forEach(function (d) { setTimeout(sync, d); });
+  }
+
+  // 1) 首次加载 + 站内 pjax 返回后：等异步的 data-pjax 脚本（swiper_init.js）跑完再补登记
+  document.addEventListener('pjax:complete', burst);
+  window.addEventListener('load', burst);
+  if (document.readyState !== 'loading') burst();
+  else document.addEventListener('DOMContentLoaded', burst);
+
+  // 2) Swiper 重建循环克隆时会增删 .blog-slider__wrp 的子节点（pjax 换页后容器会被替换，故持续重挂）
+  setTimeout(function watchWrp () {
+    var wrp = document.querySelector('.blog-slider__wrp');
+    if (wrp && wrp !== window.__swiperLazyWrp) {
+      try { if (window.__swiperLazyMo) window.__swiperLazyMo.disconnect(); } catch (e) {}
+      window.__swiperLazyWrp = wrp;
+      try {
+        window.__swiperLazyMo = new MutationObserver(function () {
+          clearTimeout(window.__swiperLazyTimer);
+          window.__swiperLazyTimer = setTimeout(sync, 100);
+        });
+        window.__swiperLazyMo.observe(wrp, { childList: true });
+      } catch (e) {}
+    }
+    setTimeout(watchWrp, 800);
+  }, 800);
+})();
+</script><script id="wow-pjax-rehook">
+(function () {
+  if (window.__wowPjaxRehook) return;
+  window.__wowPjaxRehook = true;
+
+  // 插件生成的加类脚本特征：调 classList.add 又写 data-wow-duration 的，就是它
+  function isWowInjector(code) {
+    return !!code && code.indexOf('classList.add') > -1 && code.indexOf('data-wow-duration') > -1;
+  }
+
+  // 把 .js-pjax 里哑火的加类脚本重放一遍（照抄 pjax.pug 的重放手法：换新节点才会执行）
+  function replayInjectors() {
+    var scripts = document.querySelectorAll('.js-pjax script');
+    for (var i = 0; i < scripts.length; i++) {
+      var old = scripts[i];
+      if (old.getAttribute('data-pjax') !== null) continue; // 主题自己会重放，别跑两遍
+      var code = old.text || old.textContent || old.innerHTML || '';
+      if (!isWowInjector(code)) continue;
+      var neu = document.createElement('script');
+      neu.setAttribute('data-wow-pjax-replay', '');
+      neu.appendChild(document.createTextNode(code));
+      old.parentNode.replaceChild(neu, old);
+    }
+  }
+
+  // wow 实例兜底 + 清理被 pjax 换掉的旧节点（否则 wow.boxes 会一直 accumulate）
+  function resyncBoxes() {
+    var wow = window.wow;
+    if (!wow && typeof window.WOW === 'function') {
+      // 等价于 node_modules/hexo-butterfly-wowjs/lib/wow_init.js
+      window.wow = new window.WOW({
+        boxClass: 'wow',
+        animateClass: 'animate__animated',
+        offset: 0,
+        mobile: false,
+        live: true
+      });
+      window.wow.init();
+      return;
+    }
+    if (!wow) return;
+    try {
+      if (wow.boxes && wow.boxes.length) {
+        wow.boxes = wow.boxes.filter(function (el) { return el && document.contains(el); });
+      }
+      // 关键一步：让 wow 自己把新插入的 .wow 卡片登记进 boxes（会顺手隐藏 + 置 scrolled）
+      if (typeof wow.doSync === 'function') {
+        wow.doSync(document.body);
+      } else if (wow.boxes && wow.applyStyle) {
+        // 老版本 wow.js 没有 doSync，手动补：从没被 wow 摸过的块（没有 inline visibility）收进来
+        var nodes = document.querySelectorAll('.wow');
+        for (var i = 0; i < nodes.length; i++) {
+          var el = nodes[i];
+          if (el.style.visibility) continue;
+          if (wow.all && wow.all.indexOf(el) > -1) continue;
+          wow.boxes.push(el);
+          if (wow.all) wow.all.push(el);
+          wow.applyStyle(el, true);
+        }
+        wow.scrolled = true;
+      }
+      // 再补一次 scroll 事件，保证 50ms 轮询这一拍立刻跑
+      window.dispatchEvent(new Event('scroll'));
+    } catch (e) {}
+  }
+
+  function run() {
+    try { replayInjectors(); } catch (e) {}
+    try { resyncBoxes(); } catch (e) {}
+  }
+
+  document.addEventListener('pjax:complete', function () {
+    // 主题的 pjax:complete 监听器（pjax.pug）先重放 script[data-pjax]（轮播/磁贴注入脚本在里面），
+    // 所以这里延后一拍，保证重放顺序在它之后；300ms 那次兜底给异步补内容的场景。
+    setTimeout(run, 0);
+    setTimeout(run, 300);
+  });
+
+  // 调试用：控制台里 window.__wowPjaxRehookNow() 可手动触发一次
+  window.__wowPjaxRehookNow = run;
+})();
+</script><div class="js-pjax"><script async="async">var arr = document.getElementsByClassName('recent-post-item');
+for(var i = 0;i<arr.length;i++){
+    arr[i].classList.add('wow');
+    arr[i].classList.add('animate__fadeIn');
+    arr[i].setAttribute('data-wow-duration', '700ms');
+    arr[i].setAttribute('data-wow-delay', '0');
+    arr[i].setAttribute('data-wow-offset', '0');
+    arr[i].setAttribute('data-wow-iteration', '1');
+  }</script><script async="async">var arr = document.getElementsByClassName('card-widget');
+for(var i = 0;i<arr.length;i++){
+    arr[i].classList.add('wow');
+    arr[i].classList.add('animate__fadeIn');
+    arr[i].setAttribute('data-wow-duration', '700ms');
+    arr[i].setAttribute('data-wow-delay', '0');
+    arr[i].setAttribute('data-wow-offset', '0');
+    arr[i].setAttribute('data-wow-iteration', '1');
+  }</script></div><script defer src="/External-link/js/wow.min.js"></script><script defer src="/External-link/js/wow_init.js"></script><!-- hexo injector body_end end --></body></html>

@@ -54,12 +54,71 @@
     return n;
   }
 
+  /* ── 表头吸顶偏移 ────────────────────────────────────────────
+   * 表头 sticky 到视口，top 必须避开顶部导航栏（导航固定时约 58px）。
+   * 导航随滚动方向显隐、pjax 换页会换掉 #page-header，所以实测 #nav 底边，
+   * 并盯着 header 的 class 变化重算，写进 --ph-top 供 hours.css 使用。
+   * 与刀具库 warehouse.js 的 --wh-navtop 同一套做法。
+   */
+  var navBound = false;
+  var navRaf = 0;
+  var navObservedHeader = null;
+  var navObserver = null;
+  var headEl = null;   // 当前 .ph-head 工具块，用于量它高度给表头让位
+
+  function navBottom() {
+    var header = document.getElementById('page-header');
+    var nav = document.getElementById('nav');
+    if (!header || !nav) return 58;
+    var fixed = header.classList.contains('nav-fixed');
+    var shown = header.classList.contains('nav-visible');
+    if (!fixed && !shown) return 0;           // 导航还在文档流里，不用避让
+    var r = nav.getBoundingClientRect();
+    return r.bottom > 0 ? Math.round(r.bottom) : 58;
+  }
+
+  function syncNavTop() {
+    navRaf = 0;
+    var root = document.documentElement;
+    root.style.setProperty('--ph-top', navBottom() + 'px');
+    /* 工具块高度：sticky 的 thead 紧贴它视觉底边。
+       ⚠ 只取 offsetHeight，**不能加 marginBottom**：sticky 后工具块的视觉底边
+       就在 content+padding 边界（margin 不产生视觉），表头 top 若按「高度+margin」
+       下推，两者之间会空出一条约 16px 透明的缝，滚动的数据行就从缝里漏出来。 */
+    if (headEl) {
+      root.style.setProperty('--ph-headh', Math.round(headEl.offsetHeight) + 'px');
+    }
+  }
+  function queueNavTop() {
+    if (!navRaf) navRaf = requestAnimationFrame(syncNavTop);
+  }
+
+  function bindStickyTop() {
+    syncNavTop();
+    var header = document.getElementById('page-header');
+    if (!navBound) {
+      navBound = true;
+      window.addEventListener('resize', queueNavTop);
+      window.addEventListener('scroll', queueNavTop, { passive: true });
+    }
+    // pjax 换页会换掉 #page-header：节点变了就重挂观察
+    if (header && header !== navObservedHeader && window.MutationObserver) {
+      if (navObserver) navObserver.disconnect();
+      navObservedHeader = header;
+      navObserver = new MutationObserver(queueNavTop);
+      navObserver.observe(header, { attributes: true, attributeFilter: ['class'] });
+    }
+  }
+
   function init() {
     var app = document.querySelector(SEL_APP);
     if (!app || app.getAttribute('data-ph-search') === '1') return;
     var input = app.querySelector('.ph-search-input');
     if (!input) return;
     app.setAttribute('data-ph-search', '1');
+    headEl = app.querySelector('.ph-head');
+    bindStickyTop();
+    syncNavTop();   // 工具块刚插入 DOM，立刻按实际高度算一次表头偏移
 
     var clearBtn = app.querySelector('.ph-search-clear');
     var emptyMsg = app.querySelector('.ph-empty');

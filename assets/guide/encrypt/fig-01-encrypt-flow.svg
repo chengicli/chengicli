@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" width="900" height="460" role="img" aria-label="Hexo 文章加密与解锁流程">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#6b7280"/>
+    </marker>
+  </defs>
+  <rect width="900" height="460" fill="#f7f8fa"/>
+  <text x="40" y="52" font-family="'Microsoft YaHei','PingFang SC',Arial,sans-serif" font-size="23" font-weight="700" fill="#1f2937">文章加密发生在“生成时”，解密发生在“浏览器里”</text>
+  <text x="40" y="84" font-family="'Microsoft YaHei','PingFang SC',Arial,sans-serif" font-size="15" fill="#4b5563">public/ 里只有密文、锁屏和解密脚本；密码本身不会明文写进 HTML。</text>
+
+  <g transform="translate(55,150)">
+    <rect width="220" height="190" rx="16" fill="#ffffff" stroke="#d1d5db" stroke-width="2"/>
+    <text x="22" y="40" font-family="'Microsoft YaHei',Arial,sans-serif" font-size="17" font-weight="700" fill="#1f2937">作者本机</text>
+    <text x="22" y="78" font-family="'Microsoft YaHei',Arial,sans-serif" font-size="14" fill="#4b5563">Markdown 正文</text>
+    <text x="22" y="108" font-family="Consolas,monospace" font-size="14" fill="#2563eb">password: ****</text>
+    <text x="22" y="142" font-family="'Microsoft YaHei',Arial,sans-serif" font-size="14" fill="#4b5563">hexo generate</text>
+  </g>
+
+  <line x1="285" y1="245" x2="355" y2="245" stroke="#6b7280" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <g transform="translate(365,150)">
+    <rect width="220" height="190" rx="16" fill="#ffffff" stroke="#d1d5db" stroke-width="2"/>
+    <text x="22" y="40" font-family="'Microsoft YaHei',Arial,sans-serif" font-size="17" font-weight="700" fill="#db2777">生成阶段</text>
+    <text x="22" y="78" font-family="'Microsoft YaHei',Arial,sans-serif" font-size="14" fill="#4b5563">PBKDF2 推导密钥</text>
+    <text x="22" y="108" font-family="'Microsoft YaHei',Arial,sans-serif" font-size="14" fill="#4b5563">AES-CBC 加密正文</text>
+    <text x="22" y="138" font-family="'Microsoft YaHei',Arial,sans-serif" font-size="14" fill="#4b5563">HMAC 校验完整性</text>
+  </g>
+
+  <line x1="595" y1="245" x2="665" y2="245" stroke="#6b7280" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <g transform="translate(675,150)">
+    <rect width="190" height="190" rx="16" fill="#ffffff" stroke="#d1d5db" stroke-width="2"/>
+    <text x="20" y="40" font-family="'Microsoft YaHei',Arial,sans-serif" font-size="17" font-weight="700" fill="#2563eb">访客浏览器</text>
+    <text x="20" y="78" font-family="'Microsoft YaHei',Arial,sans-serif" font-size="14" fill="#4b5563">输入密码</text>
+    <text x="20" y="108" font-family="'Microsoft YaHei',Arial,sans-serif" font-size="14" fill="#4b5563">WebCrypto 解密</text>
+    <text x="20" y="138" font-family="'Microsoft YaHei',Arial,sans-serif" font-size="14" fill="#4b5563">显示正文</text>
+  </g>
+
+  <text x="40" y="410" font-family="'Microsoft YaHei',Arial,sans-serif" font-size="14" fill="#6b7280">提醒：静态站加密不是高安全；附件 PDF / NC 文件不会自动被保护。</text>
+</svg>

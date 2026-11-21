@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" width="900" height="460" role="img" aria-label="G52 局部坐标系示意">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#374151"/>
+    </marker>
+    <marker id="arrowPink" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#db2777"/>
+    </marker>
+  </defs>
+  <rect width="900" height="460" fill="#f7f8fa"/>
+  <text x="40" y="52" font-family="'Microsoft YaHei','PingFang SC',Arial,sans-serif" font-size="23" font-weight="700" fill="#1f2937">G52：在 G54 里临时再画一个原点</text>
+  <text x="40" y="84" font-family="'Microsoft YaHei','PingFang SC',Arial,sans-serif" font-size="15" fill="#4b5563">G52 不改 G54，也不改机械坐标；它只是在当前工件坐标系上叠加一个偏移。</text>
+
+  <g transform="translate(250,300)">
+    <line x1="-170" y1="0" x2="250" y2="0" stroke="#9ca3af" stroke-width="2" marker-end="url(#arrow)"/>
+    <line x1="0" y1="150" x2="0" y2="-170" stroke="#9ca3af" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="258" y="20" font-family="Arial,sans-serif" font-size="14" fill="#6b7280">X</text>
+    <text x="14" y="-176" font-family="Arial,sans-serif" font-size="14" fill="#6b7280">Y</text>
+    <circle cx="0" cy="0" r="6" fill="#1f2937"/>
+    <text x="12" y="24" font-family="'Microsoft YaHei',Arial,sans-serif" font-size="14" font-weight="700" fill="#1f2937">G54 原点</text>
+
+    <line x1="0" y1="0" x2="190" y2="-100" stroke="#db2777" stroke-width="3" stroke-dasharray="8 6" marker-end="url(#arrowPink)"/>
+    <text x="72" y="-58" font-family="'Microsoft YaHei',Arial,sans-serif" font-size="15" font-weight="700" fill="#db2777">G52 X100 Y50</text>
+
+    <g transform="translate(190,-100)">
+      <circle r="7" fill="#db2777"/>
+      <line x1="-26" y1="0" x2="26" y2="0" stroke="#db2777" stroke-width="2"/>
+      <line x1="0" y1="-26" x2="0" y2="26" stroke="#db2777" stroke-width="2"/>
+      <text x="14" y="-16" font-family="'Microsoft YaHei',Arial,sans-serif" font-size="14" font-weight="700" fill="#db2777">局部原点</text>
+      <circle cx="70" cy="-35" r="10" fill="#2563eb"/>
+      <text x="86" y="-30" font-family="'Microsoft YaHei',Arial,sans-serif" font-size="13" fill="#2563eb">特征点</text>
+    </g>
+  </g>
+
+  <g transform="translate(600,150)">
+    <rect width="250" height="210" rx="14" fill="#ffffff" stroke="#d1d5db" stroke-width="2"/>
+    <text x="22" y="40" font-family="'Microsoft YaHei',Arial,sans-serif" font-size="17" font-weight="700" fill="#1f2937">从这一行之后</text>
+    <text x="22" y="78" font-family="Consolas,monospace" font-size="16" fill="#2563eb">G00 X0 Y0</text>
+    <text x="22" y="108" font-family="'Microsoft YaHei',Arial,sans-serif" font-size="14" fill="#4b5563">走到的是 G54 下的</text>
+    <text x="22" y="138" font-family="Consolas,monospace" font-size="16" fill="#db2777">X100 Y50</text>
+    <line x1="22" y1="158" x2="228" y2="158" stroke="#e5e7eb" stroke-width="2"/>
+    <text x="22" y="188" font-family="'Microsoft YaHei',Arial,sans-serif" font-size="14" fill="#4b5563">取消：G52 X0 Y0 Z0</text>
+  </g>
+</svg>

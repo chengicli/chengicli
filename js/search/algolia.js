@@ -130,10 +130,6 @@ window.addEventListener('load', () => {
     }
   })
 
-  const powerBy = instantsearch.widgets.poweredBy({
-    container: '#algolia-info > .algolia-poweredBy',
-  })
-
   const pagination = instantsearch.widgets.pagination({
     container: '#algolia-pagination',
     totalPages: 5,
@@ -146,7 +142,7 @@ window.addEventListener('load', () => {
   })
 
 
-  search.addWidgets([configure,searchBox,hits,stats,powerBy,pagination]) // add the widgets to the instantsearch instance
+  search.addWidgets([configure,searchBox,hits,stats,pagination]) // add the widgets to the instantsearch instance
 
   search.start()
 

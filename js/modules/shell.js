@@ -389,41 +389,47 @@ function switchNightMode() {
 /* 夜间模式切换动画 end */
 
 /* ------------------------------ 恶搞标题 ------------------------------ */
-/* 原 fomal.js 1271-1305 行，原样搬运，未改逻辑 */
-/* 恶搞标题 start */
-//动态标题
-// OriginTitile 不能只在加载时抓一次：本站是 pjax 换页，换页后 document.title 已经是新页面的标题，
-// 这份「原始标题」不跟着更新的话，切走标签再切回来，两秒后会把标签改回【上一个页面】的标题（偶现）。
-var OriginTitile = document.title;
-var PRANK_TITLES = ['chengicli', 'chengicli'];
-var titleTime;
-(function keepRealTitle() {
-  function note() {
-    var t = document.title;
-    if (PRANK_TITLES.indexOf(t) < 0) OriginTitile = t; // 只记真标题，不记恶搞标题
-  }
-  var el = document.querySelector('title');
-  if (el && window.MutationObserver) {
-    new MutationObserver(note).observe(el, { childList: true, characterData: true, subtree: true });
-  }
-  // MutationObserver 万一没兜住（老浏览器、或 pjax 手写 title），换页后再补一道
-  document.addEventListener('pjax:complete', function () { setTimeout(note, 0); });
-})();
-document.addEventListener('visibilitychange', function () {
-  if (document.hidden) {
-    //离开当前页面时标签显示内容
-    document.title = 'chengicli';
-    clearTimeout(titleTime);
-  } else {
-    //返回当前页面时标签显示内容
-    document.title = 'chengicli';
-    //两秒后变回正常标题
-    titleTime = setTimeout(function () {
-      titleTime = null;
-      document.title = OriginTitile;
-    }, 2000);
-  }
-});
+/* 开关在 _config.chengic.yml 的 title_prank：enable / away / back / delay */
+// config.pug 里是顶层 const GLOBAL_CONFIG：它是全局词法绑定，不会挂到 window 上，
+// 所以必须先按裸标识符取；直接读 window.GLOBAL_CONFIG 会永远拿到空对象，配置开关失效。
+var TITLE_PRANK_CFG = (typeof GLOBAL_CONFIG !== 'undefined' && GLOBAL_CONFIG.titlePrank)
+  ? GLOBAL_CONFIG.titlePrank
+  : ((window.GLOBAL_CONFIG && window.GLOBAL_CONFIG.titlePrank) || {});
+if (TITLE_PRANK_CFG.enable !== false) {
+  // OriginTitile 不能只在加载时抓一次：本站是 pjax 换页，换页后 document.title 已经是新页面的标题，
+  // 这份「原始标题」不跟着更新的话，切走标签再切回来，两秒后会把标签改回【上一个页面】的标题（偶现）。
+  var OriginTitile = document.title;
+  var PRANK_TITLES = [
+    TITLE_PRANK_CFG.away || '别走呀...',
+    TITLE_PRANK_CFG.back || '欢迎回来！'
+  ];
+  var PRANK_DELAY = TITLE_PRANK_CFG.delay || 2000;
+  var titleTime;
+  (function keepRealTitle() {
+    function note() {
+      var t = document.title;
+      if (PRANK_TITLES.indexOf(t) < 0) OriginTitile = t; // 只记真标题，不记恶搞标题
+    }
+    var el = document.querySelector('title');
+    if (el && window.MutationObserver) {
+      new MutationObserver(note).observe(el, { childList: true, characterData: true, subtree: true });
+    }
+    // MutationObserver 万一没兜住（老浏览器、或 pjax 手写 title），换页后再补一道
+    document.addEventListener('pjax:complete', function () { setTimeout(note, 0); });
+  })();
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) {
+      document.title = PRANK_TITLES[0];
+      clearTimeout(titleTime);
+    } else {
+      document.title = PRANK_TITLES[1];
+      titleTime = setTimeout(function () {
+        titleTime = null;
+        document.title = OriginTitile;
+      }, PRANK_DELAY);
+    }
+  });
+}
 /* 恶搞标题 end */
 
 /* ------------------------------ 搜索框修复 ------------------------------ */

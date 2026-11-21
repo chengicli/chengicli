@@ -1,0 +1,940 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><script>if ('serviceWorker' in navigator) {
+  var isLocalDev = ['localhost', '127.0.0.1', '0.0.0.0'].indexOf(location.hostname) !== -1
+  if (isLocalDev) {
+    navigator.serviceWorker.getRegistrations().then(function (rs) {
+      rs.forEach(function (r) { r.unregister() })
+    })
+  } else {
+    navigator.serviceWorker.register('/sw.js').then(function () {
+      if (localStorage.getItem('install') !== 'true') {
+        localStorage.setItem('install', 'true')
+        location.reload()
+      }
+    })
+  }
+}
+</script><head><meta name="robots" content="noindex, nofollow"><div id="myscoll"></div><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>给Hexo博客文章/页面加密 | chengicli</title><meta name="keywords" content="Hexo,hexo-blog-encrypt,加密,新手入门"><meta name="author" content="chengicli"><meta name="copyright" content="chengicli"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="ffffff"><meta name="description" content="面向完全没用过加密插件的新手，从安装 hexo-blog-encrypt 开始，一步步讲清文章加密、整页加密、标签批量加密、搜索引擎隐藏、重新生成、pjax 兼容与本站的解锁按钮增强。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="给Hexo博客文章&#x2F;页面加密">
+<meta property="og:url" content="https://www.lichengic.com/posts/hexo-encrypt-guide.html">
+<meta property="og:site_name" content="chengicli">
+<meta property="og:description" content="面向完全没用过加密插件的新手，从安装 hexo-blog-encrypt 开始，一步步讲清文章加密、整页加密、标签批量加密、搜索引擎隐藏、重新生成、pjax 兼容与本站的解锁按钮增强。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.lichengic.com/assets/covers/hexo-encrypt-guide.png">
+<meta property="article:published_time" content="2026-11-21T08:30:00.000Z">
+<meta property="article:modified_time" content="2026-11-21T08:30:00.000Z">
+<meta property="article:author" content="chengicli">
+<meta property="article:tag" content="Hexo">
+<meta property="article:tag" content="hexo-blog-encrypt">
+<meta property="article:tag" content="加密">
+<meta property="article:tag" content="新手入门">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.lichengic.com/assets/covers/hexo-encrypt-guide.png"><link rel="shortcut icon" href="/"><link rel="canonical" href="https://www.lichengic.com/posts/hexo-encrypt-guide"><link rel="preconnect" href="//events.vercount.one"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/External-link/css/fontawesome/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="/External-link/css/fancybox.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: {"appId":"XAPS1H9C4E","apiKey":"f23ce571987ecaf56e6fe0c2c9cfc9f3","indexName":"chengicli","hits":{"per_page":5},"languages":{"input_placeholder":"搜索文章","hits_empty":"找不到您查询的内容：${query}","hits_stats":"找到 ${hits} 条结果，用时 ${time} 毫秒"}},
+  localSearch: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":230},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: true,
+    post: true
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdnjs.cloudflare.com/ajax/libs/flickr-justified-gallery/2.1.2/fjGallery.min.js',
+      css: 'https://cdnjs.cloudflare.com/ajax/libs/flickr-justified-gallery/2.1.2/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isAnchor: false,
+  titlePrank: {"enable":false,"away":"别走呀...","back":"欢迎回来！","delay":2000}
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '给Hexo博客文章/页面加密',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2026-11-21 16:30:00'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', 'ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><link rel="stylesheet" href="/External-link/css/lxgw/lxgwwenkaigbscreen.css" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="/External-link/css/lxgw/lxgwwenkaigbscreen.css"></noscript><link rel="preconnect" href="https://sdk.51.la"><link rel="preconnect" href="https://sdk.51.la" crossorigin><link rel="stylesheet" href="/css/twikoo.css?v=20261117-anchor2"><link rel="stylesheet" href="/css/pdf-viewer.css?v=20261022b"><style id="themeColor"></style><style id="rightSide"></style><style id="transPercent"></style><style id="bgFilterParam"></style><span id="fps" aria-hidden="true"></span><style id="defineBg">:root{--default-bg:url(/Background-wallpaper/computer-Daytime-background.webp);--darkmode-bg:url(/Background-wallpaper/computer-Night-background.webp);--mobileday-bg:url(/Background-wallpaper/phone-Daytime-background.webp);--mobilenight-bg:url(/Background-wallpaper/phone-Night-background.webp);}</style><style id="menu_shadow"></style><style id="nav-display"></style><style id="aside-show"></style><style id="aside-pos"></style><link rel="stylesheet" href="/css/site-inject.css?v=20261121-unifywall"><link rel="stylesheet" href="/css/daily-say.css?v=20261102-hall"><link rel="stylesheet" href="/css/navigation.css?v=20261102-navtop"><link rel="stylesheet" href="/css/mobile-drawer.css?v=20261008"><link rel="stylesheet" href="/css/avatar-glow.css?v=20261004q"><script src="/js/inject/ping-route-boot.js"></script><script src="/js/inject/ping-route.js"></script><script src="/js/inject/beauty-boot.js?v=20261102-fcall"></script><script src="/js/inject/right-menu-state-boot.js"></script><script>window.fomalNightConfig=window.fomalNightConfig||{enabled:true,latLng:null,themeKey:'theme'}</script><script src="/js/inject/daynight-boot.js?v=20261014-nightboot2"></script><script src="/js/inject/typewriter.js?v=20261004b"></script><script>try{if(localStorage.getItem('chengic-lang')==='zh-Hant'){document.write('<style id="i18n-guard">html.i18n-pending body{visibility:hidden}</style>');document.documentElement.classList.add('i18n-pending');setTimeout(function(){document.documentElement.classList.remove('i18n-pending')},2500)}}catch(e){}</script><link rel="stylesheet" href="/css/typewriter.css?v=20261004"><link rel="stylesheet" href="/css/paperclip.css?v=20261005-mobile1"><link rel="stylesheet" href="/css/archive-page.css?v=20261118-tagfix"><svg aria-hidden="true" style="position:absolute; overflow:hidden; width:0; height:0"><symbol id="icon-sun" viewBox="0 0 1024 1024"><path d="M960 512l-128 128v192h-192l-128 128-128-128H192v-192l-128-128 128-128V192h192l128-128 128 128h192v192z" fill="#FFD878" p-id="8420"></path><path d="M736 512a224 224 0 1 0-448 0 224 224 0 1 0 448 0z" fill="#FFE4A9" p-id="8421"></path><path d="M512 109.248L626.752 224H800v173.248L914.752 512 800 626.752V800h-173.248L512 914.752 397.248 800H224v-173.248L109.248 512 224 397.248V224h173.248L512 109.248M512 64l-128 128H192v192l-128 128 128 128v192h192l128 128 128-128h192v-192l128-128-128-128V192h-192l-128-128z" fill="#4D5152" p-id="8422"></path><path d="M512 320c105.888 0 192 86.112 192 192s-86.112 192-192 192-192-86.112-192-192 86.112-192 192-192m0-32a224 224 0 1 0 0 448 224 224 0 0 0 0-448z" fill="#4D5152" p-id="8423"></path></symbol><symbol id="icon-moon" viewBox="0 0 1024 1024"><path d="M611.370667 167.082667a445.013333 445.013333 0 0 1-38.4 161.834666 477.824 477.824 0 0 1-244.736 244.394667 445.141333 445.141333 0 0 1-161.109334 38.058667 85.077333 85.077333 0 0 0-65.066666 135.722666A462.08 462.08 0 1 0 747.093333 102.058667a85.077333 85.077333 0 0 0-135.722666 65.024z" fill="#FFB531" p-id="11345"></path><path d="M329.728 274.133333l35.157333-35.157333a21.333333 21.333333 0 1 0-30.165333-30.165333l-35.157333 35.157333-35.114667-35.157333a21.333333 21.333333 0 0 0-30.165333 30.165333l35.114666 35.157333-35.114666 35.157334a21.333333 21.333333 0 1 0 30.165333 30.165333l35.114667-35.157333 35.157333 35.157333a21.333333 21.333333 0 1 0 30.165333-30.165333z" fill="#030835" p-id="11346"></path></symbol></svg><!-- hexo injector head_end start --><link rel="stylesheet" href="/External-link/css/animate.min.css" media="print" onload="this.media='screen'"><link rel="stylesheet" href="/External-link/css/font-awesome-animation.min.css" media="defer" onload="this.media='all'"><link rel="stylesheet" href="/External-link/css/tag_plugins.css" media="defer" onload="this.media='all'"><script src="/External-link/js/carousel-touch.js"></script><!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"><link rel="alternate" href="/atom.xml" title="chengicli" type="application/atom+xml">
+</head><body><div id="loading-box" onclick="document.getElementById(&quot;loading-box&quot;).classList.add(&quot;loaded&quot;)"><div class="loading-bg"><div class="loading-img"></div><div class="loading-image-dot"></div></div></div><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/assets/avatar.webp" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">9</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">17</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">4</div></a></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-home"></use></svg><span class="menu_word" style="font-size:17px"> 首页</span></a></div><div class="menus_item"><a class="site-page group faa-parent animated-hover hide" href="javascript:void(0);"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon--article"></use></svg><span class="menu_word" style="font-size:17px"> 文章</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child faa-parent animated-hover" href="/archives/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-guidang1">                   </use></svg><span class="menu_word" style="font-size:17px"> 文章总览</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/tags/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-shujutongji1">                   </use></svg><span class="menu_word" style="font-size:17px"> 文章统计</span></a></li><li><a class="site-page child faa-parent animated-hover" href="javascript:randomPost();"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-zuji1">                   </use></svg><span class="menu_word" style="font-size:17px"> 随便逛逛</span></a></li></ul></div><div class="menus_item"><a class="site-page group faa-parent animated-hover hide" href="javascript:void(0);"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-xiangzi"></use></svg><span class="menu_word" style="font-size:17px"> 八宝箱</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child faa-parent animated-hover" href="/thread/"><i class="fa-fw fas fa-screwdriver-wrench faa-tada"></i><span class="menu_word" style="font-size:17px"> 螺纹规格</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/macro/"><i class="fa-fw fas fa-code faa-tada"></i><span class="menu_word" style="font-size:17px"> 宏程序</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/warehouse/"><i class="fa-fw fas fa-warehouse faa-tada"></i><span class="menu_word" style="font-size:17px"> 刀具库</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/hours/"><i class="fa-fw fas fa-stopwatch faa-tada"></i><span class="menu_word" style="font-size:17px"> 产品工时</span></a></li></ul></div><div class="menus_item"><a class="site-page group faa-parent animated-hover hide" href="javascript:void(0);"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-wangye"></use></svg><span class="menu_word" style="font-size:17px"> 网站</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child faa-parent animated-hover" href="/nav/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-zhifengche">                   </use></svg><span class="menu_word" style="font-size:17px"> 网址导航</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/music/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-yinle">                   </use></svg><span class="menu_word" style="font-size:17px"> 音乐馆</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/about/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-paperplane">                   </use></svg><span class="menu_word" style="font-size:17px"> 关于</span></a></li></ul></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/message/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-liuyan"></use></svg><span class="menu_word" style="font-size:17px"> 留言板</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">chengicli</a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-home"></use></svg><span class="menu_word" style="font-size:17px"> 首页</span></a></div><div class="menus_item"><a class="site-page group faa-parent animated-hover hide" href="javascript:void(0);"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon--article"></use></svg><span class="menu_word" style="font-size:17px"> 文章</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child faa-parent animated-hover" href="/archives/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-guidang1">                   </use></svg><span class="menu_word" style="font-size:17px"> 文章总览</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/tags/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-shujutongji1">                   </use></svg><span class="menu_word" style="font-size:17px"> 文章统计</span></a></li><li><a class="site-page child faa-parent animated-hover" href="javascript:randomPost();"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-zuji1">                   </use></svg><span class="menu_word" style="font-size:17px"> 随便逛逛</span></a></li></ul></div><div class="menus_item"><a class="site-page group faa-parent animated-hover hide" href="javascript:void(0);"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-xiangzi"></use></svg><span class="menu_word" style="font-size:17px"> 八宝箱</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child faa-parent animated-hover" href="/thread/"><i class="fa-fw fas fa-screwdriver-wrench faa-tada"></i><span class="menu_word" style="font-size:17px"> 螺纹规格</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/macro/"><i class="fa-fw fas fa-code faa-tada"></i><span class="menu_word" style="font-size:17px"> 宏程序</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/warehouse/"><i class="fa-fw fas fa-warehouse faa-tada"></i><span class="menu_word" style="font-size:17px"> 刀具库</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/hours/"><i class="fa-fw fas fa-stopwatch faa-tada"></i><span class="menu_word" style="font-size:17px"> 产品工时</span></a></li></ul></div><div class="menus_item"><a class="site-page group faa-parent animated-hover hide" href="javascript:void(0);"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-wangye"></use></svg><span class="menu_word" style="font-size:17px"> 网站</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child faa-parent animated-hover" href="/nav/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-zhifengche">                   </use></svg><span class="menu_word" style="font-size:17px"> 网址导航</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/music/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-yinle">                   </use></svg><span class="menu_word" style="font-size:17px"> 音乐馆</span></a></li><li><a class="site-page child faa-parent animated-hover" href="/about/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-paperplane">                   </use></svg><span class="menu_word" style="font-size:17px"> 关于</span></a></li></ul></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/message/"><svg class="menu_icon faa-tada" aria-hidden="true" style="width:1.30em;height:1.30em;vertical-align:-0.15em;fill:currentColor;overflow:hidden;"><use xlink:href="#icon-liuyan"></use></svg><span class="menu_word" style="font-size:17px"> 留言板</span></a></div></div><center id="name-container"><a id="page-name" href="javascript:scrollToTop()">PAGE_NAME</a></center><div id="nav-right"><div id="search-button"><a class="search faa-parent animated-hover" title="检索站内任何你想要的信息"><svg class="faa-tada icon" style="height:24px;width:24px;fill:currentColor;position:relative;top:6px" aria-hidden="true"><use xlink:href="#icon-sousuo"></use></svg><span> 搜索</span></a></div><a class="meihua faa-parent animated-hover" onclick="toggleWinbox()" title="美化设置-自定义你的风格" id="meihua-button"><svg class="faa-tada icon" style="height:26px;width:26px;fill:currentColor;position:relative;top:8px" aria-hidden="true"><use xlink:href="#icon-huahua"></use></svg></a><a class="sun_moon faa-parent animated-hover" onclick="switchNightMode()" title="浅色和深色模式转换" id="nightmode-button"><svg class="faa-tada" style="height:25px;width:25px;fill:currentColor;position:relative;top:7px" viewBox="0 0 1024 1024"><use id="modeicon" xlink:href="#icon-moon">       </use></svg></a><div id="toggle-menu"><a><i class="fas fa-bars fa-fw"></i></a></div></div></div></nav><div id="post-info"><h1 class="post-title">给Hexo博客文章/页面加密</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><svg class="meta_icon post-meta-icon" style="width:30px;height:30px;position:relative;top:10px"><use xlink:href="#icon-rili"></use></svg><span class="post-meta-label">发表于 </span><time class="post-meta-date-created" datetime="2026-11-21T08:30:00.000Z" title="发表于 2026-11-21 16:30:00">2026-11-21</time><span class="post-meta-separator">|</span><svg class="meta_icon post-meta-icon" style="width:18px;height:18px;position:relative;top:5px"><use xlink:href="#icon-gengxin1"></use></svg><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-11-21T08:30:00.000Z" title="更新于 2026-11-21 16:30:00">2026-11-21</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><svg class="meta_icon post-meta-icon" style="width:18px;height:18px;position:relative;top:5px"><use xlink:href="#icon-biaoqian"></use></svg><a class="post-meta-categories" href="/categories/Hexo%E6%95%99%E7%A8%8B/">Hexo教程</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><svg class="meta_icon post-meta-icon" style="width:25px;height:25px;position:relative;top:8px"><use xlink:href="#icon-charuword"></use></svg><span class="post-meta-label">字数总计:</span><span class="word-count">4331</span><span class="post-meta-separator">|</span><svg class="meta_icon post-meta-icon" style="width:20px;height:20px;position:relative;top:5px"><use xlink:href="#icon-shizhong"></use></svg><span class="post-meta-label">阅读时长:</span><span>14分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="给Hexo博客文章/页面加密"><svg class="meta_icon post-meta-icon" style="width:25px;height:25px;position:relative;top:5px"><use xlink:href="#icon-eye"></use></svg><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv">—</span></span></div></div></div><section class="main-hero-waves-area waves-area"><svg class="waves-svg" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto"><defs><path id="gentle-wave" d="M -160 44 c 30 0 58 -18 88 -18 s 58 18 88 18 s 58 -18 88 -18 s 58 18 88 18 v 44 h -352 Z"></path></defs><g class="parallax"><use href="#gentle-wave" x="48" y="0"></use><use href="#gentle-wave" x="48" y="3"></use><use href="#gentle-wave" x="48" y="5"></use><use href="#gentle-wave" x="48" y="7"></use></g></svg></section></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><p>这篇文章是公开的，故意不加密码——否则你还没学会怎么解锁，就先被拦在门外了。</p>
+<p>本文按“我从来没用过 Hexo 加密插件”的起点来写。你看完应该能独立完成三件事：</p>
+<ol>
+<li>给<strong>某一篇文章</strong>加密码；</li>
+<li>给<strong>某个页面</strong>加密码；</li>
+<li>让加密内容不要出现在 RSS、站内搜索、Google / 百度 sitemap 里。</li>
+</ol>
+<div class="note info flat"><p>不需要另外下载任何文件。核心加密只需要一条 <code>npm install hexo-blog-encrypt --save</code>；插件会在生成时自动把 <code>/lib/hbe.js</code> 和 <code>/css/hbe.style.css</code> 放进 <code>public/</code>。第 10 节的解锁按钮、错误弹窗等属于可选增强，不抄也能正常加密和解锁。</p>
+</div>
+<p>后面还会讲本站实际做的那些“额外增强”：解锁按钮、错误弹窗、pjax 兼容、解密后目录和表格修复、隐藏“重新上锁”按钮等。</p>
+<div class="note warning flat"><p>先说清楚安全边界：静态博客的“加密”是<strong>浏览器端解密</strong>。密文和解密脚本都会发到访客浏览器里，所以它适合“挡住随手点开的人”，不适合保护真正敏感的机密。真正重要的附件请放服务端鉴权后面。</p>
+</div>
+<span id="more"></span>
+<h2 id="阅读路线">阅读路线</h2>
+<p>如果你赶时间，可以按这个顺序跳：</p>
+<table>
+<thead>
+<tr>
+<th>你想做什么</th>
+<th>看哪一节</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>我完全没装过插件</td>
+<td>第 1、2 节</td>
+</tr>
+<tr>
+<td>只想锁一篇文章</td>
+<td>第 3 节</td>
+</tr>
+<tr>
+<td>想锁一个页面，比如 <code>/hours/</code></td>
+<td>第 4 节</td>
+</tr>
+<tr>
+<td>想给一类文章统一密码</td>
+<td>第 5 节</td>
+</tr>
+<tr>
+<td>不想让搜索引擎收录</td>
+<td>第 6 节</td>
+</tr>
+<tr>
+<td>改完密码却提示错误</td>
+<td>第 7 节</td>
+</tr>
+<tr>
+<td>本地预览打不开 / 解锁后布局乱</td>
+<td>第 8、9 节</td>
+</tr>
+<tr>
+<td>想知道本站做了哪些增强</td>
+<td>第 10 节</td>
+</tr>
+<tr>
+<td>没有插件怎么办</td>
+<td>第 11 节</td>
+</tr>
+<tr>
+<td>上线前检查</td>
+<td>第 12 节</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="第-0-步：先搞懂“加密到底发生在哪”">第 0 步：先搞懂“加密到底发生在哪”</h2>
+<p>Hexo 是静态站生成器。你写的是 Markdown，Hexo 生成的是一堆 <code>.html</code>。</p>
+<p>加密插件做的是：</p>
+<ol>
+<li>在<strong>生成阶段</strong>，把文章正文用密码加密成一串密文；</li>
+<li>把原文替换成一个锁屏界面；</li>
+<li>在页面里放一段浏览器脚本；</li>
+<li>访客输入密码后，浏览器在本地解密并显示正文。</li>
+</ol>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/assets/guide/encrypt/fig-01-encrypt-flow.svg" alt="Hexo 文章加密与解锁流程" title="加密在生成时完成，解密在访客浏览器完成"></p>
+<p><em>记住这条分界线：作者本机负责加密，访客浏览器负责解密。站点服务器只保存密文和解密脚本。</em></p>
+<p>所以有三个很重要的事实：</p>
+<ul>
+<li>密码正确与否，是在<strong>访客浏览器里</strong>判断的；</li>
+<li>解密用的密钥来自密码，不会明文写在生成后的 HTML 里；</li>
+<li>但如果有人把密文下载下来，理论上可以离线暴力猜密码。</li>
+</ul>
+<div class="note info flat"><p>本站当前使用的是 <code>hexo-blog-encrypt</code> 3.1.6。它构建期用 Node 自带 <code>crypto</code>，浏览器期用原生 WebCrypto（PBKDF2 + AES-CBC + HMAC），不依赖 <code>crypto-js</code>、<code>jsencrypt</code> 或外部 CDN。</p>
+</div>
+<hr>
+<h2 id="第-1-步：安装插件">第 1 步：安装插件</h2>
+<p>在项目根目录执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install hexo-blog-encrypt --save</span><br></pre></td></tr></table></figure>
+<p>本项目 <code>package.json</code> 里已经有：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">&quot;hexo-blog-encrypt&quot;</span><span class="punctuation">:</span> <span class="string">&quot;^3.1.6&quot;</span></span><br></pre></td></tr></table></figure>
+<p>如果你是全新项目，安装完后 <code>package.json</code> 会多出类似这一行。<code>package-lock.json</code> 会锁具体版本。</p>
+<p>装完不用在主题里启用什么额外设置，插件自己会注册 Hexo 的渲染过滤器。</p>
+<hr>
+<h2 id="第-2-步：写全局配置">第 2 步：写全局配置</h2>
+<p>打开项目根目录的 <code>_config.yml</code>，加入或确认已有下面这段：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">encrypt:</span></span><br><span class="line">  <span class="attr">abstract:</span> <span class="string">本文内容已加密，需要密码才能查看</span></span><br><span class="line">  <span class="attr">message:</span> <span class="string">请输入密码</span></span><br><span class="line">  <span class="attr">wrong_pass_message:</span> <span class="string">密码不对，请重新输入</span></span><br><span class="line">  <span class="attr">wrong_hash_message:</span> <span class="string">密码正确，但内容可能已更新，仍可查看</span></span><br><span class="line">  <span class="attr">theme:</span> <span class="string">default</span></span><br><span class="line">  <span class="attr">tags:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">加密资料</span></span><br><span class="line">      <span class="attr">password:</span> <span class="string">换成你自己的分组密码</span></span><br></pre></td></tr></table></figure>
+<p>字段解释：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>作用</th>
+<th>新手怎么理解</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>abstract</code></td>
+<td>文章列表 / 首页摘要处的提示</td>
+<td>“这 article 被锁了”那句话</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td>锁屏上的提示</td>
+<td>密码框上方那句“请输入密码”</td>
+</tr>
+<tr>
+<td><code>wrong_pass_message</code></td>
+<td>密码错误提示</td>
+<td>输错时弹的话</td>
+</tr>
+<tr>
+<td><code>wrong_hash_message</code></td>
+<td>内容校验失败提示</td>
+<td>密码对但密文和当前版本不匹配时弹</td>
+</tr>
+<tr>
+<td><code>theme</code></td>
+<td>锁屏样式</td>
+<td><code>default</code> 就够用</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td>标签批量加密规则</td>
+<td>给带某个标签的文章统一密码</td>
+</tr>
+</tbody>
+</table>
+<div class="note warning flat"><p><code>tags</code> 这一段是可选的。你如果只想单篇加锁，可以先不写 <code>tags</code>。另外，本站公开教程千万不要用 <code>加密资料</code> 标签，否则会被自动加密。</p>
+</div>
+<p>YAML 有两个新手高频坑：</p>
+<ol>
+<li>冒号后面必须有空格：<code>message: 请输入密码</code>，不能写 <code>message:请输入密码</code>；</li>
+<li>密码里如果有 <code>#</code>、<code>:</code>、空格等字符，用引号包起来：</li>
+</ol>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">password:</span> <span class="string">&#x27;a:b#c 123&#x27;</span></span><br></pre></td></tr></table></figure>
+<p>本文所有示例密码都写成占位文字。<strong>不要把本站真实密码写进公开文章。</strong></p>
+<hr>
+<h2 id="第-3-步：锁一篇文章">第 3 步：锁一篇文章</h2>
+<p>打开任意文章，例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">source/_posts/2026-11-21-my-secret-post.md</span><br></pre></td></tr></table></figure>
+<p>在文件最顶部的 front-matter 里加一行 <code>password</code>：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">title:</span> <span class="string">一篇被锁住的文章</span></span><br><span class="line"><span class="attr">date:</span> <span class="number">2026-11-21 10:00:00</span></span><br><span class="line"><span class="attr">password:</span> <span class="string">换成你自己的文章密码</span></span><br><span class="line"><span class="attr">secret:</span> <span class="literal">true</span></span><br><span class="line"><span class="attr">indexing:</span> <span class="literal">false</span></span><br><span class="line"><span class="attr">sitemap:</span> <span class="literal">false</span></span><br><span class="line"><span class="attr">baidusitemap:</span> <span class="literal">false</span></span><br><span class="line"><span class="meta">---</span></span><br></pre></td></tr></table></figure>
+<p>这五个字段的关系一定要分清：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>负责什么</th>
+<th>不写会怎样</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>password</code></td>
+<td>真正触发加密</td>
+<td>不写就完全不加密</td>
+</tr>
+<tr>
+<td><code>secret: true</code></td>
+<td>让 RSS 模板识别“保密文章”</td>
+<td>Atom / RSS 可能泄露标题或摘要</td>
+</tr>
+<tr>
+<td><code>indexing: false</code></td>
+<td>让站内搜索排除</td>
+<td>搜索结果可能搜到标题</td>
+</tr>
+<tr>
+<td><code>sitemap: false</code></td>
+<td>排除 Google sitemap</td>
+<td>可能被搜索引擎抓到</td>
+</tr>
+<tr>
+<td><code>baidusitemap: false</code></td>
+<td>排除百度 sitemap</td>
+<td>可能被百度抓到</td>
+</tr>
+</tbody>
+</table>
+<p>只有 <code>password</code> 是加密开关，其余四个是“别让它到处露脸”的辅助开关。</p>
+<h3 id="优先级">优先级</h3>
+<p>插件选密码的优先级大致是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">文章 front-matter 的 password</span><br><span class="line">  &gt; _config.yml 里 encrypt.tags 命中的标签密码</span><br><span class="line">  &gt; 没有密码，不加密</span><br></pre></td></tr></table></figure>
+<p>也就是说，单篇文章写了 <code>password</code>，就以它为准。</p>
+<hr>
+<h2 id="第-4-步：锁一个页面">第 4 步：锁一个页面</h2>
+<p>文章在 <code>source/_posts/</code>，页面通常直接在 <code>source/</code> 下。本站的产品工时页就是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">source/hours/index.md</span><br></pre></td></tr></table></figure>
+<p>它的 front-matter 写法和文章一样：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">title:</span> <span class="string">产品工时</span></span><br><span class="line"><span class="attr">date:</span> <span class="number">2026-11-18 10:30:28</span></span><br><span class="line"><span class="attr">password:</span> <span class="string">换成你自己的页面密码</span></span><br><span class="line"><span class="attr">secret:</span> <span class="literal">true</span></span><br><span class="line"><span class="attr">indexing:</span> <span class="literal">false</span></span><br><span class="line"><span class="attr">sitemap:</span> <span class="literal">false</span></span><br><span class="line"><span class="attr">baidusitemap:</span> <span class="literal">false</span></span><br><span class="line"><span class="meta">---</span></span><br></pre></td></tr></table></figure>
+<p>生成后访问 <code>/hours/</code>，就会先看到锁屏。</p>
+<div class="note info flat"><p>页面和文章在插件眼里差别不大：只要 Hexo 渲染出的数据里有 <code>password</code>，插件就会处理。区别只是文件放在哪里、生成后的 URL 是什么。</p>
+</div>
+<hr>
+<h2 id="第-5-步：标签批量加密">第 5 步：标签批量加密</h2>
+<p>如果你有一批文章都要用同一个密码，不建议每篇都复制 <code>password</code>。可以用标签。</p>
+<p>先在 <code>_config.yml</code> 配好：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">encrypt:</span></span><br><span class="line">  <span class="attr">tags:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">加密资料</span></span><br><span class="line">      <span class="attr">password:</span> <span class="string">换成你自己的分组密码</span></span><br></pre></td></tr></table></figure>
+<p>然后在文章 front-matter 里加标签：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">title:</span> <span class="string">某篇内部文档</span></span><br><span class="line"><span class="attr">date:</span> <span class="number">2026-11-21 11:00:00</span></span><br><span class="line"><span class="attr">tags:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">加密资料</span></span><br><span class="line"><span class="attr">secret:</span> <span class="literal">true</span></span><br><span class="line"><span class="attr">indexing:</span> <span class="literal">false</span></span><br><span class="line"><span class="attr">sitemap:</span> <span class="literal">false</span></span><br><span class="line"><span class="attr">baidusitemap:</span> <span class="literal">false</span></span><br><span class="line"><span class="meta">---</span></span><br></pre></td></tr></table></figure>
+<p>这样所有带 <code>加密资料</code> 标签的文章都会上锁。</p>
+<h3 id="标签加密的一个坑">标签加密的一个坑</h3>
+<p>如果只用标签加密，而<strong>没写 <code>password</code> 字段</strong>，插件确实会加密正文；但 RSS 模板未必知道它是保密文章。</p>
+<p>本站的 <code>templates/atom-safe.xml</code> 里的判断逻辑可以写成伪代码：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">if not post.secret and not post.password:</span><br><span class="line">    输出到 RSS</span><br></pre></td></tr></table></figure>
+<p>也就是说，只要文章带了 <code>secret</code> 或 <code>password</code>，就不会进入 Atom / RSS。</p>
+<p>所以即使你靠标签加密，也最好同时写：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">secret:</span> <span class="literal">true</span></span><br></pre></td></tr></table></figure>
+<div class="note warning flat"><p>再次提醒：<code>加密资料</code> 在本站是“加密触发标签”。这篇教程不能带这个标签，否则你点开就会看到锁屏。</p>
+</div>
+<hr>
+<h2 id="第-6-步：别让搜索引擎和站内搜索抓到">第 6 步：别让搜索引擎和站内搜索抓到</h2>
+<p>加密正文虽然被锁住，但标题、摘要、标签仍可能出现在各种列表里。所以本站额外做了几层处理。</p>
+<h3 id="6-1-每篇-每页自己声明">6.1 每篇/每页自己声明</h3>
+<p>就是前面那四行：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">secret:</span> <span class="literal">true</span></span><br><span class="line"><span class="attr">indexing:</span> <span class="literal">false</span></span><br><span class="line"><span class="attr">sitemap:</span> <span class="literal">false</span></span><br><span class="line"><span class="attr">baidusitemap:</span> <span class="literal">false</span></span><br></pre></td></tr></table></figure>
+<h3 id="6-2-noindex-脚本">6.2 noindex 脚本</h3>
+<p>本站有 <code>scripts/noindex-secret.js</code>，它会在生成后的 HTML 里检测加密锁屏特征，然后给页面加上：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">meta</span> <span class="attr">name</span>=<span class="string">&quot;robots&quot;</span> <span class="attr">content</span>=<span class="string">&quot;noindex, nofollow&quot;</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>这样搜索引擎看到时就知道“别收录”。</p>
+<h3 id="6-3-RSS-模板">6.3 RSS 模板</h3>
+<p><code>templates/atom-safe.xml</code> 会跳过带 <code>secret</code> 或 <code>password</code> 的文章。</p>
+<h3 id="6-4-robots-txt">6.4 robots.txt</h3>
+<p>本站 <code>source/robots.txt</code> 里还有：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">User-agent: *</span><br><span class="line">Disallow: /work/</span><br></pre></td></tr></table></figure>
+<p>注意：<code>robots.txt</code> 只是“请搜索引擎不要抓”的君子协定，不是访问控制。真正不该公开的附件，别放在公开目录里。</p>
+<hr>
+<h2 id="第-7-步：重新生成，最容易翻车的一步">第 7 步：重新生成，最容易翻车的一步</h2>
+<p>改完密码、改完 front-matter，<strong>不要只刷新浏览器</strong>。Hexo 有缓存，旧密文可能还在。</p>
+<p>正确流程：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">hexo clean</span><br><span class="line">hexo generate</span><br></pre></td></tr></table></figure>
+<p>或者本项目常用：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">hexo c</span><br><span class="line">hexo g</span><br></pre></td></tr></table></figure>
+<p>生成时要看日志里有没有类似：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo-blog-encrypt: encrypting ...</span><br></pre></td></tr></table></figure>
+<div class="note warning flat"><p>没看到 <code>encrypting</code> 日志，基本就是没加密成功。常见原因：没装插件、front-matter 没写 <code>password</code>、标签没匹配、YAML 写错、缓存没清。</p>
+</div>
+<h3 id="改密码必须整套重来">改密码必须整套重来</h3>
+<p>如果你把密码从 <code>A</code> 改成 <code>B</code>，旧页面里还是用 <code>A</code> 加密的密文。访客输入 <code>B</code> 当然会提示错误。</p>
+<p>这时必须：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">hexo clean</span><br><span class="line">hexo generate</span><br></pre></td></tr></table></figure>
+<p><code>hexo clean</code> 会清掉 <code>public/</code> 和 <code>db.json</code>。如果你手动改过配置但仍不对，可以确认项目根目录的 <code>db.json</code> 是否被删除后重新生成。</p>
+<h3 id="验证生成结果">验证生成结果</h3>
+<p>生成后打开：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">public/posts/你的文章.html</span><br></pre></td></tr></table></figure>
+<p>如果能看到：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">id</span>=<span class="string">&quot;hexo-blog-encrypt&quot;</span>&gt;</span>...<span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">input</span> <span class="attr">id</span>=<span class="string">&quot;hbePass&quot;</span> <span class="attr">...</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">script</span> <span class="attr">data-pjax</span> <span class="attr">src</span>=<span class="string">&quot;/lib/hbe.js&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">link</span> <span class="attr">href</span>=<span class="string">&quot;/css/hbe.style.css&quot;</span> <span class="attr">...</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>说明插件已经接管页面。</p>
+<p>也可以在生成目录里搜 <code>hbePass</code>，有结果就对了。</p>
+<hr>
+<h2 id="第-8-步：本地预览的坑">第 8 步：本地预览的坑</h2>
+<p>本站解锁脚本检查过 WebCrypto 是否可用：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> secure = <span class="variable language_">window</span>.<span class="property">isSecureContext</span> ||</span><br><span class="line">  location.<span class="property">hostname</span> === <span class="string">&#x27;localhost&#x27;</span> ||</span><br><span class="line">  location.<span class="property">hostname</span> === <span class="string">&#x27;127.0.0.1&#x27;</span></span><br></pre></td></tr></table></figure>
+<p>所以本地预览请打开：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://localhost:4444/你的文章.html</span><br></pre></td></tr></table></figure>
+<p>不要直接用：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://192.168.1.23:4444/</span><br></pre></td></tr></table></figure>
+<p>局域网 IP 属于非安全上下文，浏览器可能禁用 <code>crypto.subtle</code>，解锁会失败。</p>
+<p>如果线上站点没配 HTTPS，也会遇到同样问题。正式站请务必上 HTTPS。</p>
+<hr>
+<h2 id="第-9-步：解锁后目录、表格、滚动乱掉怎么办">第 9 步：解锁后目录、表格、滚动乱掉怎么办</h2>
+<p>这是 pjax 主题特别容易遇到的问题。</p>
+<p>加密文章的正文不是页面加载时就存在的，而是访客输入密码后才插入 DOM。主题的目录生成、表格包装、滚动监听通常在页面加载时就跑完了，等正文出现时，它们已经“错过”了。</p>
+<p>本站的表现曾经是：</p>
+<ul>
+<li>目录空白；</li>
+<li>表格没有圆角边框；</li>
+<li>目录高亮不跟随滚动；</li>
+<li>pjax 进入文章后插件脚本没重新执行。</li>
+</ul>
+<p>本站的解决方式在 <code>source/js/unlock-secret.js</code>：</p>
+<ol>
+<li>监听 <code>DOMContentLoaded</code>；</li>
+<li>监听 <code>pjax:complete</code>；</li>
+<li>用 <code>MutationObserver</code> 盯着锁屏节点；</li>
+<li>发现 <code>/lib/hbe.js</code> 没加载就补加载；</li>
+<li>解密成功后调用主题暴露的同步函数。</li>
+</ol>
+<p>主题侧在 <code>themes/chengic/source/js/main.js</code> 暴露了：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable language_">window</span>.<span class="property">__fomalTocResync</span> = scrollFnToDo</span><br><span class="line"><span class="variable language_">window</span>.<span class="property">__fomalScrollResync</span> = scrollFn</span><br></pre></td></tr></table></figure>
+<p>解锁脚本在正文出现后再调用它们：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable language_">window</span>.<span class="property">__fomalTocResync</span> &amp;&amp; <span class="variable language_">window</span>.<span class="title function_">__fomalTocResync</span>()</span><br><span class="line"><span class="variable language_">window</span>.<span class="property">__fomalScrollResync</span> &amp;&amp; <span class="variable language_">window</span>.<span class="title function_">__fomalScrollResync</span>()</span><br></pre></td></tr></table></figure>
+<div class="note info flat"><p>如果你用的不是本站主题，不用照抄这些函数。关键是理解：正文是后插入的，主题初始化要“补跑一次”。</p>
+</div>
+<hr>
+<h2 id="第-10-步：本站做的额外增强">第 10 步：本站做的额外增强</h2>
+<p>下面这些不是插件自带功能，是本站围绕插件补的体验优化。</p>
+<h3 id="10-1-解锁按钮">10.1 解锁按钮</h3>
+<p>插件默认只有一个密码框，要靠回车触发。本站通过 <code>source/js/unlock-secret.js</code> 在 <code>.hbe-input</code> 后面插了一个按钮：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 概念示意</span></span><br><span class="line"><span class="keyword">const</span> btn = <span class="variable language_">document</span>.<span class="title function_">createElement</span>(<span class="string">&#x27;button&#x27;</span>)</span><br><span class="line">btn.<span class="property">className</span> = <span class="string">&#x27;hbe-unlock-btn&#x27;</span></span><br><span class="line">btn.<span class="property">textContent</span> = <span class="string">&#x27;解锁&#x27;</span></span><br><span class="line">btn.<span class="title function_">addEventListener</span>(<span class="string">&#x27;click&#x27;</span>, doUnlock)</span><br></pre></td></tr></table></figure>
+<p><code>doUnlock()</code> 本质是在密码框上合成一个 Enter 键事件，真正的校验仍由插件完成。</p>
+<h3 id="10-2-错误弹窗美化">10.2 错误弹窗美化</h3>
+<p>插件原本用 <code>window.alert()</code>。本站临时接管它，把系统灰框换成主题风格弹窗：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> oldAlert = <span class="variable language_">window</span>.<span class="property">alert</span></span><br><span class="line"><span class="variable language_">window</span>.<span class="property">alert</span> = <span class="keyword">function</span> (<span class="params">msg</span>) &#123;</span><br><span class="line">  <span class="comment">// 去重后显示自定义 #hbeModal</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<div class="note warning flat"><p>接管 <code>window.alert</code> 是全站级副作用。本站靠文案判断是不是加密错误提示，改插件提示语时要同步检查这段逻辑。</p>
+</div>
+<h3 id="10-3-隐藏“重新上锁”按钮">10.3 隐藏“重新上锁”按钮</h3>
+<p>插件解密成功后会显示一个 <code>Encrypt again</code> 按钮。本站用 <code>source/css/site-inject.css</code> 隐藏了它：</p>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-class">.hbe-button</span> &#123;</span><br><span class="line">  <span class="attribute">display</span>: none <span class="meta">!important</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>访客如果要在同一台设备上清除记忆，可以清浏览器 localStorage：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">键名：hexo-blog-encrypt:#&lt;页面路径&gt;</span><br></pre></td></tr></table></figure>
+<p>例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo-blog-encrypt:#/posts/hexo-encrypt-guide.html</span><br></pre></td></tr></table></figure>
+<div class="note info flat"><p>插件记住的不是明文密码，而是推导后的 AES/HMAC 密钥和 iv。但从“这台浏览器能继续看”这个结果看，效果类似记住登录状态。</p>
+</div>
+<h3 id="10-4-脚本注入与缓存版本">10.4 脚本注入与缓存版本</h3>
+<p>本站把解锁脚本放在 <code>_config.chengic.yml</code> 的 <code>inject.bottom</code> 里：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="string">&lt;script</span> <span class="string">defer</span> <span class="string">src=&quot;/js/unlock-secret.js?v=20261121&quot;&gt;&lt;/script&gt;</span></span><br></pre></td></tr></table></figure>
+<p>改了脚本内容后，记得把 <code>?v=</code> 后面的版本号改掉，并重启 <code>hexo server</code>，否则浏览器可能继续用缓存。</p>
+<p>站点样式也是同理：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="string">&lt;link</span> <span class="string">rel=&quot;stylesheet&quot;</span> <span class="string">href=&quot;/css/site-inject.css?v=20261121&quot;&gt;</span></span><br></pre></td></tr></table></figure>
+<h3 id="10-5-pjax-兜底">10.5 pjax 兜底</h3>
+<p>主题开启 pjax 后，页面局部替换可能导致插件脚本没重新执行。本站做了三层兜底：</p>
+<ol>
+<li><code>pjax:complete</code> 时重新初始化解锁脚本；</li>
+<li><code>MutationObserver</code> 监听新插入的锁屏节点；</li>
+<li>发现 <code>/lib/hbe.js</code> 不在 DOM 里就补加载一次。</li>
+</ol>
+<p>本站插件注入的脚本本身带 <code>data-pjax</code>，主题 pjax 配置也会重新执行带这个属性的脚本。</p>
+<hr>
+<h2 id="第-11-步：没有加密插件时怎么办">第 11 步：没有加密插件时怎么办</h2>
+<p>这一步专门回答“我还没装插件，能不能学会 / 能不能先凑合”。</p>
+<h3 id="11-1-只写-password-没用">11.1 只写 <code>password</code> 没用</h3>
+<p>如果没装 <code>hexo-blog-encrypt</code>，front-matter 里写：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">password:</span> <span class="number">123456</span></span><br></pre></td></tr></table></figure>
+<p>Hexo 只会把它当普通字段存着，<strong>不会加密任何内容</strong>。生成后的 HTML 里正文还是明文。</p>
+<p>所以第一步永远是装插件，或者换别的真正做加密的方案。</p>
+<h3 id="11-2-纯前端“遮罩”不是加密">11.2 纯前端“遮罩”不是加密</h3>
+<p>下面这种做法只能叫“藏一下”：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">id</span>=<span class="string">&quot;fake-lock&quot;</span>&gt;</span>请输入密码<span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">id</span>=<span class="string">&quot;fake-content&quot;</span> <span class="attr">style</span>=<span class="string">&quot;display:none&quot;</span>&gt;</span>正文<span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>因为正文已经在 HTML 里了。访客按 F12 就能看到。</p>
+<div class="note warning flat"><p>不要用 CSS 模糊、display:none、简单 JS 判断密码来做“加密”。那只是把钥匙挂在门上。</p>
+</div>
+<h3 id="11-3-正确路线只有三条">11.3 正确路线只有三条</h3>
+<table>
+<thead>
+<tr>
+<th>路线</th>
+<th>适合谁</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>安装 <code>hexo-blog-encrypt</code></td>
+<td>绝大多数 Hexo 博主</td>
+<td>本文主线，10 分钟能搞定</td>
+</tr>
+<tr>
+<td>服务端鉴权</td>
+<td>真机密、客户资料、付费内容</td>
+<td>用 Nginx / Cloudflare Access / 自建登录</td>
+</tr>
+<tr>
+<td>不放到公开站</td>
+<td>极敏感资料</td>
+<td>存网盘或内网，只放说明</td>
+</tr>
+</tbody>
+</table>
+<h3 id="11-4-如果暂时不能装插件">11.4 如果暂时不能装插件</h3>
+<p>你可以先做这些低风险准备：</p>
+<ol>
+<li>把要保护的内容从公开 <code>source/</code> 里挪走；</li>
+<li>在 <code>robots.txt</code> 里排除相关目录；</li>
+<li>确认 PDF / NC 附件不在公开路径；</li>
+<li>等能装插件时再按第 1～7 步补上。</li>
+</ol>
+<p>但不要自欺欺人地认为“前端遮住了就安全”。</p>
+<hr>
+<h2 id="第-12-步：上线前检查清单">第 12 步：上线前检查清单</h2>
+<p>每次发布加密内容前，按这个表过一遍：</p>
+<ul>
+<li>[ ] 已安装 <code>hexo-blog-encrypt</code>；</li>
+<li>[ ] <code>_config.yml</code> 的 <code>encrypt</code> 段配置正确；</li>
+<li>[ ] 文章或页面 front-matter 写了 <code>password</code>；</li>
+<li>[ ] 同时写了 <code>secret/indexing/sitemap/baidusitemap: false</code>；</li>
+<li>[ ] 密码里有特殊字符时已加引号；</li>
+<li>[ ] 没有把真实密码写进公开文章或注释；</li>
+<li>[ ] 执行了 <code>hexo clean &amp;&amp; hexo generate</code>；</li>
+<li>[ ] 日志里看到 <code>hexo-blog-encrypt: encrypting ...</code>；</li>
+<li>[ ] 生成后的 HTML 里有 <code>hbePass</code>；</li>
+<li>[ ] 用 <code>localhost</code> 或 HTTPS 打开测试；</li>
+<li>[ ] 输错密码提示正确；</li>
+<li>[ ] 输对密码正文正常显示；</li>
+<li>[ ] 目录、表格、滚动高亮正常；</li>
+<li>[ ] <code>public/atom.xml</code> 里没有该文章标题；</li>
+<li>[ ] <code>public/search.xml</code>、<code>sitemap.xml</code>、<code>baidusitemap.xml</code> 里没有该文章；</li>
+<li>[ ] 附件直链不能直接打开；</li>
+<li>[ ] 修改过 inject 资源后 <code>?v=</code> 版本号已更新。</li>
+</ul>
+<hr>
+<h2 id="常见问题对照表">常见问题对照表</h2>
+<table>
+<thead>
+<tr>
+<th>现象</th>
+<th>最可能原因</th>
+<th>怎么查</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>页面完全没锁</td>
+<td>没装插件 / 没写 <code>password</code></td>
+<td>看生成日志有没有 <code>encrypting</code></td>
+</tr>
+<tr>
+<td>提示密码错误</td>
+<td>旧密文配新密码</td>
+<td><code>hexo clean &amp;&amp; hexo generate</code></td>
+</tr>
+<tr>
+<td>提示“密码正确但内容可能已更新”</td>
+<td>HMAC 对不上</td>
+<td>重新生成，确认没有手改 <code>public/</code></td>
+</tr>
+<tr>
+<td>本地解锁失败</td>
+<td>不是 HTTPS / localhost</td>
+<td>换 <code>http://localhost:4444</code></td>
+</tr>
+<tr>
+<td>pjax 进入后没锁屏</td>
+<td>插件脚本没重跑</td>
+<td>检查 <code>data-pjax</code> 和主题 pjax 配置</td>
+</tr>
+<tr>
+<td>解锁后目录空白</td>
+<td>目录生成早于正文插入</td>
+<td>补一次目录同步</td>
+</tr>
+<tr>
+<td>表格没样式</td>
+<td>表格包装早于正文插入</td>
+<td>补一次表格包装</td>
+</tr>
+<tr>
+<td>搜索还能搜到标题</td>
+<td>没写 <code>indexing: false</code></td>
+<td>检查 front-matter 和 <code>search.xml</code></td>
+</tr>
+<tr>
+<td>RSS 泄露</td>
+<td>没写 <code>secret: true</code></td>
+<td>检查 <code>atom.xml</code> 和模板</td>
+</tr>
+<tr>
+<td>改了没生效</td>
+<td>缓存</td>
+<td>升 <code>?v=</code>、强刷、重启 server</td>
+</tr>
+<tr>
+<td>访客无法重新上锁</td>
+<td>本站隐藏了 <code>Encrypt again</code></td>
+<td>清 localStorage</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="最后再强调一次">最后再强调一次</h2>
+<ol>
+<li><code>password</code> 才是加密开关，其他四个字段只是防止泄露；</li>
+<li>改密码后必须 <code>hexo clean &amp;&amp; hexo generate</code>；</li>
+<li>静态站加密不是高安全，别拿它保护真正敏感的东西；</li>
+<li>附件不会被自动加密；</li>
+</ol>
+<p>照着上面走一遍，你就已经超过大多数“只会复制 front-matter”的新手了。剩下的，就是把密码换成你自己的，然后亲手生成、解锁、排错。多看一遍日志，比背十条命令都有用。</p>
+</article><div class="post-copyright"><div class="post-copyright__title"><span class="post-copyright-info"><h>给Hexo博客文章/页面加密</h></span></div><div class="post-copyright__type"><span class="post-copyright-info"><a href="/posts/hexo-encrypt-guide.html">/posts/hexo-encrypt-guide.html</a></span></div><div class="post-copyright-m"><div class="post-copyright-m-info"><div class="post-copyright-a"><h>作者</h><div class="post-copyright-cc-info"><h>chengicli</h></div></div><div class="post-copyright-c"><h>发布于</h><div class="post-copyright-cc-info"><h>2026-11-21</h></div></div><div class="post-copyright-u"><h>更新于</h><div class="post-copyright-cc-info"><h>2026-11-21</h></div></div><div class="post-copyright-c"><h>许可协议</h><div class="post-copyright-cc-info"><a class="icon" rel="noopener" target="_blank" title="Creative Commons" href="https://creativecommons.org/"><i class="fab fa-creative-commons"></i></a><a rel="noopener" target="_blank" title="CC BY-NC-SA 4.0" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a></div></div></div></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Hexo/"><div class="tags-punctuation"><svg class="faa-tada icon" style="height:1.1em;width:1.1em;fill:currentColor;position:relative;top:2px;margin-right:3px" aria-hidden="true"><use xlink:href="#icon-sekuaibiaoqian"></use></svg></div>Hexo</a><a class="post-meta__tags" href="/tags/hexo-blog-encrypt/"><div class="tags-punctuation"><svg class="faa-tada icon" style="height:1.1em;width:1.1em;fill:currentColor;position:relative;top:2px;margin-right:3px" aria-hidden="true"><use xlink:href="#icon-sekuaibiaoqian"></use></svg></div>hexo-blog-encrypt</a><a class="post-meta__tags" href="/tags/%E5%8A%A0%E5%AF%86/"><div class="tags-punctuation"><svg class="faa-tada icon" style="height:1.1em;width:1.1em;fill:currentColor;position:relative;top:2px;margin-right:3px" aria-hidden="true"><use xlink:href="#icon-sekuaibiaoqian"></use></svg></div>加密</a><a class="post-meta__tags" href="/tags/%E6%96%B0%E6%89%8B%E5%85%A5%E9%97%A8/"><div class="tags-punctuation"><svg class="faa-tada icon" style="height:1.1em;width:1.1em;fill:currentColor;position:relative;top:2px;margin-right:3px" aria-hidden="true"><use xlink:href="#icon-sekuaibiaoqian"></use></svg></div>新手入门</a></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/posts/music-capsule-guide.html"><img class="prev-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/assets/covers/music-capsule-guide.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">不用音乐插件，也能做出本站同款左下角音乐胶囊</div></div></a></div><div class="next-post pull-right"><a href="/posts/4axis-a-shortest-path.html"><img class="next-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/assets/covers/4axis-a-shortest-path.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">四轴 A 轴绕远路：两个角度解与后处理的两处开关</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/posts/music-capsule-guide.html" title="不用音乐插件，也能做出本站同款左下角音乐胶囊"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/assets/covers/music-capsule-guide.png" alt="cover"><div class="content is-center"><div class="date"><i class="fas fa-history fa-fw"></i> 2026-11-21</div><div class="title">不用音乐插件，也能做出本站同款左下角音乐胶囊</div></div></a></div><div><a href="/posts/canon-r50.html" title="佳能 R50 + 小痰盂：从开机设置到实拍的完整使用教程"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/assets/covers/canon-r50.png" alt="cover"><div class="content is-center"><div class="date"><i class="fas fa-history fa-fw"></i> 2026-10-30</div><div class="title">佳能 R50 + 小痰盂：从开机设置到实拍的完整使用教程</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><svg class="meta_icon" style="width:22px;height:22px;position:relative;top:5px"><use xlink:href="#icon-mulu1"></use></svg><span style="font-weight:bold">目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%98%85%E8%AF%BB%E8%B7%AF%E7%BA%BF"><span class="toc-text">阅读路线</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-0-%E6%AD%A5%EF%BC%9A%E5%85%88%E6%90%9E%E6%87%82%E2%80%9C%E5%8A%A0%E5%AF%86%E5%88%B0%E5%BA%95%E5%8F%91%E7%94%9F%E5%9C%A8%E5%93%AA%E2%80%9D"><span class="toc-text">第 0 步：先搞懂“加密到底发生在哪”</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-1-%E6%AD%A5%EF%BC%9A%E5%AE%89%E8%A3%85%E6%8F%92%E4%BB%B6"><span class="toc-text">第 1 步：安装插件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-2-%E6%AD%A5%EF%BC%9A%E5%86%99%E5%85%A8%E5%B1%80%E9%85%8D%E7%BD%AE"><span class="toc-text">第 2 步：写全局配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-3-%E6%AD%A5%EF%BC%9A%E9%94%81%E4%B8%80%E7%AF%87%E6%96%87%E7%AB%A0"><span class="toc-text">第 3 步：锁一篇文章</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%98%E5%85%88%E7%BA%A7"><span class="toc-text">优先级</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-4-%E6%AD%A5%EF%BC%9A%E9%94%81%E4%B8%80%E4%B8%AA%E9%A1%B5%E9%9D%A2"><span class="toc-text">第 4 步：锁一个页面</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-5-%E6%AD%A5%EF%BC%9A%E6%A0%87%E7%AD%BE%E6%89%B9%E9%87%8F%E5%8A%A0%E5%AF%86"><span class="toc-text">第 5 步：标签批量加密</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%87%E7%AD%BE%E5%8A%A0%E5%AF%86%E7%9A%84%E4%B8%80%E4%B8%AA%E5%9D%91"><span class="toc-text">标签加密的一个坑</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-6-%E6%AD%A5%EF%BC%9A%E5%88%AB%E8%AE%A9%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E5%92%8C%E7%AB%99%E5%86%85%E6%90%9C%E7%B4%A2%E6%8A%93%E5%88%B0"><span class="toc-text">第 6 步：别让搜索引擎和站内搜索抓到</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#6-1-%E6%AF%8F%E7%AF%87-%E6%AF%8F%E9%A1%B5%E8%87%AA%E5%B7%B1%E5%A3%B0%E6%98%8E"><span class="toc-text">6.1 每篇&#x2F;每页自己声明</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-2-noindex-%E8%84%9A%E6%9C%AC"><span class="toc-text">6.2 noindex 脚本</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-3-RSS-%E6%A8%A1%E6%9D%BF"><span class="toc-text">6.3 RSS 模板</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-4-robots-txt"><span class="toc-text">6.4 robots.txt</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-7-%E6%AD%A5%EF%BC%9A%E9%87%8D%E6%96%B0%E7%94%9F%E6%88%90%EF%BC%8C%E6%9C%80%E5%AE%B9%E6%98%93%E7%BF%BB%E8%BD%A6%E7%9A%84%E4%B8%80%E6%AD%A5"><span class="toc-text">第 7 步：重新生成，最容易翻车的一步</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%94%B9%E5%AF%86%E7%A0%81%E5%BF%85%E9%A1%BB%E6%95%B4%E5%A5%97%E9%87%8D%E6%9D%A5"><span class="toc-text">改密码必须整套重来</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%AA%8C%E8%AF%81%E7%94%9F%E6%88%90%E7%BB%93%E6%9E%9C"><span class="toc-text">验证生成结果</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-8-%E6%AD%A5%EF%BC%9A%E6%9C%AC%E5%9C%B0%E9%A2%84%E8%A7%88%E7%9A%84%E5%9D%91"><span class="toc-text">第 8 步：本地预览的坑</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-9-%E6%AD%A5%EF%BC%9A%E8%A7%A3%E9%94%81%E5%90%8E%E7%9B%AE%E5%BD%95%E3%80%81%E8%A1%A8%E6%A0%BC%E3%80%81%E6%BB%9A%E5%8A%A8%E4%B9%B1%E6%8E%89%E6%80%8E%E4%B9%88%E5%8A%9E"><span class="toc-text">第 9 步：解锁后目录、表格、滚动乱掉怎么办</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-10-%E6%AD%A5%EF%BC%9A%E6%9C%AC%E7%AB%99%E5%81%9A%E7%9A%84%E9%A2%9D%E5%A4%96%E5%A2%9E%E5%BC%BA"><span class="toc-text">第 10 步：本站做的额外增强</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#10-1-%E8%A7%A3%E9%94%81%E6%8C%89%E9%92%AE"><span class="toc-text">10.1 解锁按钮</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#10-2-%E9%94%99%E8%AF%AF%E5%BC%B9%E7%AA%97%E7%BE%8E%E5%8C%96"><span class="toc-text">10.2 错误弹窗美化</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#10-3-%E9%9A%90%E8%97%8F%E2%80%9C%E9%87%8D%E6%96%B0%E4%B8%8A%E9%94%81%E2%80%9D%E6%8C%89%E9%92%AE"><span class="toc-text">10.3 隐藏“重新上锁”按钮</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#10-4-%E8%84%9A%E6%9C%AC%E6%B3%A8%E5%85%A5%E4%B8%8E%E7%BC%93%E5%AD%98%E7%89%88%E6%9C%AC"><span class="toc-text">10.4 脚本注入与缓存版本</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#10-5-pjax-%E5%85%9C%E5%BA%95"><span class="toc-text">10.5 pjax 兜底</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-11-%E6%AD%A5%EF%BC%9A%E6%B2%A1%E6%9C%89%E5%8A%A0%E5%AF%86%E6%8F%92%E4%BB%B6%E6%97%B6%E6%80%8E%E4%B9%88%E5%8A%9E"><span class="toc-text">第 11 步：没有加密插件时怎么办</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#11-1-%E5%8F%AA%E5%86%99-password-%E6%B2%A1%E7%94%A8"><span class="toc-text">11.1 只写 password 没用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#11-2-%E7%BA%AF%E5%89%8D%E7%AB%AF%E2%80%9C%E9%81%AE%E7%BD%A9%E2%80%9D%E4%B8%8D%E6%98%AF%E5%8A%A0%E5%AF%86"><span class="toc-text">11.2 纯前端“遮罩”不是加密</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#11-3-%E6%AD%A3%E7%A1%AE%E8%B7%AF%E7%BA%BF%E5%8F%AA%E6%9C%89%E4%B8%89%E6%9D%A1"><span class="toc-text">11.3 正确路线只有三条</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#11-4-%E5%A6%82%E6%9E%9C%E6%9A%82%E6%97%B6%E4%B8%8D%E8%83%BD%E8%A3%85%E6%8F%92%E4%BB%B6"><span class="toc-text">11.4 如果暂时不能装插件</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC-12-%E6%AD%A5%EF%BC%9A%E4%B8%8A%E7%BA%BF%E5%89%8D%E6%A3%80%E6%9F%A5%E6%B8%85%E5%8D%95"><span class="toc-text">第 12 步：上线前检查清单</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E5%AF%B9%E7%85%A7%E8%A1%A8"><span class="toc-text">常见问题对照表</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%80%E5%90%8E%E5%86%8D%E5%BC%BA%E8%B0%83%E4%B8%80%E6%AC%A1"><span class="toc-text">最后再强调一次</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-color: transparent;"><div id="footer-wrap"><div class="ft-sign">chengicli</div><div class="ft-deco"></div><nav class="ft-links"><a href="/archives/">文章总览</a><a href="/categories/">文章分类</a><a href="/tags/">文章标签</a><a href="/gallery/">我的画廊</a><a href="/links/">我的朋友</a><a href="/music/">治愈音乐</a><a href="/nav/">网址导航</a><a href="/macro/">程序生成</a><a href="/thread/">螺纹规格</a><a href="/about/">关于作者</a></nav><div class="footer_custom_text"><span id="ftRun"></span><span class="ft-sep">｡･ﾟﾟ･🌸･ﾟﾟ･｡</span><span id="ftLove">已经和女朋友--啦</span><svg class="ft-love-heart" width="30" height="27" viewBox="0 0 30 27" aria-hidden="true"><defs><clipPath id="ft-love-clip"><path d="M15 26C15 26 2 17.5 2 9.5 2 5.5 5 3 8.5 3 11.2 3 13.4 4.4 15 6.5 16.6 4.4 18.8 3 21.5 3 25 3 28 5.5 28 9.5 28 17.5 15 26 15 26Z"></path></clipPath><linearGradient id="ft-love-grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff8fb3"></stop><stop offset="1" stop-color="#ff2e63"></stop></linearGradient></defs><g class="ft-love-clip"><rect class="ft-love-base" x="0" y="0" width="30" height="27"></rect><rect class="ft-love-bar b1" x="3.4" y="0" width="2.55" height="26"></rect><rect class="ft-love-bar b2" x="6.1" y="0" width="2.55" height="26"></rect><rect class="ft-love-bar b3" x="8.8" y="0" width="2.55" height="26"></rect><rect class="ft-love-bar b4" x="11.5" y="0" width="2.55" height="26"></rect><rect class="ft-love-bar b5" x="14.2" y="0" width="2.55" height="26"></rect><rect class="ft-love-bar b6" x="16.9" y="0" width="2.55" height="26"></rect><rect class="ft-love-bar b7" x="19.6" y="0" width="2.55" height="26"></rect><rect class="ft-love-bar b8" x="22.3" y="0" width="2.55" height="26"></rect><rect class="ft-love-bar b9" x="25" y="0" width="2.55" height="26"></rect></g></svg></div><div class="copyright"><span><b>&copy;2023-2026</b></span><span class="ft-by"><b>By chengicli</b></span><a class="ft-icp" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener"><span class="ft-icp-icon" aria-hidden="true"></span>豫ICP备2026057580号</a><span class="ft-dot">·</span><a class="ft-icp ft-police" href="https://beian.mps.gov.cn/#/query/webSearch?code=32040002010816" target="_blank" rel="noopener noreferrer"><span class="ft-police-icon" aria-hidden="true"></span>苏公网安备32040002010816号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><a class="icon-V hidden" onclick="switchNightMode()" title="浅色和深色模式转换"><svg width="25" height="25" viewBox="0 0 1024 1024"><use id="modeicon" xlink:href="#icon-moon"></use></svg></a><button class="share" type="button" title="右键模式" onclick="changeMouseMode()"><i class="fas fa-mouse"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog right_side"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button class="share" type="button" title="分享链接" onclick="share()"><i class="fas fa-share-nodes"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i><span id="percent">0<span>%</span></span></button><button id="go-down" type="button" title="直达底部" onclick="btf.scrollToDest(document.body.scrollHeight, 500)"><i class="fas fa-arrow-down"></i></button></div></div><div id="algolia-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="search-wrap"><div id="algolia-search-input"></div><hr/><div id="algolia-search-results"><div id="algolia-hits"></div><div id="algolia-pagination"></div><div id="algolia-info"><div class="algolia-stats"></div></div></div></div></div><div id="search-mask"></div></div><div class="js-pjax" id="rightMenu"><div class="rightMenu-group rightMenu-small"><a class="rightMenu-item" href="javascript:window.history.back();"><i class="fa fa-arrow-left"></i></a><a class="rightMenu-item" href="javascript:window.history.forward();"><i class="fa fa-arrow-right"></i></a><a class="rightMenu-item" href="javascript:window.location.reload();"><i class="fa fa-refresh"></i></a><a class="rightMenu-item" href="javascript:rmf.scrollToTop();"><i class="fa fa-arrow-up"></i></a></div><div class="rightMenu-group rightMenu-line hide" id="menu-text"><a class="rightMenu-item" href="javascript:rmf.copySelect();"><i class="fa fa-copy"></i><span>复制</span></a><a class="rightMenu-item" href="javascript:window.open(&quot;https://www.baidu.com/s?wd=&quot;+window.getSelection().toString());window.location.reload();"><i class="fa fa-search"></i><span>百度搜索</span></a></div><div class="rightMenu-group rightMenu-line hide" id="menu-too"><a class="rightMenu-item" href="javascript:window.open(window.getSelection().toString());window.location.reload();"><i class="fa fa-link"></i><span>转到链接</span></a></div><div class="rightMenu-group rightMenu-line hide" id="menu-paste"><a class="rightMenu-item" href="javascript:rmf.paste()"><i class="fa fa-copy"></i><span>粘贴</span></a></div><div class="rightMenu-group rightMenu-line hide" id="menu-post"><a class="rightMenu-item" href="#post-comment"><i class="fas fa-comment"></i><span>空降评论</span></a><a class="rightMenu-item" href="javascript:rmf.copyWordsLink()"><i class="fa fa-link"></i><span>复制本文地址</span></a></div><div class="rightMenu-group rightMenu-line hide" id="menu-to"><a class="rightMenu-item" href="javascript:rmf.openWithNewTab()"><i class="fa fa-window-restore"></i><span>新窗口打开</span></a><a class="rightMenu-item" id="menu-too" href="javascript:rmf.open()"><i class="fa fa-link"></i><span>转到链接</span></a><a class="rightMenu-item" href="javascript:rmf.copyLink()"><i class="fa fa-copy"></i><span>复制链接</span></a></div><div class="rightMenu-group rightMenu-line hide" id="menu-img"><a class="rightMenu-item" href="javascript:rmf.saveAs()"><i class="fa fa-download"></i><span>保存图片</span></a><a class="rightMenu-item" href="javascript:rmf.openWithNewTab()"><i class="fa fa-window-restore"></i><span>在新窗口打开</span></a><a class="rightMenu-item" href="javascript:rmf.copyLink()"><i class="fa fa-copy"></i><span>复制图片链接</span></a></div><div class="rightMenu-group rightMenu-line"><a class="rightMenu-item" href="javascript:randomPost()"><i class="fa fa-paper-plane"></i><span>随便逛逛</span></a><a class="rightMenu-item" href="javascript:switchNightMode();"><i class="fa fa-moon"></i><span>昼夜切换</span></a><a class="rightMenu-item" href="javascript:rmf.switchReadMode();"><i class="fa fa-book"></i><span>阅读模式</span></a><a class="rightMenu-item" href="/about/"><i class="fa fa-info-circle"></i><span>关于博客</span></a><a class="rightMenu-item" href="javascript:toggleWinbox();"><i class="fas fa-cog"></i><span>美化设置</span></a><a class="rightMenu-item" href="javascript:rmf.fullScreen();"><i class="fas fa-expand"></i><span>切换全屏</span></a><a class="rightMenu-item" href="javascript:window.print();"><i class="fa-solid fa-print"></i><span>打印页面</span></a></div></div><div><script src="/js/utils.js?v=20261005-scroll1"></script><script src="/js/main.js?v=20261117-scrollfn"></script><script src="/External-link/js/fancybox.umd.js"></script><script src="/External-link/js/instantpage.js" type="module"></script><script src="/External-link/js/lazyload.iife.min.js"></script><script>window.__SEARCH_LAZY__ = ["/External-link/js/algoliasearch-lite.umd.js","/External-link/js/instantsearch.production.min.js","/js/search/algolia.js"]</script><script async="async">var preloader = {
+  endLoading: () => {
+    document.body.style.overflow = 'auto';
+    document.getElementById('loading-box').classList.add("loaded")
+  },
+  initLoading: () => {
+    document.body.style.overflow = '';
+    document.getElementById('loading-box').classList.remove("loaded")
+
+  }
+}
+window.addEventListener('load',preloader.endLoading())
+setTimeout(function(){preloader.endLoading();}, 5000);
+document.getElementById('loading-box').addEventListener('click',()=> {preloader.endLoading()})</script><div class="js-pjax"><script>(() => {
+  const $mermaidWrap = document.querySelectorAll('#article-container .mermaid-wrap')
+  if ($mermaidWrap.length) {
+    window.runMermaid = () => {
+      window.loadMermaid = true
+      const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+      Array.from($mermaidWrap).forEach((item, index) => {
+        const mermaidSrc = item.firstElementChild
+        const mermaidThemeConfig = '%%{init:{ \'theme\':\'' + theme + '\'}}%%\n'
+        const mermaidID = 'mermaid-' + index
+        const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+        mermaid.mermaidAPI.render(mermaidID, mermaidDefinition, (svgCode) => {
+          mermaidSrc.insertAdjacentHTML('afterend', svgCode)
+        })
+      })
+    }
+
+    const loadMermaid = () => {
+      window.loadMermaid ? runMermaid() : getScript('https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.1.2/mermaid.min.js').then(runMermaid)
+    }
+
+    window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+  }
+})()</script><script>(()=>{
+  const init = () => {
+    twikoo.init(Object.assign({
+      el: '#twikoo-wrap',
+      envId: 'https://twikoo.lichengic.com',
+      region: '',
+      onCommentLoaded: function () {
+        btf.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
+      }
+    }, null))
+  }
+
+  const getCount = () => {
+    const countELement = document.getElementById('twikoo-count')
+    if(!countELement) return
+    twikoo.getCommentsCount({
+      envId: 'https://twikoo.lichengic.com',
+      region: '',
+      urls: [window.location.pathname],
+      includeReply: false
+    }).then(function (res) {
+      countELement.innerText = res[0].count
+    }).catch(function (err) {
+      console.error(err);
+    });
+  }
+
+  const runFn = () => {
+    init()
+    
+  }
+
+  const loadTwikoo = () => {
+    if (typeof twikoo === 'object') {
+      setTimeout(runFn,0)
+      return
+    } 
+    getScript('/External-link/js/twikoo.all.min.js').then(runFn)
+  }
+
+  if ('Twikoo' === 'Twikoo' || !true) {
+    if (true) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else loadTwikoo()
+  } else {
+    window.loadOtherComment = () => {
+      loadTwikoo()
+    }
+  }
+})()</script></div><script defer src="/js/pdf-viewer.js?v=20261026-mimefix"></script><script defer src="/js/unlock-secret.js?v=20261117-scroll1"></script><script defer src="/js/open-assets-blank.js?v=20261025"></script><script defer src="/js/love-days.js?v=20261109-icp-copyright"></script><script defer charset="UTF-8" id="LA_COLLECT" src="https://sdk.51.la/js-sdk-pro.min.js"></script><script defer src="https://sdk.51.la/perf/js-sdk-perf.min.js" crossorigin="anonymous"></script><script defer src="/js/51la.js"></script><script src="/js/jquery.min.js"></script><script>window.jQuery || document.write('<script src="/js/jquery.min.js"><\/script>')</script><script async src="/External-link/js/clipboard.min.js"></script><script async src="/External-link/js/pace.min.js"></script><script defer src="/js/winbox.bundle.min.js"></script><script async src="/External-link/js/iconfont/font_3586335.js"></script><script async src="/External-link/js/iconfont/font_3636804.js"></script><script async src="/External-link/js/iconfont/font_3612150.js"></script><script async src="/External-link/js/iconfont/font_5239918.js"></script><canvas id="universe"></canvas><canvas id="snow"></canvas><script defer src="/js/notify.js"></script><script defer src="/js/lunar.js"></script><script defer src="/js/data/holidays.js"></script><script defer src="/js/modules/console-art.js"></script><script defer src="/js/modules/shell.js?v=20261121-titlecfg2"></script><script defer src="/js/modules/snow.js?v=20261010-snow1"></script><script defer src="/js/modules/effects.js?v=20261010-snow1"></script><script defer src="/js/modules/reading.js?v=20261028-fpsbadge"></script><script defer src="/js/modules/nav.js?v=20261102-flickerfix"></script><script defer src="/js/inject/nav-scroll-rebind.js?v=20261102a"></script><script defer src="/js/music-bus.js?v=20261102-resume5"></script><script defer src="/js/music-page.js?v=20261031a"></script><script defer src="/js/daily-say.js?v=20261102-resume"></script><script defer src="/js/modules/cursor.js?v=20261028-dot"></script><script defer src="/js/modules/footer-time.js?v=20261109-third-line"></script><script defer src="/js/inject/archive-page.js?v=20261118-tagtotal"></script><script defer src="/js/modules/appearance-fonts.js?v=20261102-fc2"></script><script defer src="/js/modules/appearance-backgrounds.js?v=20261105-wallpaper3"></script><script defer src="/js/modules/fireflies.js?v=20261010-fireflies1"></script><script defer src="/js/modules/ripple.js?v=20261014-ripple1"></script><script defer src="/js/modules/settings.js?v=20261105-wallpaper1"></script><script defer src="/js/stats.js?v=20261102-neutral"></script><script defer src="/js/hours-search.js?v=20261122gap"></script><script defer src="/js/fomal.js"></script><script defer src="/js/wechat-qr.js?v=20261028-qr"></script><script defer src="/js/festival.js"></script><script defer src="/js/author-status.js"></script><script defer src="/js/pjax-guard.js?v=20261005"></script><script defer src="/js/pjax-relink.js?v=20261030-about2"></script><script defer src="/js/inject/search-lazy.js?v=20261011b"></script><script src="/js/inject/scroll-gap-fix.js?v=20261011"></script><script src="/js/inject/webinfo-card.js"></script><script defer src="/js/i18n-zh.js?v=20261112c"></script><script src="/js/inject/pc-local-link.js"></script><script defer src="/js/inject/about-route-probe.js?v=20261030"></script><script defer src="/js/inject/about-live.js?v=20261030"></script><script defer src="/js/twikoo-anchor.js?v=20261117-anchor2"></script><link rel="stylesheet" href="/External-link/css/APlayer.min.css" media="print" onload="this.media='all'"><script src="/External-link/js/APlayer.min.js"></script><script src="/External-link/js/Meting.min.js"></script><script src="/External-link/js/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show","#web_bg",".js-pjax","body > title","#app","#tag-echarts","#posts-echart","#categories-echarts"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener scroll 
+  ;['tocScrollFn', 'scrollCollect'].forEach(name => {
+    const handler = window[name]
+    if (!handler) return
+    window.removeEventListener('scroll', handler)
+    if (typeof handler.cancel === 'function') handler.cancel()
+    window[name] = null
+  })
+
+  typeof preloader === 'object' && preloader.initLoading()
+  document.getElementById('rightside').style.cssText = "opacity: ''; transform: ''"
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//events.vercount.one/js"></script></div><!-- hexo injector body_end start --><script id="swiper-lazyload-fix">
+(function () {
+  if (window.__swiperLazyFix) return;
+  window.__swiperLazyFix = true;
+
+  function sync () {
+    try {
+      var inst = window.lazyLoadInstance;
+      if (inst && typeof inst.update === 'function') inst.update();
+    } catch (e) {}
+  }
+
+  function burst () {
+    [0, 120, 300, 700, 1500, 2600].forEach(function (d) { setTimeout(sync, d); });
+  }
+
+  // 1) 首次加载 + 站内 pjax 返回后：等异步的 data-pjax 脚本（swiper_init.js）跑完再补登记
+  document.addEventListener('pjax:complete', burst);
+  window.addEventListener('load', burst);
+  if (document.readyState !== 'loading') burst();
+  else document.addEventListener('DOMContentLoaded', burst);
+
+  // 2) Swiper 重建循环克隆时会增删 .blog-slider__wrp 的子节点（pjax 换页后容器会被替换，故持续重挂）
+  setTimeout(function watchWrp () {
+    var wrp = document.querySelector('.blog-slider__wrp');
+    if (wrp && wrp !== window.__swiperLazyWrp) {
+      try { if (window.__swiperLazyMo) window.__swiperLazyMo.disconnect(); } catch (e) {}
+      window.__swiperLazyWrp = wrp;
+      try {
+        window.__swiperLazyMo = new MutationObserver(function () {
+          clearTimeout(window.__swiperLazyTimer);
+          window.__swiperLazyTimer = setTimeout(sync, 100);
+        });
+        window.__swiperLazyMo.observe(wrp, { childList: true });
+      } catch (e) {}
+    }
+    setTimeout(watchWrp, 800);
+  }, 800);
+})();
+</script><script id="wow-pjax-rehook">
+(function () {
+  if (window.__wowPjaxRehook) return;
+  window.__wowPjaxRehook = true;
+
+  // 插件生成的加类脚本特征：调 classList.add 又写 data-wow-duration 的，就是它
+  function isWowInjector(code) {
+    return !!code && code.indexOf('classList.add') > -1 && code.indexOf('data-wow-duration') > -1;
+  }
+
+  // 把 .js-pjax 里哑火的加类脚本重放一遍（照抄 pjax.pug 的重放手法：换新节点才会执行）
+  function replayInjectors() {
+    var scripts = document.querySelectorAll('.js-pjax script');
+    for (var i = 0; i < scripts.length; i++) {
+      var old = scripts[i];
+      if (old.getAttribute('data-pjax') !== null) continue; // 主题自己会重放，别跑两遍
+      var code = old.text || old.textContent || old.innerHTML || '';
+      if (!isWowInjector(code)) continue;
+      var neu = document.createElement('script');
+      neu.setAttribute('data-wow-pjax-replay', '');
+      neu.appendChild(document.createTextNode(code));
+      old.parentNode.replaceChild(neu, old);
+    }
+  }
+
+  // wow 实例兜底 + 清理被 pjax 换掉的旧节点（否则 wow.boxes 会一直 accumulate）
+  function resyncBoxes() {
+    var wow = window.wow;
+    if (!wow && typeof window.WOW === 'function') {
+      // 等价于 node_modules/hexo-butterfly-wowjs/lib/wow_init.js
+      window.wow = new window.WOW({
+        boxClass: 'wow',
+        animateClass: 'animate__animated',
+        offset: 0,
+        mobile: false,
+        live: true
+      });
+      window.wow.init();
+      return;
+    }
+    if (!wow) return;
+    try {
+      if (wow.boxes && wow.boxes.length) {
+        wow.boxes = wow.boxes.filter(function (el) { return el && document.contains(el); });
+      }
+      // 关键一步：让 wow 自己把新插入的 .wow 卡片登记进 boxes（会顺手隐藏 + 置 scrolled）
+      if (typeof wow.doSync === 'function') {
+        wow.doSync(document.body);
+      } else if (wow.boxes && wow.applyStyle) {
+        // 老版本 wow.js 没有 doSync，手动补：从没被 wow 摸过的块（没有 inline visibility）收进来
+        var nodes = document.querySelectorAll('.wow');
+        for (var i = 0; i < nodes.length; i++) {
+          var el = nodes[i];
+          if (el.style.visibility) continue;
+          if (wow.all && wow.all.indexOf(el) > -1) continue;
+          wow.boxes.push(el);
+          if (wow.all) wow.all.push(el);
+          wow.applyStyle(el, true);
+        }
+        wow.scrolled = true;
+      }
+      // 再补一次 scroll 事件，保证 50ms 轮询这一拍立刻跑
+      window.dispatchEvent(new Event('scroll'));
+    } catch (e) {}
+  }
+
+  function run() {
+    try { replayInjectors(); } catch (e) {}
+    try { resyncBoxes(); } catch (e) {}
+  }
+
+  document.addEventListener('pjax:complete', function () {
+    // 主题的 pjax:complete 监听器（pjax.pug）先重放 script[data-pjax]（轮播/磁贴注入脚本在里面），
+    // 所以这里延后一拍，保证重放顺序在它之后；300ms 那次兜底给异步补内容的场景。
+    setTimeout(run, 0);
+    setTimeout(run, 300);
+  });
+
+  // 调试用：控制台里 window.__wowPjaxRehookNow() 可手动触发一次
+  window.__wowPjaxRehookNow = run;
+})();
+</script><div class="js-pjax"><script async="async">var arr = document.getElementsByClassName('recent-post-item');
+for(var i = 0;i<arr.length;i++){
+    arr[i].classList.add('wow');
+    arr[i].classList.add('animate__fadeIn');
+    arr[i].setAttribute('data-wow-duration', '700ms');
+    arr[i].setAttribute('data-wow-delay', '0');
+    arr[i].setAttribute('data-wow-offset', '0');
+    arr[i].setAttribute('data-wow-iteration', '1');
+  }</script><script async="async">var arr = document.getElementsByClassName('card-widget');
+for(var i = 0;i<arr.length;i++){
+    arr[i].classList.add('wow');
+    arr[i].classList.add('animate__fadeIn');
+    arr[i].setAttribute('data-wow-duration', '700ms');
+    arr[i].setAttribute('data-wow-delay', '0');
+    arr[i].setAttribute('data-wow-offset', '0');
+    arr[i].setAttribute('data-wow-iteration', '1');
+  }</script></div><script defer src="/External-link/js/wow.min.js"></script><script defer src="/External-link/js/wow_init.js"></script><!-- hexo injector body_end end --></body></html>

@@ -33,8 +33,19 @@
  * 切换靠 radio + label 的纯 CSS 选择器：不写 JS，pjax 换页后也不会失效
  * （脚本会把 radio 紧挨在自己的 label 前面）。
  */
+/* 工具块（设备标签 + 搜索 + 提示）跟着表头一起吸顶：
+   --ph-top = 导航栏底边，--ph-headh = 本块实测高度（JS 写入）。
+   背景用卡片色 + 模糊，避免下方数据行滚上来透出。 */
 #article-container .ph-head {
+  position: sticky;
+  top: var(--ph-top, 58px);
+  z-index: 5;
   margin: 0 0 16px;
+  padding: 6px 8px 12px;
+  background: var(--ph-card);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
 }
 
 /* 按钮靠左，产品数靠右上角 */
@@ -169,9 +180,10 @@
  * 主题会给 <table> 自动套一层 .table-wrap（自己带 overflow-x），
  * 必须把它放平成 visible，否则手机上是「容器里再套一个滚动条」，很难滑。
  */
+/* ⚠ 跟刀具库一条铁律：.ph-scroll 绝不能设 overflow/max-height 形成滚动上下文，
+   否则表头 sticky 只相对表格内部生效、页面一滚就跑掉。表头要相对浏览器视口吸顶。
+   窄屏的横向滚动交给主题包的 .table-wrap（下面强制它 overflow-x:auto）。 */
 #article-container .ph-scroll {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
   border: 1px solid var(--ph-line);
   border-radius: 12px;
   background: var(--ph-card);
@@ -230,6 +242,22 @@
 
 #article-container .ph-table thead tr:first-child th:first-child { border-top-left-radius: 11px; }
 #article-container .ph-table thead tr:first-child th:last-child { border-top-right-radius: 11px; }
+
+/* ------------------------------------------------------------- 冻结表头
+ * 本表表头是两行 + rowspan（产品图号/成品时间/图纸跨两行），所以整块 <thead> 一起
+ * sticky，而不是每个 th 各粘各的 —— 后者会让跨行单元格高度错位、表头挤压变形。
+ * ⚠ --ph-top / --ph-headh 都由 hours-search.js 写在 html 根上，用 var(...,兜底)
+ *   读取即可，绝不能在 .ph-app 上再定义同名变量（局部变量会盖掉 JS 写入值，
+ *   导致 top 一直是写死的默认值，冻结看着像失效）。
+ */
+#article-container .ph-table thead {
+  position: sticky;
+  top: calc(var(--ph-top, 58px) + var(--ph-headh, 130px));
+  z-index: 4;
+}
+
+/* 冻结时第二行 opacity:.96 会透出数据行，覆盖回不透明 */
+#article-container .ph-table thead tr:last-child th { opacity: 1; }
 
 /* ---------------------------------------------------------------- 数据 */
 #article-container .ph-table td {
@@ -310,6 +338,32 @@
   }
 
   #article-container .ph-hint { font-size: 12px; }
+
+  /* 窄屏列多放不下，只能横向滑。这里让 .ph-scroll 同时承担横向 + 纵向滚动。
+     ⚠ 为什么不能「横向滚动 + 表头 sticky 到视口」：
+       只要表头有 overflow 祖先，sticky 的 top 就相对那个容器算，会被永久推开 ——
+       上一版表头卡在表格中间、这一版表头干脆消失，都是这条在作怪。
+       表头要真冻结，就只能让承载它的盒子自己滚：thead sticky 到盒子的顶边。
+     ⚠ 工具块（标签 + 搜索 + 说明，手机上实测 224px 高）因此不再吸顶，
+       否则它会一直盖住盒子顶部，把冻结的表头压在下面。 */
+  #article-container .ph-head { position: static; }
+
+  #article-container .ph-scroll {
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    /* 高度扣掉导航与留白，让盒子尽量整块落在屏幕里 */
+    max-height: calc(100vh - 130px);
+    max-height: calc(100dvh - 130px);
+    /* 盒子里滑到头以后不要把滚动「传染」给页面 —— 否则页面跟着走，
+       整个盒子（连同冻结的表头）就被顶出屏幕，看起来又变成「表头没了」 */
+    overscroll-behavior: contain;
+  }
+
+  #article-container .ph-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+  }
 
   #article-container .ph-table {
     min-width: 760px;
