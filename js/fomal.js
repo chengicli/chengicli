@@ -76,7 +76,7 @@ window.__fomal = {
     "shell.js": ["debounce"],
     "effects.js": ["owoBig"],
     "reading.js": ["startFps"],
-    "nav.js": ["showWelcome", "randomPost", "share"],
+    "nav.js": ["loadPlace", "randomPost", "share"],
     "cursor.js": ["popupMenu", "CURSOR"],
     "ripple.js": ["FOMAL_RIPPLE"],
     "footer-time.js": ["createtime"],

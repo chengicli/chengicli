@@ -25,15 +25,17 @@
     return arr;
   }
 
-  // 取一个容器里的「卡片」子元素（.site-card 是 volantis / flexcard 用的，
-  // .flink-list-item 是 flink 标签（大括号百分号那种）生成的，两套都兼容）
+  // 取一个容器里的「卡片」子元素：
+  //   .site-card        → flexcard 截图卡
+  //   .flink-list-item  → volantis 行卡（也包括 flink 标签渲染出的列表）
+  //   .flink-list-card  → 旧弹性格子，模板已不再渲染，留着判空不碍事
   function pickCards(group) {
     var out = [];
     var kids = group.children;
     for (var i = 0; i < kids.length; i++) {
       var el = kids[i];
       if (el.nodeType !== 1) continue;
-      if (el.classList.contains('site-card') || el.classList.contains('flink-list-item')) out.push(el);
+      if (el.classList.contains('site-card') || el.classList.contains('flink-list-item') || el.classList.contains('flink-list-card')) out.push(el);
     }
     return out;
   }

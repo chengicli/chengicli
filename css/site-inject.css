@@ -28,7 +28,7 @@
  *    7. rightMenuState     ← 原 _config.chengic.yml:1444-1452
  *    8. webinfoCard        ← 原 _config.chengic.yml:1492-1518
  *    9. ft-hide-self       ← 原 _config.chengic.yml:1522-1526
- *   10. aplayerVolumeFix   ← 原 _config.chengic.yml:1538-1542
+ *   10. aplayerVolumeFix   ← 已移除（2026-11-23 随 APlayer 一起删）
  *   11. readModeIconGuard  ← 2026-10-04 新增（阅读模式标题风车兜底）
  *   13. cardAnimPerf       ← 2026-10-04 新增（首页卡片箭头 / 置顶角标流光改走 transform）
  *   14. loadingIdle        ← 2026-10-04 新增（加载动画在遮罩隐藏后停掉）
@@ -344,20 +344,10 @@ html[data-rm="off"] #rightside button:has(> i.fa-mouse)::after{content:"";positi
    原来这里有一条 :has() 规则用来隐藏推荐友链里指向本站的那一项；
    整块小头像格已按需求移除，这条规则与对应的 ft-ad-extra.js 一并删掉。 */
 
-/* ── 10/12  #aplayerVolumeFix  ← 原 _config.chengic.yml:1538-1542 ── */
-/* 八音盒 APlayer 音量条「点了看不出变化」修复（2026-10-03） */
-/* 根因：APlayer 渲染出的 .aplayer-volume 自带内联 style="background:<data-theme 的颜色>"， */
-/*   内联样式优先级高于样式表，于是 themes/chengic/source/css/_custom/custom.css:1492 那句 */
-/*   不带 !important 的 background: var(--theme-color) 从来没生效过——填充色一直是 */
-/*   source/music/index.md 里 data-theme="#e3f2f5" 的浅灰蓝； */
-/*   而槽色（custom.css:1488）是 color-mix(--theme-color 18%, #fff)，也是接近白的浅色， */
-/*   两段肉眼几乎同色 → 拖动/点击音量条、点喇叭静音时只有声音变，看不出任何变化。 */
-/* 修法照主题对 .aplayer-played / .aplayer-thumb 的既有做法（custom.css 里那两句都带 !important）， */
-/*   这里补 !important 把填充色拉回主题色；再补夜间模式的槽色（custom.css 只给 */
-/*   .aplayer-bar / .aplayer-loaded 写了夜间色，漏了音量条）。 */
-/* 回滚：删掉下面这一整段即可（纯样式，不碰播放逻辑）。 */
-#article-container .aplayer .aplayer-volume { background: var(--theme-color) !important; }
-[data-theme="dark"] #article-container .aplayer .aplayer-volume-bar { background: color-mix(in srgb, var(--theme-color) 25%, #242424); }
+/* ── 10  #aplayerVolumeFix（已移除） ──
+   原先这里是 APlayer 音量条「点了看不出变化」的修复（2026-10-03）。
+   2026-11-23 APlayer / MetingJS 整个移除（音乐馆与音乐胶囊用原生 audio），
+   页面上不再有 .aplayer 节点，这两条规则失去对象，一并删掉。 */
 
 /* ── 11/12  #readModeIconGuard  ← 2026-10-04 新增（站点级兜底） ── */
 /* 阅读模式下的标题小风车兜底。

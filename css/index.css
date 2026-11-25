@@ -179,6 +179,8 @@ template {
   display: none
 }
 .limit-one-line,
+.flink-item-name,
+.flink-item-desc,
 #aside-content .card-archives ul.card-archive-list > .card-archive-list-item a span,
 #aside-content .card-categories ul.card-category-list > .card-category-list-item a span,
 .site-data > a .headline,
@@ -2348,178 +2350,249 @@ figure.highlight pre .javascript .function {
   -ms-transform: translateZ(0);
   transform: translateZ(0);
 }
-#article-container img {
-  margin: 0 auto !important;
+.flink#article-container {
+  margin-bottom: 20px;
+}
+.flink-desc {
+  margin: 0.2rem 0 0.5rem;
 }
 .flink-list {
   overflow: auto;
+  padding: 10px 10px 0;
+  text-align: center;
 }
-.flink-list > a {
-  width: calc(25% - 15px);
-  height: 130px;
+.flink-list > .flink-list-item {
   position: relative;
-  display: block;
-  margin: 15px 7px;
   float: left;
   overflow: hidden;
-  border-radius: 10px;
-  -webkit-transition: all 0.3s ease 0s, -webkit-transform 0.6s cubic-bezier(0.6, 0.2, 0.1, 1) 0s;
-  -moz-transition: all 0.3s ease 0s, -moz-transform 0.6s cubic-bezier(0.6, 0.2, 0.1, 1) 0s;
-  -o-transition: all 0.3s ease 0s, -o-transform 0.6s cubic-bezier(0.6, 0.2, 0.1, 1) 0s;
-  -ms-transition: all 0.3s ease 0s, -ms-transform 0.6s cubic-bezier(0.6, 0.2, 0.1, 1) 0s;
-  transition: all 0.3s ease 0s, transform 0.6s cubic-bezier(0.6, 0.2, 0.1, 1) 0s;
-  -webkit-box-shadow: 0 14px 38px rgba(0,0,0,0.08), 0 3px 8px rgba(0,0,0,0.06);
-  box-shadow: 0 14px 38px rgba(0,0,0,0.08), 0 3px 8px rgba(0,0,0,0.06);
+  margin: 15px 7px;
+  width: calc(100% / 3 - 15px);
+  height: 90px;
+  border-radius: 8px;
+  line-height: 17px;
+  -webkit-transform: translateZ(0);
 }
-.flink-list > a:hover .info {
-  -webkit-transform: translateY(-100%);
-  -moz-transform: translateY(-100%);
-  -o-transform: translateY(-100%);
-  -ms-transform: translateY(-100%);
-  transform: translateY(-100%);
+@media screen and (max-width: 1024px) {
+  .flink-list > .flink-list-item {
+    width: calc(50% - 15px) !important;
+  }
 }
-.flink-list > a:hover .wrapper img {
-  -webkit-transform: scale(1.2);
-  -moz-transform: scale(1.2);
-  -o-transform: scale(1.2);
-  -ms-transform: scale(1.2);
-  transform: scale(1.2);
+@media screen and (max-width: 600px) {
+  .flink-list > .flink-list-item {
+    width: calc(100% - 15px) !important;
+  }
 }
-.flink-list > a:hover::before {
-  position: fixed;
-  width: inherit;
-  margin: auto;
-  left: 0;
+.flink-list > .flink-list-item:hover .flink-item-icon {
+  margin-left: -10px;
+  width: 0;
+}
+.flink-list > .flink-list-item:before {
+  position: absolute;
+  top: 0;
   right: 0;
-  top: 10%;
-  border-radius: 10px;
-  text-align: center;
-  z-index: 100;
-  content: attr(data-title);
-  font-size: 20px;
-  color: #fff;
-  padding: 10px;
-  background-color: rgba(73,177,245,0.8);
+  bottom: 0;
+  left: 0;
+  z-index: -1;
+  background: var(--text-bg-hover);
+  content: '';
+  -webkit-transition: -webkit-transform 0.3s ease-out;
+  -moz-transition: -moz-transform 0.3s ease-out;
+  -o-transition: -o-transform 0.3s ease-out;
+  -ms-transition: -ms-transform 0.3s ease-out;
+  transition: transform 0.3s ease-out;
+  -webkit-transform: scale(0);
+  -moz-transform: scale(0);
+  -o-transform: scale(0);
+  -ms-transform: scale(0);
+  transform: scale(0);
 }
-.flink-list > a .cover {
+.flink-list > .flink-list-item:hover:before,
+.flink-list > .flink-list-item:focus:before,
+.flink-list > .flink-list-item:active:before {
+  -webkit-transform: scale(1);
+  -moz-transform: scale(1);
+  -o-transform: scale(1);
+  -ms-transform: scale(1);
+  transform: scale(1);
+}
+.flink-list > .flink-list-item a {
+  color: var(--font-color);
+  text-decoration: none;
+}
+.flink-list > .flink-list-item a .flink-item-icon {
+  float: left;
+  overflow: hidden;
+  margin: 15px 10px;
+  width: 60px;
+  height: 60px;
+  border-radius: 35px;
+  -webkit-transition: width 0.3s ease-out;
+  -moz-transition: width 0.3s ease-out;
+  -o-transition: width 0.3s ease-out;
+  -ms-transition: width 0.3s ease-out;
+  transition: width 0.3s ease-out;
+}
+.flink-list > .flink-list-item a .flink-item-icon img {
   width: 100%;
-  -webkit-transition: -webkit-transform 0.5s ease-out;
-  -moz-transition: -moz-transform 0.5s ease-out;
-  -o-transition: -o-transform 0.5s ease-out;
-  -ms-transition: -ms-transform 0.5s ease-out;
-  transition: transform 0.5s ease-out;
+  height: 100%;
+  -webkit-transition: filter 375ms ease-in 0.2s, -webkit-transform 0.3s;
+  -moz-transition: filter 375ms ease-in 0.2s, -moz-transform 0.3s;
+  -o-transition: filter 375ms ease-in 0.2s, -o-transform 0.3s;
+  -ms-transition: filter 375ms ease-in 0.2s, -ms-transform 0.3s;
+  transition: filter 375ms ease-in 0.2s, transform 0.3s;
+  object-fit: cover;
 }
-.flink-list > a .wrapper {
-  position: relative;
+.flink-list > .flink-list-item a .img-alt {
+  display: none;
 }
-.flink-list > a .wrapper .fadeIn {
-  -webkit-animation: coverIn 0.8s ease-out forwards;
-  -moz-animation: coverIn 0.8s ease-out forwards;
-  -o-animation: coverIn 0.8s ease-out forwards;
-  -ms-animation: coverIn 0.8s ease-out forwards;
-  animation: coverIn 0.8s ease-out forwards;
+.flink-item-name {
+  padding: 16px 10px 0 0;
+  height: 40px;
+  font-weight: bold;
+  font-size: 1.43em;
 }
-.flink-list > a .wrapper img {
-  height: 130px;
-  pointer-events: none;
+.flink-item-desc {
+  padding: 16px 10px 16px 0;
+  height: 50px;
+  font-size: 0.93em;
 }
-.flink-list > a .info {
+.flink-name {
+  margin-bottom: 5px;
+  font-weight: bold;
+  font-size: 1.5em;
+}
+.site-card-group {
   display: -webkit-box;
   display: -moz-box;
   display: -webkit-flex;
   display: -ms-flexbox;
   display: box;
   display: flex;
-  -webkit-box-orient: vertical;
-  -moz-box-orient: vertical;
-  -o-box-orient: vertical;
-  -webkit-flex-direction: column;
-  -ms-flex-direction: column;
-  flex-direction: column;
-  -webkit-box-pack: center;
-  -moz-box-pack: center;
-  -o-box-pack: center;
-  -ms-flex-pack: center;
-  -webkit-justify-content: center;
-  justify-content: center;
-  -webkit-box-align: center;
-  -moz-box-align: center;
-  -o-box-align: center;
-  -ms-flex-align: center;
-  -webkit-align-items: center;
-  align-items: center;
+  -webkit-box-lines: multiple;
+  -moz-box-lines: multiple;
+  -o-box-lines: multiple;
+  -webkit-flex-wrap: wrap;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+  -webkit-box-pack: start;
+  -moz-box-pack: start;
+  -o-box-pack: start;
+  -ms-flex-pack: start;
+  -webkit-justify-content: flex-start;
+  justify-content: flex-start;
+  margin: -8px;
+  -webkit-box-align: stretch;
+  -moz-box-align: stretch;
+  -o-box-align: stretch;
+  -ms-flex-align: stretch;
+  -webkit-align-items: stretch;
+  align-items: stretch;
+}
+.site-card {
+  margin: 8px;
+  width: calc(100% / 4 - 16px);
+  display: block;
+  line-height: 1.4;
+  height: 100%;
+}
+@media screen and (min-width: 2048px) {
+  .site-card {
+    width: calc(100% / 5 - 16px);
+  }
+}
+@media screen and (max-width: 768px) {
+  .site-card {
+    width: calc(100% / 3 - 16px);
+  }
+}
+@media screen and (max-width: 500px) {
+  .site-card {
+    width: calc(100% / 2 - 16px);
+  }
+}
+.site-card .img {
+  width: 100%;
+  height: 120px;
+  overflow: hidden;
+  border-radius: 6px;
+  -webkit-box-shadow: 0 1px 2px 0px rgba(0,0,0,0.2);
+  box-shadow: 0 1px 2px 0px rgba(0,0,0,0.2);
+  background: #f6f6f6;
+}
+@media screen and (max-width: 500px) {
+  .site-card .img {
+    height: 100px;
+  }
+}
+.site-card .img img {
   width: 100%;
   height: 100%;
-  overflow: hidden;
-  border-radius: 3px;
-  background-color: rgba(255,255,255,0.7);
-  -webkit-transition: -webkit-transform 0.5s cubic-bezier(0.6, 0.2, 0.1, 1) 0s;
-  -moz-transition: -moz-transform 0.5s cubic-bezier(0.6, 0.2, 0.1, 1) 0s;
-  -o-transition: -o-transform 0.5s cubic-bezier(0.6, 0.2, 0.1, 1) 0s;
-  -ms-transition: -ms-transform 0.5s cubic-bezier(0.6, 0.2, 0.1, 1) 0s;
-  transition: transform 0.5s cubic-bezier(0.6, 0.2, 0.1, 1) 0s;
-}
-.flink-list > a .info img {
-  position: relative;
-  top: 22px;
-  width: 66px;
-  height: 66px;
-  border-radius: 50%;
-  -webkit-box-shadow: 0 0 10px rgba(0,0,0,0.3);
-  box-shadow: 0 0 10px rgba(0,0,0,0.3);
-  z-index: 1;
-  text-align: center;
   pointer-events: none;
+  -webkit-transition: -webkit-transform 2s ease;
+  -moz-transition: -moz-transform 2s ease;
+  -o-transition: -o-transform 2s ease;
+  -ms-transition: -ms-transform 2s ease;
+  transition: transform 2s ease;
+  object-fit: cover;
 }
-.flink-list > a .info span {
-  padding: 20px 10% 60px 10%;
-  font-size: 16px;
-  width: 100%;
-  text-align: center;
-  -webkit-box-shadow: 0 0 10px rgba(0,0,0,0.3);
-  box-shadow: 0 0 10px rgba(0,0,0,0.3);
-  background-color: rgba(255,255,255,0.7);
-  color: var(--font-color);
-  white-space: nowrap;
+.site-card .info {
+  margin-top: 8px;
+}
+.site-card .info img {
+  width: 32px;
+  height: 32px;
+  pointer-events: none;
+  border-radius: 16px;
+  float: left;
+  margin-right: 8px;
+  margin-top: 2px;
+}
+.site-card .info span {
+  display: block;
+}
+.site-card .info .title {
+  font-weight: 600;
+  font-size: var(--global-font-size);
+  color: #444;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  -o-text-overflow: ellipsis;
-  text-overflow: ellipsis;
+  -webkit-line-clamp: 1;
+  -webkit-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+  transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
 }
-.flink-list>a .info,
-.flink-list>a .wrapper .cover {
-  position: absolute;
-  top: 0;
-  left: 0;
+.site-card .info .desc {
+  font-size: var(--global-font-size);
+  word-wrap: break-word;
+  line-height: 1.2;
+  color: #888;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
 }
-@media screen and (max-width: 1024px) {
-  .flink-list > a {
-    width: calc(33.33333% - 15px);
-  }
+.site-card .img {
+  -webkit-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+  transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
 }
-@media screen and (max-width: 600px) {
-  .flink-list > a {
-    width: calc(50% - 15px);
-  }
+.site-card:hover .img {
+  -webkit-box-shadow: 0 4px 8px 0px rgba(0,0,0,0.1), 0 2px 4px 0px rgba(0,0,0,0.1), 0 4px 8px 0px rgba(0,0,0,0.1), 0 8px 16px 0px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 8px 0px rgba(0,0,0,0.1), 0 2px 4px 0px rgba(0,0,0,0.1), 0 4px 8px 0px rgba(0,0,0,0.1), 0 8px 16px 0px rgba(0,0,0,0.1);
 }
-[data-theme=dark] .flink-list a .info,
-[data-theme=dark] .flink-list a .info span {
-  background-color: rgba(0,0,0,0.6);
-}
-[data-theme=dark] .flink-list > a:hover:before {
-  background-color: rgba(18,18,18,0.8);
-}
-.justified-gallery > div > img,
-.justified-gallery > figure > img,
-.justified-gallery > a > a > img,
-.justified-gallery > div > a > img,
-.justified-gallery > figure > a > img,
-.justified-gallery > a > svg,
-.justified-gallery > div > svg,
-.justified-gallery > figure > svg,
-.justified-gallery > a > a > svg,
-.justified-gallery > div > a > svg,
-.justified-gallery > figure > a > svg {
-  position: static !important;
+.site-card:hover .info .title {
+  color: #ff5722;
 }
 .recent-posts {
   padding: 0 5px 0 5px;
@@ -8675,6 +8748,23 @@ li.categoryBar-list-item {
   }
 }
 
+/* ── 2026-11-22  全屏颗粒层隐藏（星空 #universe / 雪花 #snow）───────────────
+ * 现象：两张 canvas 都是 position:fixed; z-index:-2，而 banner 的遮罩
+ *   （#page-header::before）在 z-index:-3、banner 自身背景又被置成 transparent，
+ *   于是画布上的星点 / 雪点正好压在 banner 遮罩之上显形 —— 文章页顶部那块就
+ *   成了「黑黑白白」的颗粒。正文卡片是不透明底，把画布盖住了，所以只有 banner 看得到。
+ * 处理：两道画布一律隐藏。
+ * 附带效果：effects.js 的 starLoop 与 snow.js 的 visible() 都是读「计算样式」判断可见性，
+ *   display:none 之后会自动退出 rAF 循环，不再空转重绘。
+ * 想恢复：删掉下面这条规则即可。
+ * 注意：美化面板里的「星空特效 / 雪花特效」是写内联 style.display 的，
+ *   本条带 !important，会压过面板开关（面板勾选后不生效，属预期）。
+ */
+#universe,
+#snow {
+  display: none !important;
+}
+
 /* 右边的小猫咪 */
 /* 滚动条，我设置的不隐藏，为了可以到达任何地方 */
 /* body::-webkit-scrollbar {
@@ -9034,6 +9124,19 @@ i.fas.fa-cog.right_side {
    元素尺寸固定 20×10px，圆角半径约 2px，曲线按 4 段采样成多边形 */
 .recent-posts .recent-post-item .recent-post-content .recent-post-arrow {
   -webkit-clip-path: polygon(4.8px 0px, 15.2px 0px, 16.27px 0.05px, 17.09px 0.21px, 17.65px 0.48px, 17.95px 0.85px, 18px 1.33px, 17.79px 1.91px, 17.32px 2.6px, 16.6px 3.4px, 11.4px 8.6px, 11.05px 8.91px, 10.7px 9.12px, 10.35px 9.26px, 10px 9.3px, 9.65px 9.26px, 9.3px 9.13px, 8.95px 8.91px, 8.6px 8.6px, 3.4px 3.4px, 2.68px 2.6px, 2.21px 1.91px, 2px 1.33px, 2.05px 0.85px, 2.35px 0.48px, 2.91px 0.21px, 3.73px 0.05px, 4.8px 0px);
+}
+
+/* 2026-11-23  首页卡片封面去尖角（平底）
+   来源：主题 _index_card_style/multicard.styl:103 / :127（本站 index_card_style: multicard）
+   给 .recent-post-cover 和叠在它上面的 .article-content 都套了
+   clip-path: polygon(0 130px, 0 0, 100% 0, 100% 130px, 50% 100%)，
+   于是 200px 高的封面在底边中间拖出一个尖，卡片看着像气泡/箭头。
+   这里两个元素一起去掉裁剪，封面回到直角矩形，正文从 200px 处平接。
+   想恢复尖角：删掉这一段即可（特异性与主题相同，靠 custom.css 更靠后生效）。 */
+.recent-posts .recent-post-item .recent-post-content .recent-post-cover,
+.recent-posts .recent-post-item .recent-post-content .article-content {
+  -webkit-clip-path: none;
+  clip-path: none;
 }
 
 @keyframes ddd {

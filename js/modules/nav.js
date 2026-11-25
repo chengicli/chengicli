@@ -157,8 +157,12 @@ const TENCENT_MAP_KEY = 'DV3BZ-J6R6T-XCNXP-VGCNP-AN6V7-XCB2G';
 const SITE_LAT = 116.397428;
 const SITE_LNG = 39.90923;
 
-/* 三个源的总开关，按需关掉（比如想省配额只留 zxinc） */
-const SOURCES_ENABLED = { qqmap: true, zxinc: true, ipwho: true };
+/* 三个源的总开关，按需关掉（比如想省配额只留 zxinc）
+ * 2026-11-23：qqmap 关掉 —— 这把 key 的 IP 定位日配额已经用尽，每次进站必回 status=121，
+ * 白打一次 jsonp 请求还留一条控制台提示。关掉后走 zxinc（中文省市，无经纬度）→ ipwho.is（有经纬度）。
+ * 想要回经纬度：去 https://lbs.qq.com/dev/console/application/mine 用自己账号申请 WebServiceAPI Key、
+ * 完成个人实名认证，填到 TENCENT_MAP_KEY，再把 qqmap 改回 true。 */
+const SOURCES_ENABLED = { qqmap: false, zxinc: true, ipwho: true };
 
 /* 定位结果缓存：sessionStorage，30 分钟内 pjax 反复切页不再重复请求（省配额、也更快）。
  * 用 sessionStorage 而不是 localStorage：关掉标签页就忘，IP 归属变化能重新取。 */
@@ -208,7 +212,7 @@ function fetchTencent(cb) {
     timeout: 5000,
     success: function (res) {
       // status 非 0 是「通了但没结果」：121 配额用尽/未实名、110 域名未授权、311 key 格式错…
-      // 这种 res 不能当数据用（showWelcome 只认 result.location），原样交给调用方去写日志。
+      // 这种 res 不能当数据用（loadPlace 只认 result.location），原样交给调用方去写日志。
       if (!res || res.status !== 0 || !res.result || !res.result.location) { cb(null, res); return; }
       var ad = res.result.ad_info || {};
       var pos = ad.nation && ad.nation !== '中国'
@@ -374,7 +378,10 @@ function loadPlace() {
     clearTimeout(watchdog);
     if (placeInfo) return;             // 备用源已经先出了结果，别再用腾讯的把它换掉（避免文字闪一下）
     if (p) { applyPlace(p); return; }
-    console.info('[定位] 腾讯位置服务不可用' + (res && res.status !== undefined ? '(status=' + res.status + ' ' + (res.message || '') + ')' : '') + '，改用备用源');
+    // 配额用尽 / 未实名 / 域名未授权都会走到这里，属于预期内的降级，只在 ?debug=1 下打一条
+    if (window.FOMAL_DEBUG) {
+      console.info('[定位] 腾讯位置服务不可用' + (res && res.status !== undefined ? '(status=' + res.status + ' ' + (res.message || '') + ')' : '') + '，改用备用源');
+    }
     startAlt(res, err);
   });
 }
