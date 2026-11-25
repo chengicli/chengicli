@@ -6,9 +6,10 @@
 /* ---------- 搜索引擎 ---------- */
 const ENGINES = [
   { id: 'bing',   name: 'Bing',   url: 'https://www.bing.com/search?q=%s' },
-  // { id: 'baidu',  name: '百度',   url: 'https://www.baidu.com/s?wd=%s' },
-  // { id: 'github', name: 'GitHub', url: 'https://github.com/search?q=%s' },
-  // { id: 'zhihu',  name: '知乎',   url: 'https://www.zhihu.com/search?type=content&q=%s' },
+  { id: 'google', name: 'Google', url: 'https://www.google.com/search?q=%s' },
+  { id: 'baidu',  name: '百度',   url: 'https://www.baidu.com/s?wd=%s' },
+  { id: 'github', name: 'GitHub', url: 'https://github.com/search?q=%s' },
+  { id: 'zhihu',  name: '知乎',   url: 'https://www.zhihu.com/search?type=content&q=%s' },
   { id: 'site',   name: '站内',   url: 'https://www.bing.com/search?q=site%3Alichengic.com+%s' }
 ];
 
@@ -491,6 +492,58 @@ function initSearch() {
       $('search-input').select();
     }
   });
+
+  /* 打开页面就把光标放进搜索框：新标签页里直接打字就能搜。
+   *
+   * 坑：Edge / Chrome 打开新标签页后，会晚于页面加载再把焦点塞进地址栏，
+   * 所以只调一次 focus() 基本会被它覆盖掉（表现为光标还在地址栏）。
+   * 处理办法是「多打几拍」：先立即抢一次，再在若干时间点重试；
+   * 另外页面本身拿到焦点时（浏览器把焦点还回来）再补一次。
+   * 只在有鼠标的设备上做，手机上不弹软键盘挡住整屏。 */
+  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    const input = $('search-input');
+
+    const grabSearch = () => {
+      const active = document.activeElement;
+      // 用户已经在别处输入了（比如点了编辑框），就别抢
+      if (!input || active === input) return;
+      if (active && active !== document.body) return;
+      input.focus({ preventScroll: true });
+    };
+
+    requestAnimationFrame(grabSearch);
+    [40, 100, 200, 400, 800, 1500].forEach((ms) => setTimeout(grabSearch, ms));
+
+    // 只在前 5 秒内响应「页面获得焦点」，避免之后切标签回来还硬抢光标
+    const openedAt = Date.now();
+    let firstFocus = true;
+
+    const onWindowFocus = () => {
+      if (Date.now() - openedAt > 5000) {
+        window.removeEventListener('focus', onWindowFocus);
+        return;
+      }
+      // 首次进入页面（比如从地址栏按 Tab 进来）直接落到搜索框
+      if (firstFocus) {
+        firstFocus = false;
+        input.focus({ preventScroll: true });
+        return;
+      }
+      setTimeout(grabSearch, 0);
+    };
+    window.addEventListener('focus', onWindowFocus);
+
+    /* 地址栏持有焦点时页面收不到键盘事件（按 / 也没反应），
+     * 而 Chromium 不允许页面从地址栏抢焦点，这点绕不过去。
+     * 所以再补一条：点页面任意空白处，光标直接进搜索框。 */
+    document.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      const t = e.target;
+      if (!t || typeof t.closest !== 'function') return;
+      if (t.closest('a, button, input, textarea, select, label, .sheet, [data-site], [contenteditable="true"]')) return;
+      input.focus({ preventScroll: true });
+    });
+  }
 }
 
 /* ---------- 打字副标题 ---------- */
