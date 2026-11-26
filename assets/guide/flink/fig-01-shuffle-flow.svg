@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" width="900" height="520" role="img" aria-label="友链随机排序流程：取卡片、洗牌、按新顺序放回">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#6b7280"/>
+    </marker>
+  </defs>
+
+  <rect width="900" height="520" fill="#f7f8fa"/>
+
+  <text x="40" y="50" font-family="'Microsoft YaHei','PingFang SC',Arial,sans-serif" font-size="23" font-weight="700" fill="#1f2937">随机排序发生在浏览器里：取卡片 → 洗牌 → 按新顺序放回</text>
+  <text x="40" y="82" font-family="'Microsoft YaHei','PingFang SC',Arial,sans-serif" font-size="15" fill="#4b5563">分类标题和描述是卡片组的“邻居”，不在组里，所以永远不参与打乱。</text>
+
+  <text x="40" y="132" font-family="'Microsoft YaHei',Arial,sans-serif" font-size="13" font-weight="700" fill="#6b7280">① 原始 DOM 顺序</text>
+  <text x="605" y="132" font-family="'Microsoft YaHei',Arial,sans-serif" font-size="13" font-weight="700" fill="#6b7280">② 洗牌后的新顺序（按行读）</text>
+
+  <g font-family="'Microsoft YaHei',Arial,sans-serif" font-size="13" fill="#1f2937">
+    <rect x="40" y="150" width="90" height="66" rx="12" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+    <text x="85" y="190" text-anchor="middle">南方嘉木</text>
+
+    <rect x="140" y="150" width="90" height="66" rx="12" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+    <text x="185" y="190" text-anchor="middle">轻笑</text>
+
+    <rect x="240" y="150" width="90" height="66" rx="12" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+    <text x="285" y="190" text-anchor="middle">LanYun</text>
+
+    <rect x="340" y="150" width="90" height="66" rx="12" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+    <text x="385" y="190" text-anchor="middle">丘卡饮品</text>
+  </g>
+
+  <line x1="446" y1="183" x2="470" y2="183" stroke="#6b7280" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="560" y1="183" x2="584" y2="183" stroke="#6b7280" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <g transform="translate(515,183)">
+    <circle cx="0" cy="0" r="30" fill="#ffffff" stroke="#ff1493" stroke-width="2"/>
+    <g fill="none" stroke="#ff1493" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M-13,-7 H-5 L5,7"/>
+      <path d="M-13,7 H-5 L5,-7"/>
+      <path d="M7,-12 L12,-7 L7,-2"/>
+    </g>
+    <text x="0" y="48" text-anchor="middle" font-family="Consolas,monospace" font-size="11" fill="#9ca3af">shuffle()</text>
+  </g>
+
+  <g font-family="'Microsoft YaHei',Arial,sans-serif" font-size="13" fill="#1f2937">
+    <rect x="605" y="150" width="88" height="52" rx="12" fill="#ffffff" stroke="#c7d2fe" stroke-width="2"/>
+    <text x="649" y="182" text-anchor="middle">LanYun</text>
+
+    <rect x="702" y="150" width="88" height="52" rx="12" fill="#ffffff" stroke="#c7d2fe" stroke-width="2"/>
+    <text x="746" y="182" text-anchor="middle">南方嘉木</text>
+
+    <rect x="605" y="214" width="88" height="52" rx="12" fill="#ffffff" stroke="#c7d2fe" stroke-width="2"/>
+    <text x="649" y="246" text-anchor="middle">丘卡饮品</text>
+
+    <rect x="702" y="214" width="88" height="52" rx="12" fill="#ffffff" stroke="#c7d2fe" stroke-width="2"/>
+    <text x="746" y="246" text-anchor="middle">轻笑</text>
+  </g>
+
+  <line x1="40" y1="292" x2="860" y2="292" stroke="#e5e7eb" stroke-width="1"/>
+
+  <text x="40" y="318" font-family="'Microsoft YaHei',Arial,sans-serif" font-size="15" font-weight="700" fill="#1f2937">③ 有 pin 时：先洗“没写 pin”的，再把 pin 的插回第 N 位</text>
+
+  <g font-family="'Microsoft YaHei',Arial,sans-serif" font-size="14" fill="#1f2937">
+    <text x="40" y="376" font-size="13" font-weight="700" fill="#6b7280">原始</text>
+
+    <rect x="110" y="348" width="160" height="54" rx="12" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+    <text x="190" y="381" text-anchor="middle">A 南方嘉木</text>
+
+    <rect x="290" y="348" width="160" height="54" rx="12" fill="#fff1f8" stroke="#ff1493" stroke-width="2"/>
+    <text x="370" y="381" text-anchor="middle">B 轻笑</text>
+    <text x="370" y="342" text-anchor="middle" font-size="12" font-weight="700" fill="#ff1493">pin: 2</text>
+
+    <rect x="470" y="348" width="160" height="54" rx="12" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+    <text x="550" y="381" text-anchor="middle">C LanYun</text>
+
+    <rect x="650" y="348" width="160" height="54" rx="12" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+    <text x="730" y="381" text-anchor="middle">D 丘卡饮品</text>
+
+    <text x="40" y="470" font-size="13" font-weight="700" fill="#6b7280">结果</text>
+
+    <rect x="110" y="442" width="160" height="54" rx="12" fill="#ffffff" stroke="#c7d2fe" stroke-width="1.5"/>
+    <text x="190" y="475" text-anchor="middle">C LanYun</text>
+
+    <rect x="290" y="442" width="160" height="54" rx="12" fill="#fff1f8" stroke="#ff1493" stroke-width="2"/>
+    <text x="370" y="475" text-anchor="middle">B 轻笑</text>
+
+    <rect x="470" y="442" width="160" height="54" rx="12" fill="#ffffff" stroke="#c7d2fe" stroke-width="1.5"/>
+    <text x="550" y="475" text-anchor="middle">A 南方嘉木</text>
+
+    <rect x="650" y="442" width="160" height="54" rx="12" fill="#ffffff" stroke="#c7d2fe" stroke-width="1.5"/>
+    <text x="730" y="475" text-anchor="middle">D 丘卡饮品</text>
+  </g>
+
+  <line x1="826" y1="404" x2="826" y2="430" stroke="#6b7280" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="840" y="422" font-family="'Microsoft YaHei',Arial,sans-serif" font-size="12" fill="#6b7280">插回</text>
+</svg>

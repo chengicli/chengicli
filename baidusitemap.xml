@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>https://www.lichengic.com/posts/flink-shuffle-guide.html</loc>
+    <lastmod>2026-11-26</lastmod>
+  </url>
+  <url>
     <loc>https://www.lichengic.com/posts/g52-g16-guide.html</loc>
     <lastmod>2026-11-22</lastmod>
   </url>

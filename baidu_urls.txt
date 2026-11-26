@@ -1,3 +1,4 @@
+https://www.lichengic.com/posts/flink-shuffle-guide.html
 https://www.lichengic.com/posts/g52-g16-guide.html
 https://www.lichengic.com/posts/music-capsule-guide.html
 https://www.lichengic.com/posts/hexo-encrypt-guide.html
